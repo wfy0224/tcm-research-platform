@@ -596,3 +596,129 @@ class FormulaEvidence(Base):
         PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
     )
 
+
+class QualityIssue(Base):
+    __tablename__ = "quality_issue"
+    __table_args__ = (
+        Index("ix_quality_issue_open", "status", "severity", "target_kind", "target_id"),
+        {"schema": "governance"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    issue_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False)
+    target_kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    target_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="OPEN")
+    resolution_note: Mapped[str | None] = mapped_column(Text)
+    resolved_by: Mapped[str | None] = mapped_column(String(120))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class HumanReview(Base):
+    __tablename__ = "human_review"
+    __table_args__ = (Index("ix_human_review_target", "target_kind", "target_id"),
+                      {"schema": "governance"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    target_kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    target_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    reviewer_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    decision: Mapped[str] = mapped_column(String(20), nullable=False)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class KnowledgeVersion(Base):
+    __tablename__ = "knowledge_version"
+    __table_args__ = (
+        UniqueConstraint("public_id", name="uq_knowledge_version_public_id"),
+        UniqueConstraint("version_no", name="uq_knowledge_version_no"),
+        {"schema": "governance"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    public_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    version_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    manifest_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class KnowledgeVersionItem(Base):
+    __tablename__ = "knowledge_version_item"
+    __table_args__ = (
+        CheckConstraint(
+            "num_nonnulls(evidence_revision_id, formula_revision_id, concept_id, "
+            "relation_id, herb_id) = 1", name="ck_knowledge_item_one_object"
+        ),
+        UniqueConstraint("knowledge_version_id", "evidence_revision_id", name="uq_kv_evidence"),
+        UniqueConstraint("knowledge_version_id", "formula_revision_id", name="uq_kv_formula"),
+        UniqueConstraint("knowledge_version_id", "concept_id", name="uq_kv_concept"),
+        UniqueConstraint("knowledge_version_id", "relation_id", name="uq_kv_relation"),
+        UniqueConstraint("knowledge_version_id", "herb_id", name="uq_kv_herb"),
+        {"schema": "governance"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    knowledge_version_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.knowledge_version.id"), nullable=False
+    )
+    evidence_revision_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id")
+    )
+    formula_revision_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.formula_revision.id")
+    )
+    concept_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.concept.id")
+    )
+    relation_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.relation.id")
+    )
+    herb_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.herb.id")
+    )
+
+
+class IndexBuild(Base):
+    __tablename__ = "index_build"
+    __table_args__ = (Index("ix_index_build_version", "knowledge_version_id", "status"),
+                      {"schema": "governance"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    knowledge_version_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.knowledge_version.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="PENDING")
+    fts_status: Mapped[str] = mapped_column(String(30), nullable=False, default="PENDING")
+    vector_status: Mapped[str] = mapped_column(String(30), nullable=False, default="PENDING")
+    manifest_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    configuration: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    validated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class KnowledgeRuntimeState(Base):
+    __tablename__ = "knowledge_runtime_state"
+    __table_args__ = (
+        CheckConstraint("id = 1", name="ck_knowledge_runtime_singleton"),
+        CheckConstraint(
+            "(active_knowledge_version_id IS NULL) = (active_index_build_id IS NULL)",
+            name="ck_knowledge_runtime_pointer_pair",
+        ),
+        {"schema": "governance"},
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    active_knowledge_version_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.knowledge_version.id")
+    )
+    active_index_build_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.index_build.id")
+    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+

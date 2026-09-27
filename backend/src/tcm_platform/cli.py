@@ -10,6 +10,15 @@ from sqlalchemy import select
 
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
+from tcm_platform.knowledge_publish import (
+    activate_knowledge_version,
+    compare_knowledge_versions,
+    create_index_build,
+    create_knowledge_version,
+    open_quality_issue,
+    resolve_quality_issue,
+    review_object,
+)
 from tcm_platform.knowledge_service import (
     IngredientSpec,
     create_concept,
@@ -97,6 +106,36 @@ def main() -> None:
     formula.add_argument("--school")
     formula.add_argument("--indications")
     formula.add_argument("--effects")
+    issue = commands.add_parser("open-quality-issue", help="record a quality finding")
+    issue.add_argument("kind", choices=[
+        "source_revision", "text_segment_revision", "evidence_revision",
+        "concept", "relation", "herb", "formula_revision", "index_build",
+    ])
+    issue.add_argument("object_id", type=UUID)
+    issue.add_argument("--type", required=True)
+    issue.add_argument("--severity", required=True, choices=["BLOCKER", "WARNING", "INFO"])
+    issue.add_argument("--description", required=True)
+    resolve_issue = commands.add_parser("resolve-quality-issue", help="resolve or waive a finding")
+    resolve_issue.add_argument("issue_id", type=UUID)
+    resolve_issue.add_argument("--reviewer", required=True)
+    resolve_issue.add_argument("--note", required=True)
+    resolve_issue.add_argument("--waive", action="store_true")
+    review = commands.add_parser("review-knowledge", help="record a human review decision")
+    review.add_argument("kind", choices=["evidence_revision", "concept", "relation", "herb", "formula_revision"])
+    review.add_argument("object_id", type=UUID)
+    review.add_argument("--reviewer", required=True)
+    review.add_argument("--decision", required=True, choices=["APPROVE", "REJECT"])
+    review.add_argument("--note", required=True)
+    commands.add_parser("snapshot-knowledge", help="freeze reviewed objects into a version")
+    index_build = commands.add_parser("create-index-build", help="request FTS and vector indexes")
+    index_build.add_argument("knowledge_version_id", type=UUID)
+    index_build.add_argument("--configuration", default="{}", help="JSON retrieval configuration")
+    activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
+    activate.add_argument("knowledge_version_id", type=UUID)
+    activate.add_argument("index_build_id", type=UUID)
+    compare = commands.add_parser("compare-knowledge", help="compare immutable version memberships")
+    compare.add_argument("left_id", type=UUID)
+    compare.add_argument("right_id", type=UUID)
 
     args = parser.parse_args()
     if args.command == "import-source":
@@ -167,6 +206,37 @@ def main() -> None:
             indications=args.indications, effects=args.effects,
         )
         print(json.dumps({"formula_revision_id": str(revision_id)}))
+    elif args.command == "open-quality-issue":
+        issue_id = open_quality_issue(
+            args.kind, args.object_id, issue_type=args.type,
+            severity=args.severity, description=args.description,
+        )
+        print(json.dumps({"quality_issue_id": str(issue_id)}))
+    elif args.command == "resolve-quality-issue":
+        resolve_quality_issue(
+            args.issue_id, reviewer_id=args.reviewer,
+            note=args.note, waive=args.waive,
+        )
+        print(json.dumps({"status": "WAIVED" if args.waive else "RESOLVED"}))
+    elif args.command == "review-knowledge":
+        review_id = review_object(
+            args.kind, args.object_id, reviewer_id=args.reviewer,
+            decision=args.decision, note=args.note,
+        )
+        print(json.dumps({"human_review_id": str(review_id)}))
+    elif args.command == "snapshot-knowledge":
+        version_id = create_knowledge_version()
+        print(json.dumps({"knowledge_version_id": str(version_id)}))
+    elif args.command == "create-index-build":
+        build_id = create_index_build(
+            args.knowledge_version_id, configuration=json.loads(args.configuration)
+        )
+        print(json.dumps({"index_build_id": str(build_id)}))
+    elif args.command == "activate-knowledge":
+        activate_knowledge_version(args.knowledge_version_id, args.index_build_id)
+        print(json.dumps({"status": "READY", "knowledge_version_id": str(args.knowledge_version_id)}))
+    elif args.command == "compare-knowledge":
+        print(json.dumps(compare_knowledge_versions(args.left_id, args.right_id)))
     elif args.command == "show-segments":
         with SessionLocal() as session:
             rows = session.scalars(

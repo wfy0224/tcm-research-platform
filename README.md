@@ -56,6 +56,20 @@ uv run python -m tcm_platform.cli trace-knowledge formula_revision <formula_revi
 
 `create-relation <subject_concept_id> <object_concept_id> --type <关系类型> --assertion <断言> --evidence <evidence_revision_id>` 建立概念关系草稿。概念、关系、药物和方剂都须引用准确的 EvidenceRevision；`trace-knowledge` 可回溯到来源修订、段落修订、原文和定位。当前对象仅为 `DRAFT`，不能作为已发布知识提供给研究任务；人工校订和发布门禁属于 E5。
 
+## 人工校订与发布门禁 E5
+
+审核会保留每次人工决定；阻断级 QualityIssue 未解决时，不能批准对象或创建知识快照。先审核 EvidenceRevision，再审核引用它的概念、关系、药物或方剂：
+
+```powershell
+uv run python -m tcm_platform.cli open-quality-issue evidence_revision <evidence_revision_id> --type INVALID_EVIDENCE_LOCATION --severity BLOCKER --description "待核对原文"
+uv run python -m tcm_platform.cli resolve-quality-issue <quality_issue_id> --reviewer expert-1 --note "已核对原文"
+uv run python -m tcm_platform.cli review-knowledge evidence_revision <evidence_revision_id> --reviewer expert-1 --decision APPROVE --note "核对通过"
+uv run python -m tcm_platform.cli snapshot-knowledge
+uv run python -m tcm_platform.cli create-index-build <knowledge_version_id> --configuration '{"strategy":"hybrid-v1"}'
+```
+
+快照固定精确对象修订，可用 `compare-knowledge <左版本 ID> <右版本 ID>` 比较。`activate-knowledge <knowledge_version_id> <index_build_id>` 只在全文和向量索引均通过验证后，才会原子切换活动知识版本与索引版本。当前索引构建接口尚未接入 E6，因此待构建索引会阻止发布；不会把未完成的知识标为 `READY`。
+
 ## 设计约束
 
 - PostgreSQL 是结构化权威数据源；Blob 文件在数据库登记前先原子写入磁盘。
