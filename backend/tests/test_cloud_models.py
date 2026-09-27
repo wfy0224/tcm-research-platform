@@ -54,7 +54,8 @@ def test_cloud_research_model_parses_json_without_leaking_key(monkeypatch):
 
     def fake_post(url, key, payload):
         captured.append((url, key, payload))
-        return {"choices": [{"message": {"content": '{"subquestions":["脉象"]}'}}]}
+        return {"choices": [{"message": {"content": '{"subquestions":["脉象"]}'}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 7}}
 
     monkeypatch.setattr(cloud_models, "_post_json", fake_post)
     model = cloud_models.CloudResearchModel(model="Qwen/Qwen3-8B", api_key="unit-test-key")
@@ -65,3 +66,31 @@ def test_cloud_research_model_parses_json_without_leaking_key(monkeypatch):
     assert captured[0][1] == "unit-test-key"
     assert captured[0][2]["response_format"] == {"type": "json_object"}
     assert captured[0][2]["enable_thinking"] is False
+    assert model.complete_json_with_metadata("Return JSON", {"question": "太阳病"})[1] == {
+        "prompt_tokens": 12, "completion_tokens": 7,
+    }
+
+
+def test_deepseek_research_route_uses_official_endpoint_and_frozen_model(monkeypatch):
+    captured = []
+
+    def fake_post(url, key, payload):
+        captured.append((url, key, payload))
+        return {"choices": [{"message": {"content": '{"claims":[]}'}}],
+                "usage": {"prompt_tokens": 10, "completion_tokens": 3}}
+
+    monkeypatch.setattr(cloud_models, "_post_json", fake_post)
+    monkeypatch.setenv("TCM_RESEARCH_PROVIDER", "deepseek")
+    monkeypatch.setenv("TCM_RESEARCH_MODEL", "deepseek-flash")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "unit-test-deepseek-key")
+    model = cloud_models.research_model_from_environment()
+    assert model.model_version == "deepseek/deepseek-flash"
+    assert model.complete_json("Return JSON", {"question": "太阳病"}) == {"claims": []}
+    assert captured[0][0] == "https://api.deepseek.com/chat/completions"
+    assert captured[0][1] == "unit-test-deepseek-key"
+    assert captured[0][2]["thinking"] == {"type": "disabled"}
+    assert cloud_models.research_model_for_version(
+        "deepseek/deepseek-flash"
+    ).model_version == model.model_version
+    with pytest.raises(ValueError, match="approved HTTPS"):
+        cloud_models._checked_endpoint("https://api.deepseek.com.evil.example/chat/completions")

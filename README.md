@@ -97,19 +97,27 @@ uv run python -m tcm_platform.cli run-retrieval-benchmark --k 10
 
 已建立研究任务、冻结的执行上下文、任务证据池、检索事件、首轮 AgentRun 与 Claim Pool。Planner 的子问题采用严格 JSON 合约；首轮 Classicist、HistoricalScholar、Theorist 的输入会在任何 Claim 生成前分别冻结。Agent 输出若包含不在任务证据池或本次可见集合中的 EvidenceRevision，整份输出拒绝写入。
 
-生成模型使用硅基流动云端对话 API。联调使用用户确认免费的 `Qwen/Qwen3-8B`；运行前仍需显式设置 `TCM_RESEARCH_MODEL`，随后可按顺序执行：
+生成模型默认使用硅基流动云端对话 API。联调使用用户确认免费的 `Qwen/Qwen3-8B`；运行前仍需显式设置 `TCM_RESEARCH_MODEL`。启动任务会将冻结模型路由的研究 Job 放入 PostgreSQL 队列，运行一个 Worker 即可自动完成 Planner、证据检索和首轮独立研究：
 
 ```powershell
 $env:TCM_RESEARCH_MODEL = "Qwen/Qwen3-8B"
 uv run python -m tcm_platform.cli create-research-task "太阳病脉象的经典文献依据是什么" --source-id <source_id>
 uv run python -m tcm_platform.cli start-research-task <task_id>
+uv run python -m tcm_platform.cli run-research-next --task-id <task_id>
+```
+
+常驻处理可运行 `uv run python -m tcm_platform.cli run-research-worker`。Worker 使用租约和心跳；节点提交前核验租约，进程中断后从已提交的任务状态与 AgentRun 继续。暂停和取消请求在安全点生效；若模型调用正在进行，会等待该调用返回并丢弃其未提交的业务结果。可用 `pause-research-task <task_id>`、`resume-research-task <task_id>`、`cancel-research-task <task_id>` 控制任务。每次生成调用记录模型、请求/输出哈希、耗时、状态和接口返回的 token 用量，不保存原始提示词。也可按下列命令逐步调试：
+
+```powershell
 uv run python -m tcm_platform.cli plan-research-task <task_id>
 uv run python -m tcm_platform.cli retrieve-research-task <task_id>
 uv run python -m tcm_platform.cli prepare-first-round <task_id>
 uv run python -m tcm_platform.cli run-first-round <task_id>
 ```
 
-历史研究角色只有在来源具有明确作者、时代、流派、版本或出版年元数据时才生成 Claim；其余情况记录空结果，避免把普通原文误标为历史事实。这是保守的临时门禁，文本中隐含的历史线索可能暂时无法进入历史角色。`Qwen/Qwen3-8B` 的真实联调曾产生超出原文的解释，因此当前 Claim 只是待审研究草稿，不能直接当作可靠结论。目前 E7 为命令行同步流程，尚未接入研究 Job/Worker 的暂停恢复、模型调用记录与首轮后的语义审计工作流；这些属于后续实现范围。
+如需使用 DeepSeek 官方 API，可单独设置 `TCM_RESEARCH_PROVIDER=deepseek`、`TCM_RESEARCH_MODEL=deepseek-flash` 和 `DEEPSEEK_API_KEY`；向量和重排仍可保持硅基流动免费模型。DeepSeek 官方 Flash 按 token 计费，选择该路由前应查看[官方价格](https://api-docs.deepseek.com/quick_start/pricing/)。已启动任务的模型路由不会被后续环境默认值改变。
+
+历史研究角色只有在来源具有明确作者、时代、流派、版本或出版年元数据时才生成 Claim；其余情况记录空结果，避免把普通原文误标为历史事实。这是保守的临时门禁，文本中隐含的历史线索可能暂时无法进入历史角色。`Qwen/Qwen3-8B` 的真实联调曾产生超出原文的解释，因此当前 Claim 只是待审研究草稿，不能直接当作可靠结论。首轮后的语义审计与纠错闭环将在 E8 实现。
 
 ## 设计约束
 

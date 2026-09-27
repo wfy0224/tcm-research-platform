@@ -2,15 +2,18 @@
 
 import hashlib
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import or_, select
+from sqlalchemy.orm import Session
 
 from tcm_platform.audit import append_event
 from tcm_platform.db import SessionLocal
+from tcm_platform.enums import JobStatus, ResourceClass
 from tcm_platform.ids import new_id
+from tcm_platform.jobs import enqueue_job
 from tcm_platform.knowledge_service import trace_evidence
 from tcm_platform.models import (
     AgentRun,
@@ -28,11 +31,13 @@ from tcm_platform.models import (
     SourceDocument,
     SourceRevision,
     TaskEvidenceRef,
+    TaskJob,
     utc_now,
 )
 from tcm_platform.retrieval import Embedder, Reranker, search_published
 
 RESEARCH_ROLES = ("Classicist", "HistoricalScholar", "Theorist")
+LeaseGuard = Callable[[Session], None]
 CLAIM_TYPES = {
     "Classicist": {"DIRECT_TEXT", "TEXTUAL_RELATION"},
     "HistoricalScholar": {"HISTORICAL_FACT", "LATER_INTERPRETATION"},
@@ -146,14 +151,92 @@ def start_research_task(
                      payload={"run_fingerprint": task.run_fingerprint,
                               "knowledge_version_id": str(version.id),
                               "index_build_id": str(build.id)})
+        enqueue_job(
+            session, idempotency_key=f"research:{task_id}:run:v1",
+            job_type="research.run", payload={"task_id": str(task_id),
+                                              "run_fingerprint": task.run_fingerprint},
+            resource_class=ResourceClass.LLM_REMOTE, actor_id=actor_id,
+        )
         return task.run_fingerprint
 
 
+def _lock_research_control(session: Session, task_id: UUID) -> tuple[TaskJob, ResearchTask]:
+    job = session.scalar(select(TaskJob).where(
+        TaskJob.idempotency_key == f"research:{task_id}:run:v1"
+    ).with_for_update())
+    task = session.scalar(select(ResearchTask).where(
+        ResearchTask.id == task_id
+    ).with_for_update())
+    if job is None or task is None or task.status in {"CREATED", "FIRST_ROUND_COMPLETE", "CANCELLED"}:
+        raise ValueError("research task is not controllable")
+    return job, task
+
+
+def request_research_pause(task_id: UUID, *, actor_id: str = "local-researcher") -> str:
+    with SessionLocal.begin() as session:
+        job, task = _lock_research_control(session, task_id)
+        if task.control_state in {"PAUSED", "PAUSE_REQUESTED"}:
+            return task.control_state
+        if task.control_state != "ACTIVE":
+            raise ValueError("research task cannot be paused")
+        if job.status == JobStatus.RUNNING.value:
+            task.control_state = "PAUSE_REQUESTED"
+        elif job.status in {JobStatus.PENDING.value, JobStatus.RETRY_WAIT.value}:
+            task.control_state = "PAUSED"
+            job.status = JobStatus.PAUSED.value
+            job.updated_at = utc_now()
+        else:
+            raise ValueError("research job cannot be paused")
+        append_event(session, event_type="research_task.pause_requested", actor_id=actor_id,
+                     aggregate_id=task_id, payload={"control_state": task.control_state})
+        return task.control_state
+
+
+def resume_research_task(task_id: UUID, *, actor_id: str = "local-researcher") -> str:
+    with SessionLocal.begin() as session:
+        job, task = _lock_research_control(session, task_id)
+        if task.control_state == "PAUSE_REQUESTED" and job.status == JobStatus.RUNNING.value:
+            task.control_state = "ACTIVE"
+        elif task.control_state == "PAUSED" and job.status == JobStatus.PAUSED.value:
+            task.control_state = "ACTIVE"
+            job.status = JobStatus.PENDING.value
+            job.available_at = utc_now()
+            job.updated_at = utc_now()
+        else:
+            raise ValueError("research task is not paused")
+        append_event(session, event_type="research_task.resumed", actor_id=actor_id,
+                     aggregate_id=task_id, payload={"phase": task.status})
+        return task.status
+
+
+def cancel_research_task(task_id: UUID, *, actor_id: str = "local-researcher") -> str:
+    with SessionLocal.begin() as session:
+        job, task = _lock_research_control(session, task_id)
+        if task.control_state == "CANCEL_REQUESTED":
+            return task.control_state
+        if job.status == JobStatus.RUNNING.value:
+            task.control_state = "CANCEL_REQUESTED"
+        elif job.status in {JobStatus.PENDING.value, JobStatus.RETRY_WAIT.value,
+                            JobStatus.PAUSED.value}:
+            task.control_state = "CANCELLED"
+            task.status = "CANCELLED"
+            job.status = JobStatus.CANCELLED.value
+            job.updated_at = utc_now()
+        else:
+            raise ValueError("research job cannot be cancelled")
+        append_event(session, event_type="research_task.cancel_requested", actor_id=actor_id,
+                     aggregate_id=task_id, payload={"control_state": task.control_state})
+        return task.control_state
+
+
 def save_research_plan(
-    task_id: UUID, payload: Mapping, *, actor_id: str = "planner"
+    task_id: UUID, payload: Mapping, *, actor_id: str = "planner",
+    lease_guard: LeaseGuard | None = None,
 ) -> list[UUID]:
     output = PlannerOutput.model_validate(payload)
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         task = session.scalar(select(ResearchTask).where(ResearchTask.id == task_id).with_for_update())
         if task is None or task.status != "PLANNING" or task.execution_context is None:
             raise ValueError("research task is not planning")
@@ -172,9 +255,12 @@ def save_research_plan(
 def add_task_evidence(
     task_id: UUID, query: str, results: Sequence[dict], *,
     actor_id: str = "retrieval-service",
+    lease_guard: LeaseGuard | None = None,
 ) -> int:
     """Store pool membership and every retrieval occurrence in separate tables."""
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         task = session.scalar(select(ResearchTask).where(ResearchTask.id == task_id).with_for_update())
         if task is None or task.status != "RETRIEVING":
             raise ValueError("research task is not retrieving")
@@ -183,6 +269,12 @@ def add_task_evidence(
         scoped_sources = {UUID(value) for value in context["source_ids"]}
         existing = {row.evidence_revision_id for row in session.scalars(
             select(TaskEvidenceRef).where(TaskEvidenceRef.task_id == task_id)
+        )}
+        recorded = {row.evidence_revision_id for row in session.scalars(
+            select(EvidenceRetrievalEvent).where(
+                EvidenceRetrievalEvent.task_id == task_id,
+                EvidenceRetrievalEvent.query_text == query,
+            )
         )}
         new_count = 0
         for rank, result in enumerate(results, 1):
@@ -202,10 +294,12 @@ def add_task_evidence(
                                             evidence_revision_id=revision_id))
                 existing.add(revision_id)
                 new_count += 1
-            session.add(EvidenceRetrievalEvent(
-                id=new_id(), task_id=task_id, evidence_revision_id=revision_id,
-                query_text=query, rank=rank, channels=result.get("matched_channels", []),
-            ))
+            if revision_id not in recorded:
+                session.add(EvidenceRetrievalEvent(
+                    id=new_id(), task_id=task_id, evidence_revision_id=revision_id,
+                    query_text=query, rank=rank, channels=result.get("matched_channels", []),
+                ))
+                recorded.add(revision_id)
         append_event(session, event_type="research_task.evidence_retrieved", actor_id=actor_id,
                      aggregate_id=task_id,
                      payload={"query": query, "result_count": len(results), "new_count": new_count})
@@ -214,7 +308,7 @@ def add_task_evidence(
 
 def retrieve_for_task(
     task_id: UUID, *, embedder: Embedder, reranker: Reranker | None = None,
-    limit: int = 10,
+    limit: int = 10, lease_guard: LeaseGuard | None = None,
 ) -> int:
     with SessionLocal() as session:
         task = session.get(ResearchTask, task_id)
@@ -238,13 +332,16 @@ def retrieve_for_task(
             knowledge_version_id=UUID(context["knowledge_version_id"]),
             index_build_id=UUID(context["index_build_id"]),
         )
-        total += add_task_evidence(task_id, query, results)
+        total += add_task_evidence(task_id, query, results, lease_guard=lease_guard)
     return total
 
 
-def prepare_first_round(task_id: UUID, *, actor_id: str = "research-runtime") -> list[UUID]:
+def prepare_first_round(task_id: UUID, *, actor_id: str = "research-runtime",
+                        lease_guard: LeaseGuard | None = None) -> list[UUID]:
     """Freeze all role inputs before any role can submit a Claim."""
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         task = session.scalar(select(ResearchTask).where(ResearchTask.id == task_id).with_for_update())
         if task is None or task.status != "RETRIEVING":
             raise ValueError("research task is not ready for first round")
@@ -292,7 +389,8 @@ def agent_visible_context(run_id: UUID) -> dict:
 
 
 def submit_first_round_output(
-    run_id: UUID, payload: Mapping, *, actor_id: str = "agent-runtime"
+    run_id: UUID, payload: Mapping, *, actor_id: str = "agent-runtime",
+    lease_guard: LeaseGuard | None = None,
 ) -> list[UUID]:
     """Validate the entire Agent output before persisting any Claim."""
     output = ResearchAgentOutput.model_validate(payload)
@@ -300,10 +398,14 @@ def submit_first_round_output(
     if len(set(refs)) != len(refs):
         raise ValueError("Agent output contains duplicate client_ref")
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         run = session.scalar(select(AgentRun).where(AgentRun.id == run_id).with_for_update())
         if run is None or run.status != "PENDING" or run.round_no != 1:
             raise ValueError("AgentRun is not accepting first-round output")
-        task = session.get(ResearchTask, run.task_id)
+        task = session.scalar(select(ResearchTask).where(
+            ResearchTask.id == run.task_id
+        ).with_for_update())
         if task.status != "RESEARCHING" or run.model_version != task.execution_context["generation_model"]:
             raise ValueError("AgentRun differs from frozen task context")
         visible = {UUID(value) for value in run.visible_evidence_ids}
@@ -369,6 +471,14 @@ def submit_first_round_output(
         run.status = "COMPLETED"
         run.output = output.model_dump(mode="json")
         run.completed_at = utc_now()
+        session.flush()
+        remaining = session.scalar(select(AgentRun.id).where(
+            AgentRun.task_id == run.task_id,
+            AgentRun.round_no == 1,
+            AgentRun.status == "PENDING",
+        ).limit(1))
+        if remaining is None:
+            task.status = "FIRST_ROUND_COMPLETE"
         append_event(session, event_type="agent_run.first_round_completed", actor_id=actor_id,
                      aggregate_id=run.id,
                      payload={"task_id": str(run.task_id), "role": run.role,

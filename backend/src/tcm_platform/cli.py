@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import time
 from dataclasses import asdict
 from pathlib import Path
 from uuid import UUID
@@ -42,11 +43,15 @@ from tcm_platform.models import (
 )
 from tcm_platform.research_runtime import execute_first_round, execute_planner
 from tcm_platform.research_service import (
+    cancel_research_task,
     create_research_task,
     prepare_first_round,
+    request_research_pause,
+    resume_research_task,
     retrieve_for_task,
     start_research_task,
 )
+from tcm_platform.research_worker import run_next_research_job
 from tcm_platform.retrieval import build_retrieval_index, search_published
 from tcm_platform.retrieval_benchmark import create_golden_query, run_benchmark
 from tcm_platform.segment_service import process_next_segment
@@ -171,6 +176,15 @@ def main() -> None:
     first.add_argument("task_id", type=UUID)
     run_first = commands.add_parser("run-first-round", help="run cloud Agents into guarded Claim pool")
     run_first.add_argument("task_id", type=UUID)
+    next_research = commands.add_parser("run-research-next", help="process one queued research task")
+    next_research.add_argument("--worker-id", default="local-research-worker")
+    next_research.add_argument("--task-id", type=UUID)
+    research_worker = commands.add_parser("run-research-worker", help="poll research task queue")
+    research_worker.add_argument("--worker-id", default="local-research-worker")
+    research_worker.add_argument("--poll-seconds", type=float, default=2)
+    for command in ("pause-research-task", "resume-research-task", "cancel-research-task"):
+        control = commands.add_parser(command, help=f"{command} at a safe worker boundary")
+        control.add_argument("task_id", type=UUID)
     activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
     activate.add_argument("knowledge_version_id", type=UUID)
     activate.add_argument("index_build_id", type=UUID)
@@ -335,6 +349,33 @@ def main() -> None:
         model = research_model_from_environment()
         ids = execute_first_round(args.task_id, model=model)
         print(json.dumps({"claim_ids": [str(item) for item in ids]}))
+    elif args.command == "pause-research-task":
+        print(json.dumps({"control_state": request_research_pause(args.task_id)}))
+    elif args.command == "resume-research-task":
+        print(json.dumps({"phase": resume_research_task(args.task_id)}))
+    elif args.command == "cancel-research-task":
+        print(json.dumps({"control_state": cancel_research_task(args.task_id)}))
+    elif args.command in {"run-research-next", "run-research-worker"}:
+        embedder, reranker = cloud_clients_from_environment()
+        if args.command == "run-research-next":
+            job_id = run_next_research_job(
+                worker_id=args.worker_id,
+                embedder=embedder, reranker=reranker, task_id=args.task_id,
+            )
+            print(json.dumps({"job_id": str(job_id) if job_id else None}))
+        else:
+            if args.poll_seconds < 0.1:
+                parser.error("--poll-seconds must be at least 0.1")
+            try:
+                while True:
+                    job_id = run_next_research_job(
+                        worker_id=args.worker_id,
+                        embedder=embedder, reranker=reranker,
+                    )
+                    if job_id is None:
+                        time.sleep(args.poll_seconds)
+            except KeyboardInterrupt:
+                pass
     elif args.command == "activate-knowledge":
         activate_knowledge_version(args.knowledge_version_id, args.index_build_id)
         print(json.dumps({"status": "READY", "knowledge_version_id": str(args.knowledge_version_id)}))

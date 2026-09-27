@@ -14,17 +14,26 @@ from tcm_platform.models import (
     IndexBuild,
     KnowledgeRuntimeState,
     KnowledgeVersionItem,
+    ModelInvocation,
+    ResearchSubquestion,
+    ResearchTask,
+    TaskCheckpoint,
     TaskEvidenceRef,
+    TaskJob,
 )
 from tcm_platform.research_runtime import execute_first_round, execute_planner
 from tcm_platform.research_service import (
     agent_visible_context,
+    cancel_research_task,
     create_research_task,
     prepare_first_round,
+    request_research_pause,
+    resume_research_task,
     retrieve_for_task,
     start_research_task,
     submit_first_round_output,
 )
+from tcm_platform.research_worker import run_next_research_job
 
 
 def test_agent_can_abstain_when_visible_evidence_is_insufficient():
@@ -158,3 +167,169 @@ def test_first_round_freezes_context_and_rejects_unseen_evidence_atomically():
         assert len(list(session.scalars(select(ClaimEvidence).where(
             ClaimEvidence.claim_id.in_(claim_ids)
         )))) == expected_claims
+        invocations = list(session.scalars(select(ModelInvocation).where(
+            ModelInvocation.task_id == task_id
+        )))
+        assert len(invocations) == 1 + expected_claims
+        assert {item.purpose for item in invocations} == (
+            {"Planner", "Classicist", "Theorist"} |
+            ({"HistoricalScholar"} if has_history else set())
+        )
+        assert all(item.status == "COMPLETED" and len(item.request_hash) == 64
+                   and item.output_hash and item.latency_ms >= 0 for item in invocations)
+    job_id = run_next_research_job(
+        worker_id="test-reconciler", model=model, embedder=embedder,
+        reranker=reranker, task_id=task_id,
+    )
+    assert job_id is not None
+
+
+def test_research_worker_resumes_from_frozen_task_and_checkpoints():
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        if runtime.active_knowledge_version_id is None:
+            pytest.skip("no published sample knowledge version")
+        build = session.get(IndexBuild, runtime.active_index_build_id)
+        vector = session.scalar(select(EmbeddingRecord).where(
+            EmbeddingRecord.index_build_id == build.id
+        ))
+        item = session.scalar(select(KnowledgeVersionItem).where(
+            KnowledgeVersionItem.knowledge_version_id == build.knowledge_version_id,
+            KnowledgeVersionItem.evidence_revision_id.is_not(None),
+        ))
+        embedder = FakeEmbedder(build.configuration["embedding_model"], vector.dimensions)
+        reranker = (FakeReranker(build.configuration["rerank_model"])
+                    if build.configuration.get("rerank_model") else None)
+    provenance = trace_evidence(item.evidence_revision_id)
+    task_id = create_research_task(
+        provenance["quote_text"], source_ids=[UUID(provenance["source_id"])]
+    )
+    model = FakeGenerator()
+    start_research_task(task_id, model_version=model.model_version)
+    job_id = run_next_research_job(
+        worker_id="test-research-worker", model=model, embedder=embedder,
+        reranker=reranker, task_id=task_id,
+    )
+    assert job_id is not None
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        job = session.get(TaskJob, job_id)
+        checkpoint = session.scalar(select(TaskCheckpoint).where(
+            TaskCheckpoint.job_id == job_id
+        ))
+        assert task.status == "FIRST_ROUND_COMPLETE"
+        assert job.status == "COMPLETED"
+        assert checkpoint.result == {"task_id": str(task_id),
+                                     "status": "FIRST_ROUND_COMPLETE"}
+        claim_count = len(list(session.scalars(select(Claim).where(Claim.task_id == task_id))))
+        assert claim_count >= 2
+    assert run_next_research_job(
+        worker_id="test-research-worker", model=model, embedder=embedder,
+        reranker=reranker, task_id=task_id,
+    ) is None
+
+
+def test_research_pause_discarded_planner_output_and_resume():
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        if runtime.active_knowledge_version_id is None:
+            pytest.skip("no published sample knowledge version")
+        build = session.get(IndexBuild, runtime.active_index_build_id)
+        vector = session.scalar(select(EmbeddingRecord).where(
+            EmbeddingRecord.index_build_id == build.id
+        ))
+        embedder = FakeEmbedder(build.configuration["embedding_model"], vector.dimensions)
+        reranker = (FakeReranker(build.configuration["rerank_model"])
+                    if build.configuration.get("rerank_model") else None)
+    task_id = create_research_task("太阳病脉象")
+    normal_model = FakeGenerator()
+    start_research_task(task_id, model_version=normal_model.model_version)
+    assert request_research_pause(task_id) == "PAUSED"
+    with SessionLocal() as session:
+        job = session.scalar(select(TaskJob).where(
+            TaskJob.idempotency_key == f"research:{task_id}:run:v1"
+        ))
+        assert job.status == "PAUSED"
+    assert resume_research_task(task_id) == "PLANNING"
+
+    class PausingGenerator(FakeGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "Planner" in system_prompt:
+                assert request_research_pause(task_id) == "PAUSE_REQUESTED"
+            return super().complete_json(system_prompt, input_payload)
+
+    job_id = run_next_research_job(
+        worker_id="test-pause-worker", model=PausingGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        job = session.get(TaskJob, job_id)
+        checkpoints = list(session.scalars(select(TaskCheckpoint).where(
+            TaskCheckpoint.job_id == job_id
+        )))
+        assert task.control_state == "PAUSED" and task.status == "PLANNING"
+        assert job.status == "PAUSED" and job.attempts == 0
+        assert checkpoints[0].result["phase"] == "PLANNING"
+        assert not list(session.scalars(select(ResearchSubquestion).where(
+            ResearchSubquestion.task_id == task_id
+        )))
+    assert resume_research_task(task_id) == "PLANNING"
+    assert run_next_research_job(
+        worker_id="test-pause-worker", model=normal_model,
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    ) == job_id
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "FIRST_ROUND_COMPLETE"
+        assert session.get(TaskJob, job_id).status == "COMPLETED"
+
+
+def test_research_cancel_before_worker_claims_job():
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        if runtime.active_knowledge_version_id is None:
+            pytest.skip("no published sample knowledge version")
+    task_id = create_research_task("太阳病脉象")
+    start_research_task(task_id, model_version=FakeGenerator.model_version)
+    assert cancel_research_task(task_id) == "CANCELLED"
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        job = session.scalar(select(TaskJob).where(
+            TaskJob.idempotency_key == f"research:{task_id}:run:v1"
+        ))
+        assert task.status == "CANCELLED" and task.control_state == "CANCELLED"
+        assert job.status == "CANCELLED"
+
+
+def test_research_cancel_during_planner_discards_returned_output():
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        if runtime.active_knowledge_version_id is None:
+            pytest.skip("no published sample knowledge version")
+        build = session.get(IndexBuild, runtime.active_index_build_id)
+        vector = session.scalar(select(EmbeddingRecord).where(
+            EmbeddingRecord.index_build_id == build.id
+        ))
+        embedder = FakeEmbedder(build.configuration["embedding_model"], vector.dimensions)
+        reranker = (FakeReranker(build.configuration["rerank_model"])
+                    if build.configuration.get("rerank_model") else None)
+    task_id = create_research_task("太阳病脉象")
+    start_research_task(task_id, model_version=FakeGenerator.model_version)
+
+    class CancellingGenerator(FakeGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "Planner" in system_prompt:
+                assert cancel_research_task(task_id) == "CANCEL_REQUESTED"
+            return super().complete_json(system_prompt, input_payload)
+
+    job_id = run_next_research_job(
+        worker_id="test-cancel-worker", model=CancellingGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        assert task.status == "CANCELLED" and task.control_state == "CANCELLED"
+        assert session.get(TaskJob, job_id).status == "CANCELLED"
+        assert not list(session.scalars(select(ResearchSubquestion).where(
+            ResearchSubquestion.task_id == task_id
+        )))

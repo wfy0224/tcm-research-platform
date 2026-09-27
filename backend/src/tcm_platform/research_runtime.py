@@ -1,14 +1,20 @@
 """Cloud-neutral first-round orchestration; the Agent cannot write domain objects."""
 
+import hashlib
+import json
+from time import perf_counter
 from typing import Protocol
 from uuid import UUID
 
 from sqlalchemy import select
 
+from tcm_platform.audit import append_event
 from tcm_platform.db import SessionLocal
-from tcm_platform.models import AgentRun, ResearchTask
+from tcm_platform.ids import new_id
+from tcm_platform.models import AgentRun, ModelInvocation, ResearchTask
 from tcm_platform.research_service import (
     CLAIM_TYPES,
+    LeaseGuard,
     agent_visible_context,
     save_research_plan,
     submit_first_round_output,
@@ -34,7 +40,50 @@ class StructuredGenerator(Protocol):
     def complete_json(self, system_prompt: str, input_payload: dict) -> dict: ...
 
 
-def execute_planner(task_id: UUID, *, model: StructuredGenerator) -> list[UUID]:
+def _digest(value: object) -> str:
+    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _recorded_complete(
+    task_id: UUID, agent_run_id: UUID | None, purpose: str,
+    model: StructuredGenerator, system_prompt: str, input_payload: dict,
+) -> dict:
+    started = perf_counter()
+    output: dict | None = None
+    usage: dict = {}
+    error_class: str | None = None
+    try:
+        completion = getattr(model, "complete_json_with_metadata", None)
+        if completion is None:
+            output = model.complete_json(system_prompt, input_payload)
+        else:
+            output, usage = completion(system_prompt, input_payload)
+        return output
+    except Exception as exc:
+        error_class = type(exc).__name__
+        raise
+    finally:
+        invocation_id = new_id()
+        with SessionLocal.begin() as session:
+            session.add(ModelInvocation(
+                id=invocation_id, task_id=task_id, agent_run_id=agent_run_id,
+                purpose=purpose, model_version=model.model_version,
+                endpoint=getattr(model, "endpoint", None),
+                request_hash=_digest({"system": system_prompt, "input": input_payload}),
+                output_hash=_digest(output) if output is not None else None,
+                token_usage=usage, latency_ms=max(0, round((perf_counter() - started) * 1000)),
+                status="FAILED" if error_class else "COMPLETED", error_class=error_class,
+            ))
+            append_event(session, event_type="model.invocation_recorded", actor_id="model-gateway",
+                         aggregate_id=invocation_id,
+                         payload={"task_id": str(task_id), "purpose": purpose,
+                                  "status": "FAILED" if error_class else "COMPLETED"})
+
+
+def execute_planner(task_id: UUID, *, model: StructuredGenerator,
+                    lease_guard: LeaseGuard | None = None) -> list[UUID]:
     with SessionLocal() as session:
         task = session.get(ResearchTask, task_id)
         if task is None or task.status != "PLANNING":
@@ -45,11 +94,13 @@ def execute_planner(task_id: UUID, *, model: StructuredGenerator) -> list[UUID]:
             "question": task.question, "source_ids": task.execution_context["source_ids"],
             "knowledge_version_id": task.execution_context["knowledge_version_id"],
         }
-    output = model.complete_json(PLANNER_PROTOCOL, input_payload)
-    return save_research_plan(task_id, output)
+    output = _recorded_complete(task_id, None, "Planner", model,
+                                PLANNER_PROTOCOL, input_payload)
+    return save_research_plan(task_id, output, lease_guard=lease_guard)
 
 
-def execute_first_round(task_id: UUID, *, model: StructuredGenerator) -> list[UUID]:
+def execute_first_round(task_id: UUID, *, model: StructuredGenerator,
+                        lease_guard: LeaseGuard | None = None) -> list[UUID]:
     """Each role receives its pre-frozen input; no peer Claims enter that input."""
     with SessionLocal() as session:
         task = session.get(ResearchTask, task_id)
@@ -91,6 +142,9 @@ def execute_first_round(task_id: UUID, *, model: StructuredGenerator) -> list[UU
         ):
             output = {"claims": []}
         else:
-            output = model.complete_json(system_prompt, context)
-        claim_ids.extend(submit_first_round_output(run_id, output))
+            output = _recorded_complete(task_id, run_id, role, model,
+                                        system_prompt, context)
+        claim_ids.extend(submit_first_round_output(
+            run_id, output, lease_guard=lease_guard
+        ))
     return claim_ids

@@ -22,6 +22,7 @@ def _checked_endpoint(url: str) -> str:
         or parsed.hostname is None
         or not (
             parsed.hostname == "api.siliconflow.cn"
+            or parsed.hostname == "api.deepseek.com"
             or parsed.hostname.endswith(".maas.aliyuncs.com")
         )
     ):
@@ -127,17 +128,31 @@ class CloudReranker:
 class CloudResearchModel:
     """Cloud-only JSON completion adapter; business validation stays in ResearchService."""
 
-    def __init__(self, *, model: str, api_key: str):
+    def __init__(self, *, model: str, api_key: str, provider: str = "siliconflow"):
         if not model.strip():
             raise ValueError("TCM_RESEARCH_MODEL is not configured")
+        if provider not in {"siliconflow", "deepseek"}:
+            raise ValueError("unsupported research model provider")
+        if provider == "deepseek" and model != "deepseek-flash":
+            raise ValueError("DeepSeek research route currently supports deepseek-flash only")
         self.model = model
         self.api_key = api_key
-        self.model_version = f"siliconflow/{model}"
+        self.provider = provider
+        self.model_version = f"{provider}/{model}"
+        self.endpoint = _checked_endpoint(
+            "https://api.deepseek.com/chat/completions" if provider == "deepseek"
+            else "https://api.siliconflow.cn/v1/chat/completions"
+        )
 
-    def complete_json(self, system_prompt: str, input_payload: dict) -> dict:
-        options = {"enable_thinking": False} if self.model == "Qwen/Qwen3-8B" else {}
+    def complete_json_with_metadata(
+        self, system_prompt: str, input_payload: dict
+    ) -> tuple[dict, dict]:
+        options = (
+            {"thinking": {"type": "disabled"}} if self.provider == "deepseek"
+            else {"enable_thinking": False} if self.model == "Qwen/Qwen3-8B" else {}
+        )
         result = _post_json(
-            "https://api.siliconflow.cn/v1/chat/completions", self.api_key,
+            self.endpoint, self.api_key,
             {"model": self.model, "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": json.dumps(input_payload, ensure_ascii=False)},
@@ -151,16 +166,35 @@ class CloudResearchModel:
             raise ValueError("cloud research model returned invalid JSON") from exc
         if not isinstance(payload, dict):
             raise TypeError("cloud research model must return a JSON object")
-        return payload
+        usage = result.get("usage")
+        return payload, usage if isinstance(usage, dict) else {}
+
+    def complete_json(self, system_prompt: str, input_payload: dict) -> dict:
+        return self.complete_json_with_metadata(system_prompt, input_payload)[0]
 
 
 def research_model_from_environment() -> CloudResearchModel:
-    if os.getenv("TCM_MODEL_PROVIDER", "siliconflow").lower() != "siliconflow":
-        raise ValueError("research generation currently supports SiliconFlow cloud API")
-    key = os.getenv("SILICONFLOW_API_KEY", "")
+    provider = os.getenv("TCM_RESEARCH_PROVIDER", "siliconflow").lower()
+    if provider not in {"siliconflow", "deepseek"}:
+        raise ValueError("TCM_RESEARCH_PROVIDER must be siliconflow or deepseek")
+    key_name = "DEEPSEEK_API_KEY" if provider == "deepseek" else "SILICONFLOW_API_KEY"
+    key = os.getenv(key_name, "")
     if not key:
-        raise ValueError("SILICONFLOW_API_KEY is not configured")
-    return CloudResearchModel(model=os.getenv("TCM_RESEARCH_MODEL", ""), api_key=key)
+        raise ValueError(f"{key_name} is not configured")
+    return CloudResearchModel(
+        model=os.getenv("TCM_RESEARCH_MODEL", ""), api_key=key, provider=provider,
+    )
+
+
+def research_model_for_version(model_version: str) -> CloudResearchModel:
+    provider, sep, model = model_version.partition("/")
+    if not sep or provider not in {"siliconflow", "deepseek"}:
+        raise ValueError("frozen research model route is unsupported")
+    key_name = "DEEPSEEK_API_KEY" if provider == "deepseek" else "SILICONFLOW_API_KEY"
+    key = os.getenv(key_name, "")
+    if not key:
+        raise ValueError(f"{key_name} is not configured")
+    return CloudResearchModel(model=model, api_key=key, provider=provider)
 
 
 def cloud_clients_from_environment() -> tuple[CloudEmbedder, CloudReranker]:

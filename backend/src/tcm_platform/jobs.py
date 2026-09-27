@@ -69,6 +69,7 @@ def acquire_job(
     worker_id: str,
     lease_seconds: int = 60,
     job_types: tuple[str, ...] | None = None,
+    idempotency_key: str | None = None,
 ) -> TaskJob | None:
     if lease_seconds < 1:
         raise ValueError("lease_seconds must be positive")
@@ -82,6 +83,8 @@ def acquire_job(
         if not job_types:
             return None
         query = query.where(TaskJob.job_type.in_(job_types))
+    if idempotency_key is not None:
+        query = query.where(TaskJob.idempotency_key == idempotency_key)
     job = session.scalar(
         query.order_by(TaskJob.priority.desc(), TaskJob.available_at, TaskJob.created_at)
         .with_for_update(skip_locked=True)
@@ -112,6 +115,11 @@ def _locked_lease(session: Session, job_id: UUID, worker_id: str, generation: in
     ):
         raise LeaseLostError("job lease is no longer valid")
     return job
+
+
+def assert_job_lease(session: Session, *, job_id: UUID, worker_id: str,
+                     generation: int) -> None:
+    _locked_lease(session, job_id, worker_id, generation)
 
 
 def heartbeat(
