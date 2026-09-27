@@ -24,6 +24,8 @@ from tcm_platform.models import (
     QualityIssue,
     TextSegmentRevision,
 )
+from tcm_platform.retrieval import build_retrieval_index, search_published
+from tcm_platform.retrieval_benchmark import create_golden_query, run_benchmark
 from tcm_platform.segment_service import process_next_segment
 from tcm_platform.source_import import SourceMetadata, import_file, process_next_import
 from tcm_platform.storage import ContentAddressedStore
@@ -49,7 +51,17 @@ def _finish_segment(import_job_id, store):
     pytest.fail("target segment job did not complete")
 
 
+class FakeEmbedder:
+    model_version = "test/fixed-embedding-v1"
+    max_batch_size = 10
+
+    def embed(self, texts):
+        return [[1.0, float(len(value) % 7 + 1), 2.0] for value in texts]
+
+
 def test_review_snapshot_and_index_publish_barrier(tmp_path):
+    with SessionLocal() as session:
+        previous_version_id = session.get(KnowledgeRuntimeState, 1).active_knowledge_version_id
     store = ContentAddressedStore(tmp_path / "store")
     path = tmp_path / "review.txt"
     path.write_text("太阳之为病，脉浮。", encoding="utf-8")
@@ -88,7 +100,9 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
         note="术语归一核对通过",
     )
     version_id = create_knowledge_version()
-    build_id = create_index_build(version_id, configuration={"strategy": "hybrid-v1"})
+    build_id = create_index_build(version_id, configuration={
+        "strategy": "hybrid-v1", "embedding_model": FakeEmbedder.model_version,
+    })
 
     with pytest.raises(ValueError, match="FTS and vector"):
         activate_knowledge_version(version_id, build_id)
@@ -98,7 +112,26 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
         assert session.get(EvidenceRevision, evidence_id).status == "REVIEWED"
         assert session.get(KnowledgeVersion, version_id).status == "INDEXING"
         assert session.get(IndexBuild, build_id).status == "PENDING"
-        assert session.get(KnowledgeRuntimeState, 1).active_knowledge_version_id is None
+        assert session.get(KnowledgeRuntimeState, 1).active_knowledge_version_id == previous_version_id
     assert compare_knowledge_versions(version_id, version_id)["evidence_revision"] == {
         "added": [], "removed": []
     }
+    assert build_retrieval_index(build_id, embedder=FakeEmbedder()) >= 1
+    activate_knowledge_version(version_id, build_id)
+    results = search_published(
+        "太阳之为病", embedder=FakeEmbedder(), source_ids=[imported.source_id]
+    )
+    assert results
+    assert results[0]["evidence_revision_id"] == str(evidence_id)
+    assert results[0]["quote_text"] == "太阳之为病，脉浮。"
+    query_id = create_golden_query(
+        "太阳之为病", {evidence_id: "GOLD"}, source_ids=[imported.source_id]
+    )
+    benchmark = run_benchmark(embedder=FakeEmbedder(), k=3)
+    measured = next(row for row in benchmark["queries"] if row["query_id"] == str(query_id))
+    assert measured["recall_at_k"] == 1
+    assert measured["evidence_resolution_rate"] == 1
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        assert runtime.active_knowledge_version_id == version_id
+        assert runtime.active_index_build_id == build_id

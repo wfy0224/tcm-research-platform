@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import (
     CheckConstraint,
+    Computed,
     DateTime,
     ForeignKey,
     Index,
@@ -12,12 +13,13 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from tcm_platform.db import Base
 from tcm_platform.ids import new_id
+from tcm_platform.vector_type import Vector
 
 
 def utc_now() -> datetime:
@@ -721,4 +723,101 @@ class KnowledgeRuntimeState(Base):
         PG_UUID(as_uuid=True), ForeignKey("governance.index_build.id")
     )
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class RetrievalChunk(Base):
+    __tablename__ = "retrieval_chunk"
+    __table_args__ = (
+        UniqueConstraint("index_build_id", "evidence_revision_id", name="uq_chunk_build_evidence"),
+        Index("ix_chunk_fts", "search_vector", postgresql_using="gin"),
+        Index("ix_chunk_trgm", "chunk_text", postgresql_using="gin",
+              postgresql_ops={"chunk_text": "gin_trgm_ops"}),
+        Index("ix_chunk_build", "index_build_id"),
+        {"schema": "knowledge"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    index_build_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.index_build.id"), nullable=False
+    )
+    evidence_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
+    )
+    source_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.source_revision.id"), nullable=False
+    )
+    chunk_text: Mapped[str] = mapped_column(Text, nullable=False)
+    token_text: Mapped[str] = mapped_column(Text, nullable=False)
+    search_vector: Mapped[str] = mapped_column(
+        TSVECTOR, Computed("to_tsvector('simple', token_text)", persisted=True), nullable=False
+    )
+    locator: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class EmbeddingRecord(Base):
+    __tablename__ = "embedding_record"
+    __table_args__ = (
+        UniqueConstraint("chunk_id", name="uq_embedding_chunk"),
+        Index("ix_embedding_build", "index_build_id"),
+        {"schema": "knowledge"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    index_build_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.index_build.id"), nullable=False
+    )
+    chunk_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.retrieval_chunk.id"), nullable=False
+    )
+    model_version: Mapped[str] = mapped_column(String(200), nullable=False)
+    dimensions: Mapped[int] = mapped_column(Integer, nullable=False)
+    embedding: Mapped[str] = mapped_column(Vector(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class RetrievalGoldenQuery(Base):
+    __tablename__ = "retrieval_golden_query"
+    __table_args__ = (UniqueConstraint("public_id", name="uq_golden_query_public_id"),
+                      {"schema": "governance"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    public_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    query_text: Mapped[str] = mapped_column(Text, nullable=False)
+    source_scope: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class RetrievalGoldenJudgment(Base):
+    __tablename__ = "retrieval_golden_judgment"
+    __table_args__ = (
+        UniqueConstraint("query_id", "evidence_revision_id", name="uq_golden_judgment"),
+        {"schema": "governance"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    query_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.retrieval_golden_query.id"), nullable=False
+    )
+    evidence_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
+    )
+    category: Mapped[str] = mapped_column(String(30), nullable=False)
+
+
+class RetrievalBenchmarkRun(Base):
+    __tablename__ = "retrieval_benchmark_run"
+    __table_args__ = ({"schema": "governance"},)
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    knowledge_version_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.knowledge_version.id"), nullable=False
+    )
+    index_build_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.index_build.id"), nullable=False
+    )
+    k: Mapped[int] = mapped_column(Integer, nullable=False)
+    query_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    metrics: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 

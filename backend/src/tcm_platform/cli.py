@@ -8,6 +8,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from tcm_platform.cloud_models import cloud_clients_from_environment
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
 from tcm_platform.knowledge_publish import (
@@ -36,6 +37,8 @@ from tcm_platform.models import (
     SourceRevision,
     TextSegmentRevision,
 )
+from tcm_platform.retrieval import build_retrieval_index, search_published
+from tcm_platform.retrieval_benchmark import create_golden_query, run_benchmark
 from tcm_platform.segment_service import process_next_segment
 from tcm_platform.source_import import SourceMetadata, import_file, process_next_import
 
@@ -129,7 +132,21 @@ def main() -> None:
     commands.add_parser("snapshot-knowledge", help="freeze reviewed objects into a version")
     index_build = commands.add_parser("create-index-build", help="request FTS and vector indexes")
     index_build.add_argument("knowledge_version_id", type=UUID)
-    index_build.add_argument("--configuration", default="{}", help="JSON retrieval configuration")
+    index_build.add_argument("--configuration", help="JSON retrieval configuration override")
+    build_index = commands.add_parser("build-index", help="build FTS and cloud embedding vectors")
+    build_index.add_argument("index_build_id", type=UUID)
+    search = commands.add_parser("search-published", help="search active published Evidence")
+    search.add_argument("query")
+    search.add_argument("--limit", type=int, default=10)
+    golden = commands.add_parser("add-golden-query", help="add a labeled retrieval query")
+    golden.add_argument("query")
+    golden.add_argument("--gold", type=UUID, action="append", default=[])
+    golden.add_argument("--counter", type=UUID, action="append", default=[])
+    golden.add_argument("--optional", type=UUID, action="append", default=[])
+    golden.add_argument("--hard-negative", type=UUID, action="append", default=[])
+    golden.add_argument("--source-id", type=UUID, action="append", default=[])
+    benchmark = commands.add_parser("run-retrieval-benchmark", help="score active index against golden queries")
+    benchmark.add_argument("--k", type=int, default=10)
     activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
     activate.add_argument("knowledge_version_id", type=UUID)
     activate.add_argument("index_build_id", type=UUID)
@@ -228,10 +245,48 @@ def main() -> None:
         version_id = create_knowledge_version()
         print(json.dumps({"knowledge_version_id": str(version_id)}))
     elif args.command == "create-index-build":
+        if args.configuration:
+            configuration = json.loads(args.configuration)
+        else:
+            embedder, reranker = cloud_clients_from_environment()
+            configuration = {
+                "strategy": "hybrid-rrf-v1",
+                "embedding_model": embedder.model_version,
+                "rerank_model": reranker.model_version,
+            }
         build_id = create_index_build(
-            args.knowledge_version_id, configuration=json.loads(args.configuration)
+            args.knowledge_version_id, configuration=configuration
         )
         print(json.dumps({"index_build_id": str(build_id)}))
+    elif args.command == "build-index":
+        embedder, _ = cloud_clients_from_environment()
+        count = build_retrieval_index(args.index_build_id, embedder=embedder)
+        print(json.dumps({"status": "READY", "chunk_count": count}))
+    elif args.command == "search-published":
+        embedder, reranker = cloud_clients_from_environment()
+        print(json.dumps(search_published(
+            args.query, embedder=embedder, reranker=reranker, limit=args.limit
+        ), ensure_ascii=False))
+    elif args.command == "add-golden-query":
+        pairs = [
+            (evidence_id, category)
+            for category, ids in (
+                ("GOLD", args.gold), ("COUNTER", args.counter),
+                ("OPTIONAL", args.optional), ("HARD_NEGATIVE", args.hard_negative),
+            )
+            for evidence_id in ids
+        ]
+        if len({evidence_id for evidence_id, _ in pairs}) != len(pairs):
+            parser.error("one EvidenceRevision can have only one judgment per query")
+        query_id = create_golden_query(
+            args.query, dict(pairs), source_ids=args.source_id,
+        )
+        print(json.dumps({"golden_query_id": str(query_id)}))
+    elif args.command == "run-retrieval-benchmark":
+        embedder, reranker = cloud_clients_from_environment()
+        print(json.dumps(run_benchmark(
+            embedder=embedder, reranker=reranker, k=args.k,
+        ), ensure_ascii=False))
     elif args.command == "activate-knowledge":
         activate_knowledge_version(args.knowledge_version_id, args.index_build_id)
         print(json.dumps({"status": "READY", "knowledge_version_id": str(args.knowledge_version_id)}))
