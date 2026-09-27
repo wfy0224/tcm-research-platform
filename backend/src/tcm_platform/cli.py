@@ -10,6 +10,17 @@ from sqlalchemy import select
 
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
+from tcm_platform.knowledge_service import (
+    IngredientSpec,
+    create_concept,
+    create_entity_mention,
+    create_evidence,
+    create_formula,
+    create_herb,
+    create_relation,
+    trace_evidence,
+    trace_knowledge,
+)
 from tcm_platform.models import (
     ImportJob,
     PipelineStepExecution,
@@ -45,6 +56,47 @@ def main() -> None:
     show.add_argument("import_job_id", type=UUID)
     segments = commands.add_parser("show-segments", help="list segment locators for a source revision")
     segments.add_argument("source_revision_id", type=UUID)
+    evidence = commands.add_parser("create-evidence", help="cite a contiguous segment revision range")
+    evidence.add_argument("segment_revision_ids", nargs="+", type=UUID)
+    evidence.add_argument("--strength", required=True)
+    evidence.add_argument("--evidence-id", type=UUID, help="append a new revision to existing evidence")
+    trace = commands.add_parser("trace-evidence", help="show exact source provenance")
+    trace.add_argument("evidence_revision_id", type=UUID)
+    knowledge_trace = commands.add_parser("trace-knowledge", help="trace a draft object to source")
+    knowledge_trace.add_argument("kind", choices=["concept", "relation", "herb", "formula_revision"])
+    knowledge_trace.add_argument("object_id", type=UUID)
+    mention = commands.add_parser("create-mention", help="record a source-anchored entity mention")
+    mention.add_argument("segment_revision_id", type=UUID)
+    mention.add_argument("start_offset", type=int)
+    mention.add_argument("end_offset", type=int)
+    mention.add_argument("--type", required=True)
+    concept = commands.add_parser("create-concept", help="create a draft concept")
+    concept.add_argument("name")
+    concept.add_argument("--type", required=True)
+    concept.add_argument("--evidence", required=True, type=UUID)
+    concept.add_argument("--term", action="append", default=[])
+    concept.add_argument("--mention", action="append", default=[], type=UUID)
+    concept.add_argument("--era")
+    concept.add_argument("--school")
+    relation = commands.add_parser("create-relation", help="create a draft concept relation")
+    relation.add_argument("subject_concept_id", type=UUID)
+    relation.add_argument("object_concept_id", type=UUID)
+    relation.add_argument("--type", required=True)
+    relation.add_argument("--assertion", required=True)
+    relation.add_argument("--evidence", required=True, type=UUID)
+    herb = commands.add_parser("create-herb", help="create a draft herb")
+    herb.add_argument("name")
+    herb.add_argument("--evidence", required=True, type=UUID)
+    herb.add_argument("--term", action="append", default=[])
+    formula = commands.add_parser("create-formula", help="create a draft formula revision")
+    formula.add_argument("name")
+    formula.add_argument("--evidence", required=True, type=UUID)
+    formula.add_argument("--ingredient", action="append", required=True)
+    formula.add_argument("--formula-id", type=UUID)
+    formula.add_argument("--era")
+    formula.add_argument("--school")
+    formula.add_argument("--indications")
+    formula.add_argument("--effects")
 
     args = parser.parse_args()
     if args.command == "import-source":
@@ -73,6 +125,48 @@ def main() -> None:
     elif args.command == "segment-next":
         result = process_next_segment()
         print(json.dumps(asdict(result) if result else None, default=str, ensure_ascii=False))
+    elif args.command == "create-evidence":
+        revision_id = create_evidence(
+            args.segment_revision_ids, strength=args.strength, evidence_id=args.evidence_id
+        )
+        print(json.dumps({"evidence_revision_id": str(revision_id)}))
+    elif args.command == "trace-evidence":
+        print(json.dumps(trace_evidence(args.evidence_revision_id), ensure_ascii=False))
+    elif args.command == "trace-knowledge":
+        print(json.dumps(trace_knowledge(args.kind, args.object_id), ensure_ascii=False))
+    elif args.command == "create-mention":
+        mention_id = create_entity_mention(
+            args.segment_revision_id, start_offset=args.start_offset,
+            end_offset=args.end_offset, entity_type=args.type,
+        )
+        print(json.dumps({"mention_id": str(mention_id)}))
+    elif args.command == "create-concept":
+        concept_id = create_concept(
+            args.name, concept_type=args.type, evidence_revision_id=args.evidence,
+            terms=tuple(args.term), mention_ids=tuple(args.mention),
+            era=args.era, school=args.school,
+        )
+        print(json.dumps({"concept_id": str(concept_id)}))
+    elif args.command == "create-relation":
+        relation_id = create_relation(
+            args.subject_concept_id, args.object_concept_id,
+            relation_type=args.type, assertion_text=args.assertion,
+            evidence_revision_id=args.evidence,
+        )
+        print(json.dumps({"relation_id": str(relation_id)}))
+    elif args.command == "create-herb":
+        herb_id = create_herb(
+            args.name, evidence_revision_id=args.evidence, terms=tuple(args.term)
+        )
+        print(json.dumps({"herb_id": str(herb_id)}))
+    elif args.command == "create-formula":
+        revision_id = create_formula(
+            args.name, evidence_revision_id=args.evidence,
+            ingredients=tuple(IngredientSpec(original_name=name) for name in args.ingredient),
+            formula_id=args.formula_id, era=args.era, school=args.school,
+            indications=args.indications, effects=args.effects,
+        )
+        print(json.dumps({"formula_revision_id": str(revision_id)}))
     elif args.command == "show-segments":
         with SessionLocal() as session:
             rows = session.scalars(
@@ -83,6 +177,7 @@ def main() -> None:
             print(json.dumps([
                 {
                     "segment_id": str(row.segment_id),
+                    "segment_revision_id": str(row.id),
                     "type": row.segment_type,
                     "locator": row.structural_locator,
                     "text": row.original_text,
