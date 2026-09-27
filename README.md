@@ -119,6 +119,10 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 历史研究角色只有在来源具有明确作者、时代、流派、版本或出版年元数据时才生成 Claim；其余情况记录空结果，避免把普通原文误标为历史事实。这是保守的临时门禁，文本中隐含的历史线索可能暂时无法进入历史角色。`Qwen/Qwen3-8B` 的真实联调曾产生超出原文的解释，因此当前 Claim 只是待审研究草稿，不能直接当作可靠结论。首轮后的语义审计与纠错闭环将在 E8 实现。
 
+## Claim 审计 E8（进行中）
+
+对已完成首轮的 Claim，可先运行 `audit-claim-mechanical <claim_id>`，再运行 `audit-claim-semantic <claim_id>`。机械审计重新核验任务证据池、Agent 可见集合、冻结知识版本、审核状态和原文溯源；只有机械通过才向任务冻结的云端生成模型提交 Claim 与其已引用证据。语义结果保留 `SUPPORTED`、`PARTIALLY_SUPPORTED`、`UNSUPPORTED`、`CONTRADICTED`、`NOT_VERIFIABLE` 五种状态；每次审计都追加历史，Claim 上的 `audit_status` 仅供查询。当前自动语义判断仍是待审结果，Critic、重检索与 Rebuttal 尚在实现中。
+
 ## 设计约束
 
 - PostgreSQL 是结构化权威数据源；Blob 文件在数据库登记前先原子写入磁盘。

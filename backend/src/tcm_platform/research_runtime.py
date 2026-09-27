@@ -46,7 +46,7 @@ def _digest(value: object) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _recorded_complete(
+def recorded_complete(
     task_id: UUID, agent_run_id: UUID | None, purpose: str,
     model: StructuredGenerator, system_prompt: str, input_payload: dict,
 ) -> dict:
@@ -94,7 +94,7 @@ def execute_planner(task_id: UUID, *, model: StructuredGenerator,
             "question": task.question, "source_ids": task.execution_context["source_ids"],
             "knowledge_version_id": task.execution_context["knowledge_version_id"],
         }
-    output = _recorded_complete(task_id, None, "Planner", model,
+    output = recorded_complete(task_id, None, "Planner", model,
                                 PLANNER_PROTOCOL, input_payload)
     return save_research_plan(task_id, output, lease_guard=lease_guard)
 
@@ -142,7 +142,7 @@ def execute_first_round(task_id: UUID, *, model: StructuredGenerator,
         ):
             output = {"claims": []}
         else:
-            output = _recorded_complete(task_id, run_id, role, model,
+            output = recorded_complete(task_id, run_id, role, model,
                                         system_prompt, context)
         claim_ids.extend(submit_first_round_output(
             run_id, output, lease_guard=lease_guard

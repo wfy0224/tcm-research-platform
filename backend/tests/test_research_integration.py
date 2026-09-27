@@ -4,10 +4,12 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 from tcm_platform.db import SessionLocal, engine
 from tcm_platform.knowledge_service import trace_evidence
 from tcm_platform.models import (
     AgentRun,
+    AuditResult,
     Claim,
     ClaimEvidence,
     EmbeddingRecord,
@@ -221,8 +223,47 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
         assert job.status == "COMPLETED"
         assert checkpoint.result == {"task_id": str(task_id),
                                      "status": "FIRST_ROUND_COMPLETE"}
-        claim_count = len(list(session.scalars(select(Claim).where(Claim.task_id == task_id))))
-        assert claim_count >= 2
+        claims = list(session.scalars(select(Claim).where(Claim.task_id == task_id)))
+        assert len(claims) >= 2
+        audited_claim_id = claims[0].id
+    first_audit = mechanical_audit_claim(audited_claim_id)
+    second_audit = mechanical_audit_claim(audited_claim_id)
+    assert first_audit["verdict"] == second_audit["verdict"] == "PASS"
+    with SessionLocal() as session:
+        history = list(session.scalars(select(AuditResult).where(
+            AuditResult.claim_id == audited_claim_id
+        ).order_by(AuditResult.sequence_no)))
+        assert [item.sequence_no for item in history] == [1, 2]
+        assert session.get(Claim, audited_claim_id).audit_status == "PENDING_SEMANTIC"
+        evidence_id = history[-1].evidence_revision_ids[0]
+
+    class FakeAuditor:
+        model_version = FakeGenerator.model_version
+
+        def __init__(self, cited_id):
+            self.cited_id = cited_id
+
+        def complete_json(self, system_prompt, input_payload):
+            assert "证据审计员" in system_prompt
+            assert input_payload["claim_id"] == str(audited_claim_id)
+            return {"verdict": "SUPPORTED", "rationale_summary": "原文可支持断言",
+                    "cited_evidence_revision_ids": [self.cited_id]}
+
+    with pytest.raises(ValueError, match="outside the audited Claim"):
+        semantic_audit_claim(audited_claim_id, model=FakeAuditor(str(uuid4())))
+    with SessionLocal() as session:
+        assert session.get(Claim, audited_claim_id).audit_status == "PENDING_SEMANTIC"
+        assert session.scalar(select(AuditResult.id).where(
+            AuditResult.claim_id == audited_claim_id,
+            AuditResult.stage == "SEMANTIC",
+        )) is None
+    result = semantic_audit_claim(audited_claim_id, model=FakeAuditor(evidence_id))
+    assert result["verdict"] == "SUPPORTED"
+    with SessionLocal() as session:
+        assert session.get(Claim, audited_claim_id).audit_status == "SUPPORTED"
+        assert len(list(session.scalars(select(AuditResult).where(
+            AuditResult.claim_id == audited_claim_id
+        )))) == 3
     assert run_next_research_job(
         worker_id="test-research-worker", model=model, embedder=embedder,
         reranker=reranker, task_id=task_id,

@@ -9,8 +9,10 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 from tcm_platform.cloud_models import (
     cloud_clients_from_environment,
+    research_model_for_version,
     research_model_from_environment,
 )
 from tcm_platform.db import SessionLocal
@@ -36,8 +38,10 @@ from tcm_platform.knowledge_service import (
     trace_knowledge,
 )
 from tcm_platform.models import (
+    Claim,
     ImportJob,
     PipelineStepExecution,
+    ResearchTask,
     SourceRevision,
     TextSegmentRevision,
 )
@@ -185,6 +189,10 @@ def main() -> None:
     for command in ("pause-research-task", "resume-research-task", "cancel-research-task"):
         control = commands.add_parser(command, help=f"{command} at a safe worker boundary")
         control.add_argument("task_id", type=UUID)
+    audit_claim = commands.add_parser("audit-claim-mechanical", help="verify one Claim citation chain")
+    audit_claim.add_argument("claim_id", type=UUID)
+    audit_semantic = commands.add_parser("audit-claim-semantic", help="judge support using frozen cloud model")
+    audit_semantic.add_argument("claim_id", type=UUID)
     activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
     activate.add_argument("knowledge_version_id", type=UUID)
     activate.add_argument("index_build_id", type=UUID)
@@ -355,6 +363,17 @@ def main() -> None:
         print(json.dumps({"phase": resume_research_task(args.task_id)}))
     elif args.command == "cancel-research-task":
         print(json.dumps({"control_state": cancel_research_task(args.task_id)}))
+    elif args.command == "audit-claim-mechanical":
+        print(json.dumps(mechanical_audit_claim(args.claim_id)))
+    elif args.command == "audit-claim-semantic":
+        with SessionLocal() as session:
+            claim = session.get(Claim, args.claim_id)
+            if claim is None:
+                raise ValueError("Claim does not exist")
+            task = session.get(ResearchTask, claim.task_id)
+            model_version = task.execution_context["generation_model"]
+        model = research_model_for_version(model_version)
+        print(json.dumps(semantic_audit_claim(args.claim_id, model=model), ensure_ascii=False))
     elif args.command in {"run-research-next", "run-research-worker"}:
         embedder, reranker = cloud_clients_from_environment()
         if args.command == "run-research-next":

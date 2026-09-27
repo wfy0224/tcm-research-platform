@@ -961,6 +961,7 @@ class Claim(Base):
     assertion_text: Mapped[str] = mapped_column(Text, nullable=False)
     rationale_summary: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="ACTIVE")
+    audit_status: Mapped[str] = mapped_column(String(30), nullable=False, default="PENDING")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
@@ -976,4 +977,28 @@ class ClaimEvidence(Base):
     task_evidence_ref_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("research.task_evidence_ref.id"), nullable=False
     )
+
+
+class AuditResult(Base):
+    __tablename__ = "audit_result"
+    __table_args__ = (
+        UniqueConstraint("claim_id", "sequence_no", name="uq_audit_claim_sequence"),
+        Index("ix_audit_result_task", "task_id", "created_at"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    claim_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id"), nullable=False
+    )
+    sequence_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    stage: Mapped[str] = mapped_column(String(30), nullable=False)
+    verdict: Mapped[str] = mapped_column(String(40), nullable=False)
+    rationale_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_revision_ids: Mapped[list] = mapped_column(JSONB, nullable=False)
+    model_version: Mapped[str | None] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
