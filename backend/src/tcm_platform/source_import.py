@@ -331,6 +331,14 @@ def process_next_import(
             import_job.error_message = None
             step.status = "COMPLETED"
             step.output_artifact_id = artifact.id
+            enqueue_job(
+                session,
+                idempotency_key=f"source.segment:{import_job.id}",
+                job_type="source.segment",
+                payload={"import_job_id": str(import_job.id)},
+                resource_class=ResourceClass.CPU_PARSE,
+                actor_id=worker_id,
+            )
             append_event(
                 session,
                 event_type="source.parsed",

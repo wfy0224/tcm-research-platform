@@ -1,6 +1,6 @@
 # 中医知识研究与临床推理平台
 
-本仓库按三份设计文档实施第一阶段 A（知识底座）和第一阶段 B（理论研究）。当前代码包含 E0/E1 基础与 E2 来源导入链路：本地 API 与前端健康页、PostgreSQL 迁移、内容寻址文件存储、哈希链审计事件、持久化任务队列，以及命令行导入和解析 TXT、DOCX、带文本层的 PDF。临床病例、处方与疗效功能不属于本阶段。
+本仓库按三份设计文档实施第一阶段 A（知识底座）和第一阶段 B（理论研究）。当前代码包含 E0/E1 基础、E2 来源导入及 E3 结构化文本分段链路：本地 API 与前端健康页、PostgreSQL 迁移、内容寻址文件存储、哈希链审计事件、持久化任务队列，以及命令行导入和解析 TXT、DOCX、带文本层的 PDF。临床病例、处方与疗效功能不属于本阶段。
 
 ## 本地开发
 
@@ -33,10 +33,12 @@ npm run dev
 ```powershell
 uv run python -m tcm_platform.cli import-source "D:\资料\伤寒论.txt" --title "伤寒论" --source-type CLASSIC --edition "某整理本" --copyright-status AUTHORIZED
 uv run python -m tcm_platform.cli parse-next
+uv run python -m tcm_platform.cli segment-next
 uv run python -m tcm_platform.cli show-import <上一步返回的 import_job_id>
+uv run python -m tcm_platform.cli show-segments <来源修订 source_revision_id>
 ```
 
-导入命令返回 `source_id`、`source_revision_id`、`import_job_id` 和解析任务 ID。同一著作的新版本可在导入命令中加 `--source-id <已有 source_id>`；新版本不会覆盖旧文件。`--request-key` 可用于命令重试去重。Markdown 也可按纯文本导入。无文本层 PDF 会保留原文件并标记 `OCR_REQUIRED`；OCR、篇章切分、Evidence、检索和研究工作流仍在后续迭代。
+导入命令返回 `source_id`、`source_revision_id`、`import_job_id` 和解析任务 ID。同一著作的新版本可在导入命令中加 `--source-id <已有 source_id>`；新版本不会覆盖旧文件。`--request-key` 可用于命令重试去重。Markdown 也可按纯文本导入。解析成功后自动排入分段任务；`segment-next` 生成卷、篇章、节、条、段、句等层级和上下文、校验和，并记录相邻来源修订的增删改移对齐。无文本层 PDF 会保留原文件并标记 `OCR_REQUIRED`；OCR、Evidence、检索和研究工作流仍在后续迭代。
 
 ## 设计约束
 

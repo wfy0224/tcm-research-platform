@@ -240,3 +240,79 @@ class PipelineStepExecution(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+
+class TextSegment(Base):
+    __tablename__ = "text_segment"
+    __table_args__ = (
+        UniqueConstraint("public_id", name="uq_text_segment_public_id"),
+        Index("ix_text_segment_source", "source_id"),
+        {"schema": "source"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    public_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    source_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.source_document.id"), nullable=False
+    )
+    segment_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class TextSegmentRevision(Base):
+    __tablename__ = "text_segment_revision"
+    __table_args__ = (
+        UniqueConstraint("segment_id", "source_revision_id", name="uq_segment_source_revision"),
+        UniqueConstraint("source_revision_id", "sequence_no", name="uq_segment_sequence"),
+        Index("ix_segment_revision_locator", "source_revision_id", "page_no", "paragraph_no"),
+        Index("ix_segment_revision_checksum", "checksum"),
+        {"schema": "source"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    segment_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.text_segment.id"), nullable=False
+    )
+    source_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.source_revision.id"), nullable=False
+    )
+    parent_segment_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.text_segment.id")
+    )
+    segment_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    sequence_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    original_text: Mapped[str] = mapped_column(Text, nullable=False)
+    normalized_text: Mapped[str] = mapped_column(Text, nullable=False)
+    context_before: Mapped[str] = mapped_column(Text, nullable=False)
+    context_after: Mapped[str] = mapped_column(Text, nullable=False)
+    page_no: Mapped[int | None] = mapped_column(Integer)
+    chapter_no: Mapped[int | None] = mapped_column(Integer)
+    paragraph_no: Mapped[int | None] = mapped_column(Integer)
+    structural_locator: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    checksum: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class SegmentAlignment(Base):
+    __tablename__ = "segment_alignment"
+    __table_args__ = (
+        CheckConstraint("old_revision_id IS NOT NULL OR new_revision_id IS NOT NULL"),
+        Index("ix_alignment_from_to", "from_source_revision_id", "to_source_revision_id"),
+        {"schema": "source"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    from_source_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.source_revision.id"), nullable=False
+    )
+    to_source_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.source_revision.id"), nullable=False
+    )
+    old_revision_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.text_segment_revision.id")
+    )
+    new_revision_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.text_segment_revision.id")
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+

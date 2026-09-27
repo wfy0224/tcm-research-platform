@@ -1,4 +1,4 @@
-"""Development CLI for the E2 import pipeline."""
+"""Development CLI for the source import and segmentation pipeline."""
 
 import argparse
 import json
@@ -10,7 +10,13 @@ from sqlalchemy import select
 
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
-from tcm_platform.models import ImportJob, PipelineStepExecution, SourceRevision
+from tcm_platform.models import (
+    ImportJob,
+    PipelineStepExecution,
+    SourceRevision,
+    TextSegmentRevision,
+)
+from tcm_platform.segment_service import process_next_segment
 from tcm_platform.source_import import SourceMetadata, import_file, process_next_import
 
 
@@ -34,8 +40,11 @@ def main() -> None:
     create.add_argument("--source-id", type=UUID, help="append an immutable revision to an existing source")
 
     commands.add_parser("parse-next", help="process one queued source.parse job")
+    commands.add_parser("segment-next", help="process one queued source.segment job")
     show = commands.add_parser("show-import", help="show import and pipeline status")
     show.add_argument("import_job_id", type=UUID)
+    segments = commands.add_parser("show-segments", help="list segment locators for a source revision")
+    segments.add_argument("source_revision_id", type=UUID)
 
     args = parser.parse_args()
     if args.command == "import-source":
@@ -61,6 +70,26 @@ def main() -> None:
     elif args.command == "parse-next":
         result = process_next_import()
         print(json.dumps(asdict(result) if result else None, default=str, ensure_ascii=False))
+    elif args.command == "segment-next":
+        result = process_next_segment()
+        print(json.dumps(asdict(result) if result else None, default=str, ensure_ascii=False))
+    elif args.command == "show-segments":
+        with SessionLocal() as session:
+            rows = session.scalars(
+                select(TextSegmentRevision)
+                .where(TextSegmentRevision.source_revision_id == args.source_revision_id)
+                .order_by(TextSegmentRevision.sequence_no)
+            )
+            print(json.dumps([
+                {
+                    "segment_id": str(row.segment_id),
+                    "type": row.segment_type,
+                    "locator": row.structural_locator,
+                    "text": row.original_text,
+                    "checksum": row.checksum,
+                }
+                for row in rows
+            ], ensure_ascii=False))
     else:
         with SessionLocal() as session:
             import_job = session.get(ImportJob, args.import_job_id)

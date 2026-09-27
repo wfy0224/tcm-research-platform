@@ -9,7 +9,7 @@ from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal
 from tcm_platform.enums import HealthState
 
-SCHEMA_REVISION = "0002_source_import"
+SCHEMA_REVISION = "0003_text_segments"
 
 
 class HealthResponse(BaseModel):
