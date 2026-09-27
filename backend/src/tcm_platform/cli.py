@@ -8,7 +8,10 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from tcm_platform.cloud_models import cloud_clients_from_environment
+from tcm_platform.cloud_models import (
+    cloud_clients_from_environment,
+    research_model_from_environment,
+)
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
 from tcm_platform.knowledge_publish import (
@@ -36,6 +39,13 @@ from tcm_platform.models import (
     PipelineStepExecution,
     SourceRevision,
     TextSegmentRevision,
+)
+from tcm_platform.research_runtime import execute_first_round, execute_planner
+from tcm_platform.research_service import (
+    create_research_task,
+    prepare_first_round,
+    retrieve_for_task,
+    start_research_task,
 )
 from tcm_platform.retrieval import build_retrieval_index, search_published
 from tcm_platform.retrieval_benchmark import create_golden_query, run_benchmark
@@ -147,6 +157,20 @@ def main() -> None:
     golden.add_argument("--source-id", type=UUID, action="append", default=[])
     benchmark = commands.add_parser("run-retrieval-benchmark", help="score active index against golden queries")
     benchmark.add_argument("--k", type=int, default=10)
+    research = commands.add_parser("create-research-task", help="create a draft scoped research task")
+    research.add_argument("question")
+    research.add_argument("--source-id", type=UUID, action="append", default=[])
+    start = commands.add_parser("start-research-task", help="freeze knowledge, index and cloud model")
+    start.add_argument("task_id", type=UUID)
+    plan = commands.add_parser("plan-research-task", help="run the cloud Planner")
+    plan.add_argument("task_id", type=UUID)
+    retrieve = commands.add_parser("retrieve-research-task", help="fill version-bound evidence pool")
+    retrieve.add_argument("task_id", type=UUID)
+    retrieve.add_argument("--limit", type=int, default=10)
+    first = commands.add_parser("prepare-first-round", help="freeze independent Agent inputs")
+    first.add_argument("task_id", type=UUID)
+    run_first = commands.add_parser("run-first-round", help="run cloud Agents into guarded Claim pool")
+    run_first.add_argument("task_id", type=UUID)
     activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
     activate.add_argument("knowledge_version_id", type=UUID)
     activate.add_argument("index_build_id", type=UUID)
@@ -287,6 +311,30 @@ def main() -> None:
         print(json.dumps(run_benchmark(
             embedder=embedder, reranker=reranker, k=args.k,
         ), ensure_ascii=False))
+    elif args.command == "create-research-task":
+        task_id = create_research_task(args.question, source_ids=args.source_id)
+        print(json.dumps({"task_id": str(task_id)}))
+    elif args.command == "start-research-task":
+        model = research_model_from_environment()
+        fingerprint = start_research_task(args.task_id, model_version=model.model_version)
+        print(json.dumps({"status": "PLANNING", "run_fingerprint": fingerprint}))
+    elif args.command == "plan-research-task":
+        model = research_model_from_environment()
+        ids = execute_planner(args.task_id, model=model)
+        print(json.dumps({"status": "RETRIEVING", "subquestion_ids": [str(item) for item in ids]}))
+    elif args.command == "retrieve-research-task":
+        embedder, reranker = cloud_clients_from_environment()
+        count = retrieve_for_task(
+            args.task_id, embedder=embedder, reranker=reranker, limit=args.limit
+        )
+        print(json.dumps({"new_evidence_count": count}))
+    elif args.command == "prepare-first-round":
+        ids = prepare_first_round(args.task_id)
+        print(json.dumps({"status": "RESEARCHING", "agent_run_ids": [str(item) for item in ids]}))
+    elif args.command == "run-first-round":
+        model = research_model_from_environment()
+        ids = execute_first_round(args.task_id, model=model)
+        print(json.dumps({"claim_ids": [str(item) for item in ids]}))
     elif args.command == "activate-knowledge":
         activate_knowledge_version(args.knowledge_version_id, args.index_build_id)
         print(json.dumps({"status": "READY", "knowledge_version_id": str(args.knowledge_version_id)}))

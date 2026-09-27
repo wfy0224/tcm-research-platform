@@ -72,7 +72,7 @@ uv run python -m tcm_platform.cli create-index-build <knowledge_version_id>
 
 ## 云端模型与混合检索 E6
 
-项目运行时直接调用云端 API，不需要下载或运行本地大模型。默认使用硅基流动的 `BAAI/bge-m3` 向量模型和 `BAAI/bge-reranker-v2-m3` 重排模型。将 `SILICONFLOW_API_KEY` 配置在运行后端的环境中；密钥不会写入数据库、日志或 Git。构建索引时，已审核证据文本会发给向量模型；检索时，查询和候选证据文本会发给向量及重排模型。导入需保密的资料前，应先确认可向云端提供这些内容。生成式问答将在研究工作流阶段接入。
+项目运行时直接调用云端 API，不需要下载或运行本地大模型。默认使用硅基流动的 `BAAI/bge-m3` 向量模型和 `BAAI/bge-reranker-v2-m3` 重排模型。将 `SILICONFLOW_API_KEY` 配置在运行后端的环境中；密钥不会写入数据库、日志或 Git。构建索引时，已审核证据文本会发给向量模型；检索时，查询和候选证据文本会发给向量及重排模型。研究任务的 Planner 与 Agent 也会将任务问题及可见证据发送给云端生成模型。导入需保密的资料前，应先确认可向云端提供这些内容。
 
 ```powershell
 $env:TCM_MODEL_PROVIDER = "siliconflow"
@@ -92,6 +92,24 @@ uv run python -m tcm_platform.cli run-retrieval-benchmark --k 10
 ```
 
 评测记录 Precision@K、Recall@K、MRR、nDCG、反证召回率和返回证据的可追溯率，并关联知识版本及索引版本。`GOLD` 和 `COUNTER` 计入必须召回的证据；没有反证标注的题目，其反证召回率记为 0，汇总时应结合题目标签理解。可选使用阿里云百炼，但需设置 `TCM_MODEL_PROVIDER=aliyun`、`DASHSCOPE_API_KEY`、`TCM_DASHSCOPE_WORKSPACE_ID`，可通过 `TCM_DASHSCOPE_REGION` 调整地域。
+
+## 研究任务基础 E7（进行中）
+
+已建立研究任务、冻结的执行上下文、任务证据池、检索事件、首轮 AgentRun 与 Claim Pool。Planner 的子问题采用严格 JSON 合约；首轮 Classicist、HistoricalScholar、Theorist 的输入会在任何 Claim 生成前分别冻结。Agent 输出若包含不在任务证据池或本次可见集合中的 EvidenceRevision，整份输出拒绝写入。
+
+生成模型使用硅基流动云端对话 API。联调使用用户确认免费的 `Qwen/Qwen3-8B`；运行前仍需显式设置 `TCM_RESEARCH_MODEL`，随后可按顺序执行：
+
+```powershell
+$env:TCM_RESEARCH_MODEL = "Qwen/Qwen3-8B"
+uv run python -m tcm_platform.cli create-research-task "太阳病脉象的经典文献依据是什么" --source-id <source_id>
+uv run python -m tcm_platform.cli start-research-task <task_id>
+uv run python -m tcm_platform.cli plan-research-task <task_id>
+uv run python -m tcm_platform.cli retrieve-research-task <task_id>
+uv run python -m tcm_platform.cli prepare-first-round <task_id>
+uv run python -m tcm_platform.cli run-first-round <task_id>
+```
+
+历史研究角色只有在来源具有明确作者、时代、流派、版本或出版年元数据时才生成 Claim；其余情况记录空结果，避免把普通原文误标为历史事实。这是保守的临时门禁，文本中隐含的历史线索可能暂时无法进入历史角色。`Qwen/Qwen3-8B` 的真实联调曾产生超出原文的解释，因此当前 Claim 只是待审研究草稿，不能直接当作可靠结论。目前 E7 为命令行同步流程，尚未接入研究 Job/Worker 的暂停恢复、模型调用记录与首轮后的语义审计工作流；这些属于后续实现范围。
 
 ## 设计约束
 

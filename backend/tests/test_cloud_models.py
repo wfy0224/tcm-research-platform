@@ -47,3 +47,21 @@ def test_siliconflow_models_and_endpoint_guard(monkeypatch):
             endpoint="https://api.siliconflow.cn.evil.example/v1/embeddings",
             api_key="unit-test-key",
         )
+
+
+def test_cloud_research_model_parses_json_without_leaking_key(monkeypatch):
+    captured = []
+
+    def fake_post(url, key, payload):
+        captured.append((url, key, payload))
+        return {"choices": [{"message": {"content": '{"subquestions":["脉象"]}'}}]}
+
+    monkeypatch.setattr(cloud_models, "_post_json", fake_post)
+    model = cloud_models.CloudResearchModel(model="Qwen/Qwen3-8B", api_key="unit-test-key")
+    assert model.complete_json("Return JSON", {"question": "太阳病"}) == {
+        "subquestions": ["脉象"]
+    }
+    assert captured[0][0] == "https://api.siliconflow.cn/v1/chat/completions"
+    assert captured[0][1] == "unit-test-key"
+    assert captured[0][2]["response_format"] == {"type": "json_object"}
+    assert captured[0][2]["enable_thinking"] is False

@@ -187,8 +187,10 @@ def search_published(
     reranker: Reranker | None = None,
     limit: int = 10,
     source_ids: Sequence[UUID] | None = None,
+    knowledge_version_id: UUID | None = None,
+    index_build_id: UUID | None = None,
 ) -> list[dict]:
-    """Fuse exact, FTS and vector ranks; return only active published Evidence."""
+    """Fuse exact, FTS and vector ranks for the active or explicitly frozen version."""
     query = unicodedata.normalize("NFKC", query).strip()
     if not query or len(query) > 2_000:
         raise ValueError("query must be 1-2000 characters")
@@ -197,23 +199,28 @@ def search_published(
     terms = tokenize(query)
     if not terms:
         raise ValueError("query has no searchable terms")
+    if (knowledge_version_id is None) != (index_build_id is None):
+        raise ValueError("frozen knowledge and index IDs must be supplied together")
     with SessionLocal() as session:
-        runtime = session.get(KnowledgeRuntimeState, 1)
-        if runtime is None or runtime.active_knowledge_version_id is None:
-            raise ValueError("no published knowledge version is active")
-        version = session.get(KnowledgeVersion, runtime.active_knowledge_version_id)
-        build = session.get(IndexBuild, runtime.active_index_build_id)
+        if knowledge_version_id is None:
+            runtime = session.get(KnowledgeRuntimeState, 1)
+            if runtime is None or runtime.active_knowledge_version_id is None:
+                raise ValueError("no published knowledge version is active")
+            knowledge_version_id = runtime.active_knowledge_version_id
+            index_build_id = runtime.active_index_build_id
+        version = session.get(KnowledgeVersion, knowledge_version_id)
+        build = session.get(IndexBuild, index_build_id)
         if (
-            version.status != "READY" or build.status != "READY"
+            version is None or build is None
+            or version.status != "READY" or build.status != "READY"
             or build.knowledge_version_id != version.id
         ):
             raise ValueError("active knowledge/index pair is inconsistent")
         if build.configuration.get("embedding_model") != embedder.model_version:
             raise ValueError("query embedder differs from active index model")
         expected_reranker = build.configuration.get("rerank_model")
-        if expected_reranker and (
-            reranker is None or reranker.model_version != expected_reranker
-        ):
+        if ((expected_reranker is None) != (reranker is None)
+                or (reranker is not None and reranker.model_version != expected_reranker)):
             raise ValueError("query reranker differs from active index model")
         build_id, version_id = build.id, version.id
 

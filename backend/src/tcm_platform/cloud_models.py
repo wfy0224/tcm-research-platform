@@ -124,6 +124,45 @@ class CloudReranker:
         return scores
 
 
+class CloudResearchModel:
+    """Cloud-only JSON completion adapter; business validation stays in ResearchService."""
+
+    def __init__(self, *, model: str, api_key: str):
+        if not model.strip():
+            raise ValueError("TCM_RESEARCH_MODEL is not configured")
+        self.model = model
+        self.api_key = api_key
+        self.model_version = f"siliconflow/{model}"
+
+    def complete_json(self, system_prompt: str, input_payload: dict) -> dict:
+        options = {"enable_thinking": False} if self.model == "Qwen/Qwen3-8B" else {}
+        result = _post_json(
+            "https://api.siliconflow.cn/v1/chat/completions", self.api_key,
+            {"model": self.model, "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": json.dumps(input_payload, ensure_ascii=False)},
+            ], "response_format": {"type": "json_object"},
+             "temperature": 0.2, "max_tokens": 2_048, "stream": False, **options},
+        )
+        try:
+            content = result["choices"][0]["message"]["content"]
+            payload = json.loads(content)
+        except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
+            raise ValueError("cloud research model returned invalid JSON") from exc
+        if not isinstance(payload, dict):
+            raise TypeError("cloud research model must return a JSON object")
+        return payload
+
+
+def research_model_from_environment() -> CloudResearchModel:
+    if os.getenv("TCM_MODEL_PROVIDER", "siliconflow").lower() != "siliconflow":
+        raise ValueError("research generation currently supports SiliconFlow cloud API")
+    key = os.getenv("SILICONFLOW_API_KEY", "")
+    if not key:
+        raise ValueError("SILICONFLOW_API_KEY is not configured")
+    return CloudResearchModel(model=os.getenv("TCM_RESEARCH_MODEL", ""), api_key=key)
+
+
 def cloud_clients_from_environment() -> tuple[CloudEmbedder, CloudReranker]:
     provider = os.getenv("TCM_MODEL_PROVIDER", "siliconflow").lower()
     if provider == "aliyun":

@@ -821,3 +821,132 @@ class RetrievalBenchmarkRun(Base):
     metrics: Mapped[dict] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
+
+class ResearchTask(Base):
+    __tablename__ = "research_task"
+    __table_args__ = (
+        UniqueConstraint("public_id", name="uq_research_task_public_id"),
+        Index("ix_research_task_status", "status", "created_at"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    public_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="CREATED")
+    draft_scope: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    execution_context: Mapped[dict | None] = mapped_column(JSONB)
+    run_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ResearchSubquestion(Base):
+    __tablename__ = "sub_question"
+    __table_args__ = (
+        UniqueConstraint("task_id", "sequence_no", name="uq_sub_question_order"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    sequence_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    question_text: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TaskEvidenceRef(Base):
+    __tablename__ = "task_evidence_ref"
+    __table_args__ = (
+        UniqueConstraint("task_id", "evidence_revision_id", name="uq_task_evidence_member"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    evidence_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class EvidenceRetrievalEvent(Base):
+    __tablename__ = "evidence_retrieval_event"
+    __table_args__ = (Index("ix_retrieval_event_task", "task_id", "created_at"),
+                      {"schema": "research"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    evidence_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
+    )
+    query_text: Mapped[str] = mapped_column(Text, nullable=False)
+    rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    channels: Mapped[list] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class AgentRun(Base):
+    __tablename__ = "agent_run"
+    __table_args__ = (
+        UniqueConstraint("task_id", "role", "round_no", name="uq_agent_run_round"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    role: Mapped[str] = mapped_column(String(50), nullable=False)
+    round_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False)
+    input_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    visible_evidence_ids: Mapped[list] = mapped_column(JSONB, nullable=False)
+    model_version: Mapped[str] = mapped_column(String(200), nullable=False)
+    output: Mapped[dict | None] = mapped_column(JSONB)
+    error_code: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Claim(Base):
+    __tablename__ = "claim"
+    __table_args__ = (Index("ix_claim_task_role", "task_id", "agent_role"),
+                      {"schema": "research"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    agent_run_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.agent_run.id"), nullable=False
+    )
+    parent_claim_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id")
+    )
+    agent_role: Mapped[str] = mapped_column(String(50), nullable=False)
+    claim_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    assertion_text: Mapped[str] = mapped_column(Text, nullable=False)
+    rationale_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="ACTIVE")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class ClaimEvidence(Base):
+    __tablename__ = "claim_evidence"
+    __table_args__ = (UniqueConstraint("claim_id", "task_evidence_ref_id", name="uq_claim_evidence"),
+                      {"schema": "research"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    claim_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id"), nullable=False
+    )
+    task_evidence_ref_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.task_evidence_ref.id"), nullable=False
+    )
+
