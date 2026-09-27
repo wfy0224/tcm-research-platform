@@ -876,8 +876,12 @@ class TaskEvidenceRef(Base):
 
 class EvidenceRetrievalEvent(Base):
     __tablename__ = "evidence_retrieval_event"
-    __table_args__ = (Index("ix_retrieval_event_task", "task_id", "created_at"),
-                      {"schema": "research"})
+    __table_args__ = (
+        Index("ix_retrieval_event_task", "task_id", "created_at"),
+        UniqueConstraint("evidence_request_id", "evidence_revision_id",
+                         name="uq_retrieval_request_revision"),
+        {"schema": "research"},
+    )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
     task_id: Mapped[UUID] = mapped_column(
@@ -885,6 +889,10 @@ class EvidenceRetrievalEvent(Base):
     )
     evidence_revision_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
+    )
+    evidence_request_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.evidence_request.id",
+                                         name="fk_retrieval_event_request")
     )
     query_text: Mapped[str] = mapped_column(Text, nullable=False)
     rank: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -1000,5 +1008,72 @@ class AuditResult(Base):
     rationale_summary: Mapped[str] = mapped_column(Text, nullable=False)
     evidence_revision_ids: Mapped[list] = mapped_column(JSONB, nullable=False)
     model_version: Mapped[str | None] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class Critique(Base):
+    __tablename__ = "critique"
+    __table_args__ = (Index("ix_critique_task_claim", "task_id", "target_claim_id"),
+                      {"schema": "research"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    agent_run_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.agent_run.id"), nullable=False
+    )
+    target_claim_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id"), nullable=False
+    )
+    issue_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    rationale_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="OPEN")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class EvidenceRequest(Base):
+    __tablename__ = "evidence_request"
+    __table_args__ = (Index("ix_evidence_request_task_status", "task_id", "status"),
+                      {"schema": "research"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    critique_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.critique.id"), nullable=False
+    )
+    query_text: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="PENDING")
+    result_count: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class Rebuttal(Base):
+    __tablename__ = "rebuttal"
+    __table_args__ = (
+        UniqueConstraint("critique_id", "round_no", name="uq_rebuttal_critique_round"),
+        CheckConstraint("(action = 'REVISE' AND revised_claim_id IS NOT NULL) OR "
+                        "(action <> 'REVISE' AND revised_claim_id IS NULL)"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    critique_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.critique.id"), nullable=False
+    )
+    agent_run_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.agent_run.id"), nullable=False
+    )
+    round_no: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    action: Mapped[str] = mapped_column(String(30), nullable=False)
+    rationale_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    revised_claim_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id")
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 

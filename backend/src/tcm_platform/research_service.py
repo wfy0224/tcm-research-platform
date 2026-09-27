@@ -20,6 +20,7 @@ from tcm_platform.models import (
     Claim,
     ClaimEvidence,
     Evidence,
+    EvidenceRequest,
     EvidenceRetrievalEvent,
     EvidenceRevision,
     IndexBuild,
@@ -256,14 +257,28 @@ def add_task_evidence(
     task_id: UUID, query: str, results: Sequence[dict], *,
     actor_id: str = "retrieval-service",
     lease_guard: LeaseGuard | None = None,
+    evidence_request_id: UUID | None = None,
 ) -> int:
     """Store pool membership and every retrieval occurrence in separate tables."""
     with SessionLocal.begin() as session:
         if lease_guard is not None:
             lease_guard(session)
         task = session.scalar(select(ResearchTask).where(ResearchTask.id == task_id).with_for_update())
-        if task is None or task.status != "RETRIEVING":
+        if task is None or task.status not in {"RETRIEVING", "DEBATING"}:
             raise ValueError("research task is not retrieving")
+        if task.status == "DEBATING" and task.control_state != "ACTIVE":
+            raise ValueError("research task is not active")
+        if task.status == "DEBATING" and evidence_request_id is None:
+            raise ValueError("debate retrieval requires an EvidenceRequest")
+        if evidence_request_id is not None:
+            request = session.get(EvidenceRequest, evidence_request_id)
+            if (task.status != "DEBATING" or request is None or request.task_id != task_id
+                    or request.query_text != query):
+                raise ValueError("EvidenceRequest is outside the active debate retrieval")
+            if request.status in {"RETRIEVED", "NO_RESULT"}:
+                return 0
+            if request.status != "PENDING":
+                raise ValueError("EvidenceRequest is not pending")
         context = task.execution_context
         version_id = UUID(context["knowledge_version_id"])
         scoped_sources = {UUID(value) for value in context["source_ids"]}
@@ -274,6 +289,7 @@ def add_task_evidence(
             select(EvidenceRetrievalEvent).where(
                 EvidenceRetrievalEvent.task_id == task_id,
                 EvidenceRetrievalEvent.query_text == query,
+                EvidenceRetrievalEvent.evidence_request_id == evidence_request_id,
             )
         )}
         new_count = 0
@@ -297,12 +313,19 @@ def add_task_evidence(
             if revision_id not in recorded:
                 session.add(EvidenceRetrievalEvent(
                     id=new_id(), task_id=task_id, evidence_revision_id=revision_id,
+                    evidence_request_id=evidence_request_id,
                     query_text=query, rank=rank, channels=result.get("matched_channels", []),
                 ))
                 recorded.add(revision_id)
         append_event(session, event_type="research_task.evidence_retrieved", actor_id=actor_id,
                      aggregate_id=task_id,
                      payload={"query": query, "result_count": len(results), "new_count": new_count})
+        if evidence_request_id is not None:
+            request.status = "RETRIEVED" if results else "NO_RESULT"
+            request.result_count = len(recorded)
+            append_event(session, event_type="evidence_request.resolved", actor_id=actor_id,
+                         aggregate_id=evidence_request_id,
+                         payload={"result_count": request.result_count})
         return new_count
 
 

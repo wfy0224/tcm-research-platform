@@ -121,7 +121,11 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 ## Claim 审计 E8（进行中）
 
-对已完成首轮的 Claim，可先运行 `audit-claim-mechanical <claim_id>`，再运行 `audit-claim-semantic <claim_id>`。机械审计重新核验任务证据池、Agent 可见集合、冻结知识版本、审核状态和原文溯源；只有机械通过才向任务冻结的云端生成模型提交 Claim 与其已引用证据。语义结果保留 `SUPPORTED`、`PARTIALLY_SUPPORTED`、`UNSUPPORTED`、`CONTRADICTED`、`NOT_VERIFIABLE` 五种状态；每次审计都追加历史，Claim 上的 `audit_status` 仅供查询。当前自动语义判断仍是待审结果，Critic、重检索与 Rebuttal 尚在实现中。
+对已完成首轮的 Claim，可先运行 `audit-claim-mechanical <claim_id>`，再运行 `audit-claim-semantic <claim_id>`。机械审计重新核验任务证据池、Agent 可见集合、冻结知识版本、审核状态和原文溯源；只有机械通过才向任务冻结的云端生成模型提交 Claim 与其已引用证据。语义结果保留 `SUPPORTED`、`PARTIALLY_SUPPORTED`、`UNSUPPORTED`、`CONTRADICTED`、`NOT_VERIFIABLE` 五种状态；每次审计都追加历史，Claim 上的 `audit_status` 仅供查询。当前自动语义判断仍是待审结果。
+
+完成 Claim 审计后，可依次运行 `prepare-critic <task_id>`、`run-critic <agent_run_id>`、`retrieve-evidence-requests <task_id>`。Critic 只看到已完成审计的 Claim 及冻结的任务证据；它提出的 EvidenceRequest 才能触发再检索。检索沿用任务冻结的来源、知识版本、索引与模型路由，并记录每条请求的证据来源事件。Rebuttal、Claim 修订与 Worker 自动串联仍在后续 E8 任务中。
+
+验收追踪：AC-1B-03 的 Claim 定向质疑、受限再检索、来源事件与重复执行约束对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、迁移 0012/0013，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
 
 ## 设计约束
 

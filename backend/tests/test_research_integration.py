@@ -6,13 +6,23 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 from tcm_platform.db import SessionLocal, engine
+from tcm_platform.debate_service import (
+    execute_critic,
+    prepare_critic_round,
+    retrieve_evidence_requests,
+    submit_critic_output,
+)
 from tcm_platform.knowledge_service import trace_evidence
 from tcm_platform.models import (
     AgentRun,
     AuditResult,
     Claim,
     ClaimEvidence,
+    Critique,
     EmbeddingRecord,
+    EventLog,
+    EvidenceRequest,
+    EvidenceRetrievalEvent,
     IndexBuild,
     KnowledgeRuntimeState,
     KnowledgeVersionItem,
@@ -25,6 +35,7 @@ from tcm_platform.models import (
 )
 from tcm_platform.research_runtime import execute_first_round, execute_planner
 from tcm_platform.research_service import (
+    add_task_evidence,
     agent_visible_context,
     cancel_research_task,
     create_research_task,
@@ -226,6 +237,7 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
         claims = list(session.scalars(select(Claim).where(Claim.task_id == task_id)))
         assert len(claims) >= 2
         audited_claim_id = claims[0].id
+        unaudited_claim_id = claims[1].id
     first_audit = mechanical_audit_claim(audited_claim_id)
     second_audit = mechanical_audit_claim(audited_claim_id)
     assert first_audit["verdict"] == second_audit["verdict"] == "PASS"
@@ -264,6 +276,73 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
         assert len(list(session.scalars(select(AuditResult).where(
             AuditResult.claim_id == audited_claim_id
         )))) == 3
+    critic_run_id = prepare_critic_round(task_id)
+    invalid_critique = {"critiques": [
+        {"client_ref": "valid", "target_claim_id": str(audited_claim_id),
+         "issue_type": "EVIDENCE_GAP", "rationale_summary": "需补证",
+         "evidence_request_query": "太阳病脉象"},
+        {"client_ref": "invalid", "target_claim_id": str(unaudited_claim_id),
+         "issue_type": "EVIDENCE_GAP", "rationale_summary": "越界",
+         "evidence_request_query": None},
+    ]}
+    with pytest.raises(ValueError, match="outside its visible task"):
+        submit_critic_output(critic_run_id, invalid_critique)
+    with SessionLocal() as session:
+        assert not list(session.scalars(select(Critique).where(Critique.task_id == task_id)))
+
+    class FakeCritic:
+        model_version = FakeGenerator.model_version
+
+        def complete_json(self, system_prompt, input_payload):
+            assert "Critic" in system_prompt
+            assert [item["claim_id"] for item in input_payload["claims"]] == [str(audited_claim_id)]
+            assert input_payload["claims"][0]["audit_status"] == "SUPPORTED"
+            return {"critiques": [{
+                "client_ref": "c1", "target_claim_id": str(audited_claim_id),
+                "issue_type": "EVIDENCE_GAP", "rationale_summary": "需核对更多原文",
+                "evidence_request_query": "太阳病脉象",
+            }]}
+
+    critique_ids = execute_critic(critic_run_id, model=FakeCritic())
+    assert len(critique_ids) == 1
+    with SessionLocal() as session:
+        request_id = session.scalar(select(EvidenceRequest.id).where(
+            EvidenceRequest.critique_id == critique_ids[0]
+        ))
+        query = session.get(EvidenceRequest, request_id).query_text
+    with pytest.raises(ValueError, match="outside the frozen task scope"):
+        add_task_evidence(task_id, query, [{"evidence_revision_id": str(uuid4())}],
+                          evidence_request_id=request_id)
+    with SessionLocal() as session:
+        assert session.get(EvidenceRequest, request_id).status == "PENDING"
+        assert not list(session.scalars(select(EvidenceRetrievalEvent).where(
+            EvidenceRetrievalEvent.evidence_request_id == request_id
+        )))
+    assert retrieve_evidence_requests(
+        task_id, embedder=embedder, reranker=reranker, limit=1,
+    ) >= 0
+    with SessionLocal() as session:
+        resolved_events = list(session.scalars(select(EventLog).where(
+            EventLog.event_type == "evidence_request.resolved",
+            EventLog.aggregate_id == str(request_id),
+        )))
+        assert len(resolved_events) == 1
+    assert retrieve_evidence_requests(
+        task_id, embedder=embedder, reranker=reranker, limit=1,
+    ) == 0
+    with SessionLocal() as session:
+        assert len(list(session.scalars(select(EventLog).where(
+            EventLog.event_type == "evidence_request.resolved",
+            EventLog.aggregate_id == str(request_id),
+        )))) == 1
+        request = session.scalar(select(EvidenceRequest).where(
+            EvidenceRequest.critique_id == critique_ids[0]
+        ))
+        assert request.status in {"RETRIEVED", "NO_RESULT"}
+        events = list(session.scalars(select(EvidenceRetrievalEvent).where(
+            EvidenceRetrievalEvent.evidence_request_id == request.id
+        )))
+        assert len(events) == request.result_count
     assert run_next_research_job(
         worker_id="test-research-worker", model=model, embedder=embedder,
         reranker=reranker, task_id=task_id,

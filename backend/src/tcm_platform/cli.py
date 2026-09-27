@@ -16,6 +16,11 @@ from tcm_platform.cloud_models import (
     research_model_from_environment,
 )
 from tcm_platform.db import SessionLocal
+from tcm_platform.debate_service import (
+    execute_critic,
+    prepare_critic_round,
+    retrieve_evidence_requests,
+)
 from tcm_platform.ids import new_id
 from tcm_platform.knowledge_publish import (
     activate_knowledge_version,
@@ -38,6 +43,7 @@ from tcm_platform.knowledge_service import (
     trace_knowledge,
 )
 from tcm_platform.models import (
+    AgentRun,
     Claim,
     ImportJob,
     PipelineStepExecution,
@@ -193,6 +199,12 @@ def main() -> None:
     audit_claim.add_argument("claim_id", type=UUID)
     audit_semantic = commands.add_parser("audit-claim-semantic", help="judge support using frozen cloud model")
     audit_semantic.add_argument("claim_id", type=UUID)
+    prepare_critic = commands.add_parser("prepare-critic", help="freeze the Critic input")
+    prepare_critic.add_argument("task_id", type=UUID)
+    run_critic = commands.add_parser("run-critic", help="create Claim-targeted critiques")
+    run_critic.add_argument("agent_run_id", type=UUID)
+    retrieve_requests = commands.add_parser("retrieve-evidence-requests", help="resolve Critic evidence requests")
+    retrieve_requests.add_argument("task_id", type=UUID)
     activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
     activate.add_argument("knowledge_version_id", type=UUID)
     activate.add_argument("index_build_id", type=UUID)
@@ -374,6 +386,23 @@ def main() -> None:
             model_version = task.execution_context["generation_model"]
         model = research_model_for_version(model_version)
         print(json.dumps(semantic_audit_claim(args.claim_id, model=model), ensure_ascii=False))
+    elif args.command == "prepare-critic":
+        print(json.dumps({"agent_run_id": str(prepare_critic_round(args.task_id))}))
+    elif args.command == "run-critic":
+        with SessionLocal() as session:
+            run = session.get(AgentRun, args.agent_run_id)
+            if run is None:
+                raise ValueError("Critic AgentRun does not exist")
+            model_version = run.model_version
+        model = research_model_for_version(model_version)
+        print(json.dumps({"critique_ids": [str(item) for item in execute_critic(
+            args.agent_run_id, model=model,
+        )]}))
+    elif args.command == "retrieve-evidence-requests":
+        embedder, reranker = cloud_clients_from_environment()
+        count = retrieve_evidence_requests(args.task_id, embedder=embedder,
+                                           reranker=reranker)
+        print(json.dumps({"new_evidence_count": count}))
     elif args.command in {"run-research-next", "run-research-worker"}:
         embedder, reranker = cloud_clients_from_environment()
         if args.command == "run-research-next":
