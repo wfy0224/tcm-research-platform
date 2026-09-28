@@ -13,8 +13,9 @@ from tcm_platform.knowledge_publish import (
     open_quality_issue,
     resolve_quality_issue,
     review_object,
+    supersede_reviewed_object,
 )
-from tcm_platform.knowledge_service import create_concept, create_evidence
+from tcm_platform.knowledge_service import create_concept, create_evidence, create_relation
 from tcm_platform.main import _public_retrieval_result
 from tcm_platform.models import (
     EmbeddingRecord,
@@ -24,6 +25,7 @@ from tcm_platform.models import (
     IndexBuild,
     KnowledgeRuntimeState,
     KnowledgeVersion,
+    KnowledgeVersionItem,
     QualityIssue,
     TextSegmentRevision,
 )
@@ -101,6 +103,21 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
     review_object(
         "concept", concept_id, reviewer_id="expert-1", decision="APPROVE",
         note="术语归一核对通过",
+    )
+    related_concept_id = create_concept(
+        "表证", concept_type="PATTERN", evidence_revision_id=evidence_id
+    )
+    review_object(
+        "concept", related_concept_id, reviewer_id="expert-1", decision="APPROVE",
+        note="术语归一核对通过",
+    )
+    relation_id = create_relation(
+        concept_id, related_concept_id, relation_type="RELATED_TO",
+        assertion_text="太阳病与表证相关", evidence_revision_id=evidence_id,
+    )
+    review_object(
+        "relation", relation_id, reviewer_id="expert-1", decision="APPROVE",
+        note="关系及引用核对通过",
     )
     version_id = create_knowledge_version()
     build_id = create_index_build(version_id, configuration={
@@ -192,11 +209,66 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
     )
     revised_version_id = create_knowledge_version()
     comparison = compare_knowledge_versions(version_id, revised_version_id)
-    assert comparison["revision_changes"]["evidence_revision"] == [{
-        "identity_id": str(stable_evidence_id),
-        "from_revision_id": str(evidence_id),
-        "to_revision_id": str(revised_evidence_id),
-        "citation_impact": [{
-            "kind": "concept", "object_id": str(concept_id), "retained_in_target": True,
-        }],
-    }]
+    evidence_change = comparison["revision_changes"]["evidence_revision"]
+    assert len(evidence_change) == 1
+    assert evidence_change[0]["identity_id"] == str(stable_evidence_id)
+    assert evidence_change[0]["from_revision_id"] == str(evidence_id)
+    assert evidence_change[0]["to_revision_id"] == str(revised_evidence_id)
+    assert {item["object_id"] for item in evidence_change[0]["citation_impact"]} == {
+        str(concept_id), str(related_concept_id), str(relation_id)
+    }
+    replacement_concept_id = create_concept(
+        "太阳病校订", concept_type="DISEASE", evidence_revision_id=revised_evidence_id
+    )
+    review_object(
+        "concept", replacement_concept_id, reviewer_id="expert-1",
+        decision="APPROVE", note="校订证据引用",
+    )
+    assert supersede_reviewed_object("concept", concept_id, replacement_concept_id) == 2
+    with pytest.raises(ValueError, match="already superseded"):
+        supersede_reviewed_object("concept", concept_id, replacement_concept_id)
+    with pytest.raises(ValueError, match="relation still points"):
+        create_knowledge_version()
+    replacement_related_id = create_concept(
+        "表证校订", concept_type="PATTERN", evidence_revision_id=revised_evidence_id
+    )
+    review_object(
+        "concept", replacement_related_id, reviewer_id="expert-1",
+        decision="APPROVE", note="校订证据引用",
+    )
+    assert supersede_reviewed_object("concept", related_concept_id, replacement_related_id) == 2
+    replacement_relation_id = create_relation(
+        replacement_concept_id, replacement_related_id, relation_type="RELATED_TO",
+        assertion_text="校订后太阳病与表证相关", evidence_revision_id=revised_evidence_id,
+    )
+    review_object(
+        "relation", replacement_relation_id, reviewer_id="expert-1", decision="APPROVE",
+        note="关系及新版证据核对通过",
+    )
+    assert supersede_reviewed_object("relation", relation_id, replacement_relation_id) == 2
+    corrected_version_id = create_knowledge_version()
+    corrected = compare_knowledge_versions(version_id, corrected_version_id)
+    assert str(concept_id) in corrected["concept"]["removed"]
+    assert str(replacement_concept_id) in corrected["concept"]["added"]
+    assert corrected["revision_changes"]["relation"][0]["revision_no"] == 2
+    assert {item["to_revision_id"] for item in
+            corrected["revision_changes"]["concept"]} == {
+        str(replacement_concept_id), str(replacement_related_id)
+    }
+    with SessionLocal() as session:
+        original_items = list(session.scalars(select(KnowledgeVersionItem).where(
+            KnowledgeVersionItem.knowledge_version_id == version_id,
+            KnowledgeVersionItem.concept_id == concept_id,
+        )))
+        assert len(original_items) == 1
+    corrected_build_id = create_index_build(corrected_version_id, configuration={
+        "strategy": "hybrid-v1", "embedding_model": FakeEmbedder.model_version,
+    })
+    build_retrieval_index(corrected_build_id, embedder=FakeEmbedder())
+    activate_knowledge_version(corrected_version_id, corrected_build_id)
+    activate_knowledge_version(version_id, build_id)
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        assert (runtime.active_knowledge_version_id, runtime.active_index_build_id) == (
+            version_id, build_id
+        )

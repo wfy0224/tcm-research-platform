@@ -639,6 +639,27 @@ class HumanReview(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class KnowledgeSupersession(Base):
+    """Append-only lineage between reviewed rows of the same knowledge kind."""
+
+    __tablename__ = "knowledge_supersession"
+    __table_args__ = (
+        UniqueConstraint("target_kind", "old_object_id", name="uq_supersession_old"),
+        UniqueConstraint("target_kind", "new_object_id", name="uq_supersession_new"),
+        UniqueConstraint("target_kind", "root_object_id", "revision_no",
+                         name="uq_supersession_revision"),
+        {"schema": "governance"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    target_kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    old_object_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    new_object_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    root_object_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    revision_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class KnowledgeVersion(Base):
     __tablename__ = "knowledge_version"
     __table_args__ = (

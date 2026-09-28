@@ -17,6 +17,7 @@ from tcm_platform.models import (
     EmbeddingRecord,
     EvidenceRevision,
     FormulaEvidence,
+    FormulaIngredient,
     FormulaRevision,
     Herb,
     HerbEvidence,
@@ -24,6 +25,7 @@ from tcm_platform.models import (
     IndexBuild,
     KnowledgeRelation,
     KnowledgeRuntimeState,
+    KnowledgeSupersession,
     KnowledgeVersion,
     KnowledgeVersionItem,
     QualityIssue,
@@ -152,6 +154,13 @@ def review_object(
         )
         if published is not None:
             raise ValueError("published knowledge cannot be reviewed in place")
+        if kind in {"concept", "relation", "herb"} and session.scalar(
+            select(KnowledgeSupersession.id).where(
+                KnowledgeSupersession.target_kind == kind,
+                KnowledgeSupersession.new_object_id == object_id,
+            ).limit(1)
+        ) is not None:
+            raise ValueError("linked knowledge revision cannot be reviewed in place")
         if decision == "APPROVE" and _open_blockers(session, kind, object_id):
             raise ValueError("open blocker prevents approval")
         if decision == "APPROVE" and kind != "evidence_revision":
@@ -183,6 +192,67 @@ def review_object(
         return review_id
 
 
+REVISION_TARGETS = frozenset({"concept", "relation", "herb"})
+
+
+def supersede_reviewed_object(
+    kind: str, old_id: UUID, replacement_id: UUID, *, actor_id: str = "local-curator"
+) -> int:
+    """Link a reviewed replacement to a published row without editing either row."""
+    if kind not in REVISION_TARGETS or old_id == replacement_id:
+        raise ValueError("unsupported or identical knowledge replacement")
+    if not actor_id.strip():
+        raise ValueError("actor is required")
+    model, field_name = REVIEW_TARGETS[kind]
+    with SessionLocal.begin() as session:
+        runtime = session.scalar(select(KnowledgeRuntimeState).where(
+            KnowledgeRuntimeState.id == 1
+        ).with_for_update())
+        if runtime is None:
+            raise RuntimeError("knowledge runtime state is not initialized")
+        old = session.scalar(select(model).where(model.id == old_id).with_for_update())
+        new = session.scalar(select(model).where(model.id == replacement_id).with_for_update())
+        if old is None or new is None or old.status != "REVIEWED" or new.status != "REVIEWED":
+            raise ValueError("both knowledge revisions must be reviewed")
+        item_field = getattr(KnowledgeVersionItem, field_name)
+        published = session.scalar(select(KnowledgeVersionItem.id).join(KnowledgeVersion).where(
+            item_field == old_id, KnowledgeVersion.status == "READY"
+        ).limit(1))
+        if published is None:
+            raise ValueError("old knowledge revision must be published")
+        already_snapshotted = session.scalar(select(KnowledgeVersionItem.id).where(
+            item_field == replacement_id
+        ).limit(1))
+        if already_snapshotted is not None:
+            raise ValueError("replacement was already frozen in a knowledge version")
+        if session.scalar(select(KnowledgeSupersession.id).where(
+            KnowledgeSupersession.target_kind == kind,
+            KnowledgeSupersession.old_object_id == old_id,
+        ).limit(1)) is not None:
+            raise ValueError("old knowledge revision was already superseded")
+        predecessor = session.scalar(select(KnowledgeSupersession).where(
+            KnowledgeSupersession.target_kind == kind,
+            KnowledgeSupersession.new_object_id == old_id,
+        ))
+        if session.scalar(select(KnowledgeSupersession.id).where(
+            KnowledgeSupersession.target_kind == kind,
+            KnowledgeSupersession.new_object_id == replacement_id,
+        ).limit(1)) is not None:
+            raise ValueError("replacement already belongs to a revision lineage")
+        root_id = predecessor.root_object_id if predecessor else old_id
+        revision_no = predecessor.revision_no + 1 if predecessor else 2
+        session.add(KnowledgeSupersession(
+            id=new_id(), target_kind=kind, old_object_id=old_id,
+            new_object_id=replacement_id, root_object_id=root_id, revision_no=revision_no,
+        ))
+        append_event(session, event_type="knowledge.revision_superseded", actor_id=actor_id,
+                     aggregate_id=root_id, payload={
+                         "kind": kind, "old_object_id": str(old_id),
+                         "new_object_id": str(replacement_id), "revision_no": revision_no,
+                     })
+        return revision_no
+
+
 def _snapshot_items(session: Session) -> dict[str, list[UUID]]:
     items: dict[str, list[UUID]] = {}
     for kind, (model, _) in REVIEW_TARGETS.items():
@@ -207,8 +277,51 @@ def _snapshot_items(session: Session) -> dict[str, list[UUID]]:
                     items[kind].append(row.id)
                     seen.add(row.formula_id)
         else:
-            items[kind] = list(session.scalars(select(model.id).where(model.status == "REVIEWED")))
+            excluded = select(KnowledgeSupersession.old_object_id).where(
+                KnowledgeSupersession.target_kind == kind
+            )
+            items[kind] = list(session.scalars(select(model.id).where(
+                model.status == "REVIEWED", model.id.not_in(excluded)
+            )))
     return items
+
+
+def _validate_replacement_references(session: Session, items: dict[str, list[UUID]]) -> None:
+    """Newly linked revisions must cite evidence and objects selected in this snapshot."""
+    for kind, link_model, object_field in (
+        ("concept", ConceptEvidence, ConceptEvidence.concept_id),
+        ("relation", RelationEvidence, RelationEvidence.relation_id),
+        ("herb", HerbEvidence, HerbEvidence.herb_id),
+    ):
+        replacements = set(session.scalars(select(KnowledgeSupersession.new_object_id).where(
+            KnowledgeSupersession.target_kind == kind,
+            KnowledgeSupersession.new_object_id.in_(items[kind]),
+        )))
+        if not replacements:
+            continue
+        stale = session.scalar(select(link_model.evidence_revision_id).where(
+            object_field.in_(replacements),
+            link_model.evidence_revision_id.not_in(items["evidence_revision"]),
+        ).limit(1))
+        if stale is not None:
+            raise ValueError("replacement cites evidence outside the new snapshot")
+    replaced_concepts = select(KnowledgeSupersession.old_object_id).where(
+        KnowledgeSupersession.target_kind == "concept"
+    )
+    if session.scalar(select(KnowledgeRelation.id).where(
+        KnowledgeRelation.id.in_(items["relation"]),
+        (KnowledgeRelation.subject_concept_id.in_(replaced_concepts)
+         | KnowledgeRelation.object_concept_id.in_(replaced_concepts)),
+    ).limit(1)) is not None:
+        raise ValueError("relation still points to a superseded concept")
+    replaced_herbs = select(KnowledgeSupersession.old_object_id).where(
+        KnowledgeSupersession.target_kind == "herb"
+    )
+    if session.scalar(select(FormulaIngredient.id).where(
+        FormulaIngredient.formula_revision_id.in_(items["formula_revision"]),
+        FormulaIngredient.herb_id.in_(replaced_herbs),
+    ).limit(1)) is not None:
+        raise ValueError("formula still points to a superseded herb")
 
 
 def _manifest(items: dict[str, list[UUID]]) -> str:
@@ -232,6 +345,7 @@ def create_knowledge_version(*, actor_id: str = "local-curator") -> UUID:
         items = _snapshot_items(session)
         if not items["evidence_revision"]:
             raise ValueError("knowledge version requires reviewed evidence")
+        _validate_replacement_references(session, items)
         version_no = (session.scalar(select(func.max(KnowledgeVersion.version_no))) or 0) + 1
         version_id = new_id()
         manifest = _manifest(items)
@@ -427,5 +541,21 @@ def compare_knowledge_versions(left_id: UUID, right_id: UUID) -> dict:
                     )
                 changes.append(change)
             revisions[kind] = changes
+        for kind in sorted(REVISION_TARGETS):
+            links = list(session.scalars(select(KnowledgeSupersession).where(
+                KnowledgeSupersession.target_kind == kind
+            )))
+            lineage = {link.old_object_id: link.root_object_id for link in links}
+            lineage.update({link.new_object_id: link.root_object_id for link in links})
+            revision_numbers = {link.new_object_id: link.revision_no for link in links}
+            left_by_root = {lineage.get(item, item): item for item in left[kind]}
+            right_by_root = {lineage.get(item, item): item for item in right[kind]}
+            revisions[kind] = [{
+                "identity_id": str(root),
+                "from_revision_id": str(left_by_root[root]),
+                "to_revision_id": str(right_by_root[root]),
+                "revision_no": revision_numbers.get(right_by_root[root], 1),
+            } for root in sorted(set(left_by_root) & set(right_by_root))
+                if left_by_root[root] != right_by_root[root]]
         difference["revision_changes"] = revisions
         return difference

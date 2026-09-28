@@ -37,6 +37,7 @@ from tcm_platform.knowledge_publish import (
     open_quality_issue,
     resolve_quality_issue,
     review_object,
+    supersede_reviewed_object,
 )
 from tcm_platform.knowledge_service import (
     IngredientSpec,
@@ -184,6 +185,12 @@ def main() -> None:
     review.add_argument("--reviewer", required=True)
     review.add_argument("--decision", required=True, choices=["APPROVE", "REJECT"])
     review.add_argument("--note", required=True)
+    supersede = commands.add_parser(
+        "supersede-knowledge", help="link an approved replacement to a published knowledge row"
+    )
+    supersede.add_argument("kind", choices=["concept", "relation", "herb"])
+    supersede.add_argument("old_id", type=UUID)
+    supersede.add_argument("replacement_id", type=UUID)
     commands.add_parser("snapshot-knowledge", help="freeze reviewed objects into a version")
     index_build = commands.add_parser("create-index-build", help="request FTS and vector indexes")
     index_build.add_argument("knowledge_version_id", type=UUID)
@@ -599,6 +606,12 @@ def main() -> None:
         print(json.dumps({"status": "READY", "knowledge_version_id": str(args.knowledge_version_id)}))
     elif args.command == "compare-knowledge":
         print(json.dumps(compare_knowledge_versions(args.left_id, args.right_id)))
+    elif args.command == "supersede-knowledge":
+        revision_no = supersede_reviewed_object(
+            args.kind, args.old_id, args.replacement_id
+        )
+        print(json.dumps({"kind": args.kind, "revision_no": revision_no,
+                          "replacement_id": str(args.replacement_id)}))
     elif args.command == "show-segments":
         with SessionLocal() as session:
             rows = session.scalars(
