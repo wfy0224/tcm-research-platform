@@ -1,9 +1,11 @@
+import hashlib
 from uuid import uuid4
 
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal, engine
 from tcm_platform.knowledge_publish import (
     activate_knowledge_version,
@@ -18,6 +20,7 @@ from tcm_platform.knowledge_publish import (
 from tcm_platform.knowledge_service import create_concept, create_evidence, create_relation
 from tcm_platform.main import _public_retrieval_result
 from tcm_platform.models import (
+    Artifact,
     EmbeddingRecord,
     EventLog,
     EvidenceRevision,
@@ -28,10 +31,12 @@ from tcm_platform.models import (
     KnowledgeVersionItem,
     KnowledgeVersionReference,
     QualityIssue,
+    ReleaseSnapshot,
     ResearchTask,
     TaskEvidenceRef,
     TextSegmentRevision,
 )
+from tcm_platform.release_snapshot import restore_release_snapshot
 from tcm_platform.research_runtime import execute_planner
 from tcm_platform.research_service import (
     create_research_task,
@@ -185,8 +190,40 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
         "strategy": "hybrid-v1", "embedding_model": FakeEmbedder.model_version,
     })
     build_retrieval_index(newer_build_id, embedder=FakeEmbedder())
-    activate_knowledge_version(newer_version_id, newer_build_id)
-    activate_knowledge_version(version_id, build_id)
+    release_snapshot_id = activate_knowledge_version(newer_version_id, newer_build_id)
+    assert release_snapshot_id is not None
+    with SessionLocal() as session:
+        snapshot = session.get(ReleaseSnapshot, release_snapshot_id)
+        assert (snapshot.source_knowledge_version_id, snapshot.source_index_build_id) == (
+            version_id, build_id
+        )
+        assert (snapshot.target_knowledge_version_id, snapshot.target_index_build_id) == (
+            newer_version_id, newer_build_id
+        )
+        artifact = session.get(Artifact, snapshot.artifact_id)
+        assert artifact.artifact_type == "RELEASE_SNAPSHOT"
+        path = ContentAddressedStore(settings.data_root).path_for(snapshot.manifest_sha256)
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == artifact.blob_sha256
+    unavailable_path = path.with_suffix(".temporarily_missing")
+    path.rename(unavailable_path)
+    try:
+        with pytest.raises(ValueError, match="release snapshot artifact is unavailable"):
+            restore_release_snapshot(release_snapshot_id)
+        with SessionLocal() as session:
+            assert session.get(KnowledgeRuntimeState, 1).active_knowledge_version_id == (
+                newer_version_id
+            )
+    finally:
+        unavailable_path.rename(path)
+    with (pytest.raises(SQLAlchemyError, match="release snapshot records are immutable"),
+          SessionLocal.begin() as session):
+        session.execute(text(
+            "UPDATE governance.release_snapshot SET manifest_sha256 = :hash "
+            "WHERE id = :snapshot_id"
+        ), {"hash": "0" * 64, "snapshot_id": release_snapshot_id})
+    restore_release_snapshot(release_snapshot_id)
+    with pytest.raises(ValueError, match="does not match this version switch"):
+        restore_release_snapshot(release_snapshot_id)
     with SessionLocal() as session:
         runtime = session.get(KnowledgeRuntimeState, 1)
         assert (runtime.active_knowledge_version_id, runtime.active_index_build_id) == (
@@ -200,6 +237,8 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
         assert event.payload["previous_knowledge_version_id"] == str(newer_version_id)
         assert event.payload["previous_index_build_id"] == str(newer_build_id)
         assert event.payload["historical_switch"] is True
+        assert event.payload["restored_from_snapshot_id"] == str(release_snapshot_id)
+        assert event.payload["release_snapshot_id"] is not None
 
     with SessionLocal.begin() as session:
         record = session.scalar(select(EmbeddingRecord).where(

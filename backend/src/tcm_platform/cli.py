@@ -66,6 +66,7 @@ from tcm_platform.models import (
     TextSegmentRevision,
 )
 from tcm_platform.outbound_policy import set_source_outbound_policy
+from tcm_platform.release_snapshot import restore_release_snapshot
 from tcm_platform.report_export import process_next_report_export, queue_report_export
 from tcm_platform.research_runtime import execute_first_round, execute_planner
 from tcm_platform.research_service import (
@@ -284,6 +285,10 @@ def main() -> None:
     activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
     activate.add_argument("knowledge_version_id", type=UUID)
     activate.add_argument("index_build_id", type=UUID)
+    restore = commands.add_parser(
+        "restore-release-snapshot", help="return to the prior version/index pair"
+    )
+    restore.add_argument("snapshot_id", type=UUID)
     compare = commands.add_parser("compare-knowledge", help="compare immutable version memberships")
     compare.add_argument("left_id", type=UUID)
     compare.add_argument("right_id", type=UUID)
@@ -602,8 +607,14 @@ def main() -> None:
             except KeyboardInterrupt:
                 pass
     elif args.command == "activate-knowledge":
-        activate_knowledge_version(args.knowledge_version_id, args.index_build_id)
-        print(json.dumps({"status": "READY", "knowledge_version_id": str(args.knowledge_version_id)}))
+        snapshot_id = activate_knowledge_version(
+            args.knowledge_version_id, args.index_build_id
+        )
+        print(json.dumps({"status": "READY", "knowledge_version_id": str(args.knowledge_version_id),
+                          "release_snapshot_id": str(snapshot_id) if snapshot_id else None}))
+    elif args.command == "restore-release-snapshot":
+        restore_release_snapshot(args.snapshot_id)
+        print(json.dumps({"status": "READY", "restored_snapshot_id": str(args.snapshot_id)}))
     elif args.command == "compare-knowledge":
         print(json.dumps(compare_knowledge_versions(args.left_id, args.right_id)))
     elif args.command == "supersede-knowledge":

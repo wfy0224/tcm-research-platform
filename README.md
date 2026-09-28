@@ -88,6 +88,8 @@ uv run python -m tcm_platform.cli create-index-build <knowledge_version_id>
 
 新快照若保留了引用旧 EvidenceRevision 的已审核知识对象，会把这些历史引用单独冻结并校验哈希；历史引用用于溯源和版本比较，不进入当前 Evidence 检索索引。旧研究任务继续使用启动时冻结的知识版本与索引。
 
+从已有活动版本切换时，`activate-knowledge` 会返回 `release_snapshot_id`，并把切换前后的 KV/Index 指针及清单哈希保存为不可变的本地 CAS 工件。需要快速切回时运行 `restore-release-snapshot <release_snapshot_id>`；系统先核对工件哈希、当前活动指针和旧版本双索引，再原子切回。首次发布没有旧活动版本，因此没有可恢复的 Release Snapshot。该快照依赖原数据库与索引仍可用；完整数据库和文件的灾难恢复属于 Portable Backup，不能用它替代。
+
 ## 云端模型与混合检索 E6
 
 项目运行时直接调用云端 API，不需要下载或运行本地大模型。默认使用硅基流动的 `BAAI/bge-m3` 向量模型和 `BAAI/bge-reranker-v2-m3` 重排模型。外发默认 `LOCAL_ONLY`；云端使用需设置 `TCM_OUTBOUND_MODE=CLOUD_ALLOWED`，并对每个来源显式标记 `PUBLIC`、记录授权理由。旧来源迁移后均为 `RESTRICTED` 且未授权。使用 `set-model-key siliconflow` 在交互式提示中把密钥存入 OS Keychain；仅隔离开发容器可显式设置 `TCM_ALLOW_ENV_API_KEYS=1` 从环境变量读取。密钥不会写入数据库、日志或 Git。构建索引时，已审核证据文本会发给向量模型；检索时，查询和候选证据文本会发给向量及重排模型。研究任务的 Planner 与 Agent 也会将任务问题及可见证据发送给云端生成模型。来源授权撤销后，新外发调用会被拒绝；已发送的数据无法撤回。

@@ -735,6 +735,32 @@ class KnowledgeVersionReference(Base):
     )
 
 
+class ReleaseSnapshot(Base):
+    """Immutable, content-addressed pointer snapshot for a knowledge release switch."""
+
+    __tablename__ = "release_snapshot"
+    __table_args__: ClassVar[dict[str, str]] = {"schema": "governance"}
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
+    source_knowledge_version_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.knowledge_version.id"), nullable=False
+    )
+    source_index_build_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.index_build.id"), nullable=False
+    )
+    target_knowledge_version_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.knowledge_version.id"), nullable=False
+    )
+    target_index_build_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.index_build.id"), nullable=False
+    )
+    artifact_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("storage.artifact.id"), nullable=False
+    )
+    manifest_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class IndexBuild(Base):
     __tablename__ = "index_build"
     __table_args__ = (Index("ix_index_build_version", "knowledge_version_id", "status"),

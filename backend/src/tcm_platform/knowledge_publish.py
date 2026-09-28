@@ -36,6 +36,7 @@ from tcm_platform.models import (
     TextSegmentRevision,
     utc_now,
 )
+from tcm_platform.release_snapshot import create_release_snapshot, validate_release_snapshot
 
 REVIEW_TARGETS = {
     "evidence_revision": (EvidenceRevision, "evidence_revision_id"),
@@ -460,8 +461,9 @@ def _version_items(session: Session, version_id: UUID) -> dict[str, list[UUID]]:
 
 
 def activate_knowledge_version(
-    version_id: UUID, build_id: UUID, *, actor_id: str = "local-curator"
-) -> None:
+    version_id: UUID, build_id: UUID, *, actor_id: str = "local-curator",
+    restore_snapshot_id: UUID | None = None,
+) -> UUID | None:
     """Switch both active pointers only after content and both index gates pass."""
     with SessionLocal.begin() as session:
         runtime = session.scalar(
@@ -520,6 +522,23 @@ def activate_knowledge_version(
             raise ValueError("target FTS/vector index is incomplete")
         previous_version_id = runtime.active_knowledge_version_id
         previous_build_id = runtime.active_index_build_id
+        if (previous_version_id is None) != (previous_build_id is None):
+            raise ValueError("active knowledge/index pointers are inconsistent")
+        if restore_snapshot_id is not None:
+            if previous_version_id is None or previous_build_id is None:
+                raise ValueError("release snapshot cannot restore an empty active pair")
+            validate_release_snapshot(
+                session, restore_snapshot_id,
+                source_version_id=version_id, source_build_id=build_id,
+                target_version_id=previous_version_id, target_build_id=previous_build_id,
+            )
+        release_snapshot = (
+            create_release_snapshot(
+                session, previous_version_id, previous_build_id, version_id, build_id
+            ) if (previous_version_id is not None and previous_build_id is not None
+                  and (previous_version_id, previous_build_id) != (version_id, build_id))
+            else None
+        )
         version.status = "READY"
         version.ready_at = version.ready_at or utc_now()
         runtime.active_knowledge_version_id = version_id
@@ -534,10 +553,15 @@ def activate_knowledge_version(
                     str(previous_version_id) if previous_version_id else None
                 ),
                 "previous_index_build_id": str(previous_build_id) if previous_build_id else None,
+                "release_snapshot_id": str(release_snapshot.id) if release_snapshot else None,
+                "restored_from_snapshot_id": (
+                    str(restore_snapshot_id) if restore_snapshot_id else None
+                ),
                 "historical_switch": previous_version_id is not None
                 and version.version_no < session.get(KnowledgeVersion, previous_version_id).version_no,
             },
         )
+        return release_snapshot.id if release_snapshot else None
 
 
 def compare_knowledge_versions(left_id: UUID, right_id: UUID) -> dict:
