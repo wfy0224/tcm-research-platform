@@ -78,6 +78,14 @@ def prepare_critic_round(task_id: UUID, *, actor_id: str = "research-runtime",
         )
         if task is None or task.status != "FIRST_ROUND_COMPLETE" or task.control_state != "ACTIVE":
             raise ValueError("research task is not ready for Critic")
+        previous = session.scalar(select(AgentRun).where(
+            AgentRun.task_id == task_id, AgentRun.role == "Critic",
+        ).order_by(AgentRun.round_no.desc()).limit(1))
+        round_no = previous.round_no + 1 if previous else 2
+        from tcm_platform.stop_service import WorkflowConfig
+        config = WorkflowConfig.model_validate(task.execution_context.get("workflow_config", {}))
+        if round_no - 1 > config.max_debate_rounds:
+            raise ValueError("frozen debate round limit reached")
         claims = list(session.scalars(select(Claim).where(
             Claim.task_id == task_id, Claim.status == "ACTIVE",
             Claim.audit_status.in_((
@@ -92,7 +100,7 @@ def prepare_critic_round(task_id: UUID, *, actor_id: str = "research-runtime",
         ).order_by(TaskEvidenceRef.evidence_revision_id)))
         run_id = new_id()
         session.add(AgentRun(
-            id=run_id, task_id=task_id, role="Critic", round_no=2, status="PENDING",
+            id=run_id, task_id=task_id, role="Critic", round_no=round_no, status="PENDING",
             input_snapshot={"claim_ids": [str(item.id) for item in claims],
                             "run_fingerprint": task.run_fingerprint,
                             "knowledge_version_id": task.execution_context["knowledge_version_id"],
@@ -110,7 +118,7 @@ def prepare_critic_round(task_id: UUID, *, actor_id: str = "research-runtime",
 def critic_visible_context(run_id: UUID) -> dict:
     with SessionLocal() as session:
         run = session.get(AgentRun, run_id)
-        if run is None or run.role != "Critic" or run.round_no != 2:
+        if run is None or run.role != "Critic" or run.round_no < 2:
             raise ValueError("Critic AgentRun does not exist")
         claims = [session.get(Claim, UUID(value))
                   for value in run.input_snapshot["claim_ids"]]
@@ -150,7 +158,7 @@ def submit_critic_output(run_id: UUID, payload: dict,
         if lease_guard is not None:
             lease_guard(session)
         run = session.scalar(select(AgentRun).where(AgentRun.id == run_id).with_for_update())
-        if run is None or run.role != "Critic" or run.round_no != 2 or run.status != "PENDING":
+        if run is None or run.role != "Critic" or run.round_no < 2 or run.status != "PENDING":
             raise ValueError("Critic AgentRun is not accepting output")
         task = session.get(ResearchTask, run.task_id)
         if (task is None or task.status != "DEBATING" or task.control_state != "ACTIVE"
@@ -305,17 +313,18 @@ def prepare_rebuttal_round(task_id: UUID, *, actor_id: str = "research-runtime",
         )
         if task is None or task.status != "DEBATING" or task.control_state != "ACTIVE":
             raise ValueError("research task is not ready for Rebuttal")
+        critic = session.scalar(select(AgentRun).where(
+            AgentRun.task_id == task_id, AgentRun.role == "Critic",
+            AgentRun.status == "COMPLETED",
+        ).order_by(AgentRun.round_no.desc()).limit(1))
+        if critic is None:
+            raise ValueError("Critic must complete before Rebuttal")
         existing = session.scalar(select(AgentRun).where(
-            AgentRun.task_id == task_id, AgentRun.role == "Rebuttal", AgentRun.round_no == 2,
+            AgentRun.task_id == task_id, AgentRun.role == "Rebuttal",
+            AgentRun.round_no == critic.round_no,
         ))
         if existing is not None:
             return existing.id
-        critic = session.scalar(select(AgentRun).where(
-            AgentRun.task_id == task_id, AgentRun.role == "Critic", AgentRun.round_no == 2,
-            AgentRun.status == "COMPLETED",
-        ))
-        if critic is None:
-            raise ValueError("Critic must complete before Rebuttal")
         pending_request = session.scalar(select(EvidenceRequest.id).where(
             EvidenceRequest.task_id == task_id, EvidenceRequest.status == "PENDING",
         ).limit(1))
@@ -365,7 +374,7 @@ def prepare_rebuttal_round(task_id: UUID, *, actor_id: str = "research-runtime",
         ).order_by(TaskEvidenceRef.evidence_revision_id)))
         run_id = new_id()
         session.add(AgentRun(
-            id=run_id, task_id=task_id, role="Rebuttal", round_no=2, status="PENDING",
+            id=run_id, task_id=task_id, role="Rebuttal", round_no=critic.round_no, status="PENDING",
             input_snapshot={"critiques": frozen, "critic_run_id": str(critic.id),
                             "run_fingerprint": task.run_fingerprint,
                             "knowledge_version_id": task.execution_context["knowledge_version_id"],
@@ -382,7 +391,7 @@ def prepare_rebuttal_round(task_id: UUID, *, actor_id: str = "research-runtime",
 def rebuttal_visible_context(run_id: UUID) -> dict:
     with SessionLocal() as session:
         run = session.get(AgentRun, run_id)
-        if run is None or run.role != "Rebuttal" or run.round_no != 2:
+        if run is None or run.role != "Rebuttal" or run.round_no < 2:
             raise ValueError("Rebuttal AgentRun does not exist")
         return {
             "critiques": run.input_snapshot["critiques"],
@@ -400,7 +409,7 @@ def submit_rebuttal_output(run_id: UUID, payload: dict,
         if lease_guard is not None:
             lease_guard(session)
         run = session.scalar(select(AgentRun).where(AgentRun.id == run_id).with_for_update())
-        if run is None or run.role != "Rebuttal" or run.round_no != 2:
+        if run is None or run.role != "Rebuttal" or run.round_no < 2:
             raise ValueError("Rebuttal AgentRun does not exist")
         if run.status == "COMPLETED" and run.output == output.model_dump(mode="json"):
             existing = {

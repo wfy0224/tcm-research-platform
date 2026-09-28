@@ -838,6 +838,9 @@ class ResearchTask(Base):
     draft_scope: Mapped[dict] = mapped_column(JSONB, nullable=False)
     execution_context: Mapped[dict | None] = mapped_column(JSONB)
     run_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    interrupted_stage: Mapped[str | None] = mapped_column(String(40))
+    resume_stage: Mapped[str | None] = mapped_column(String(40))
+    waiting_reason_code: Mapped[str | None] = mapped_column(String(40))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -1179,4 +1182,48 @@ class EvidenceGap(Base):
     cited_evidence_ids: Mapped[list] = mapped_column(JSONB, nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="OPEN")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class StopEvaluation(Base):
+    __tablename__ = "stop_evaluation"
+    __table_args__ = (
+        UniqueConstraint("task_id", "round_no", "input_hash", name="uq_stop_evaluation_input"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    round_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    input_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    decision: Mapped[str] = mapped_column(String(30), nullable=False)
+    reason_code: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class HumanReviewRequest(Base):
+    __tablename__ = "human_review_request"
+    __table_args__ = (
+        UniqueConstraint("task_id", "source_key", name="uq_human_review_request_source"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    stop_evaluation_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.stop_evaluation.id"), nullable=False
+    )
+    source_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDING")
+    interrupted_stage: Mapped[str] = mapped_column(String(40), nullable=False)
+    resume_stage: Mapped[str] = mapped_column(String(40), nullable=False)
+    reason_code: Mapped[str] = mapped_column(String(40), nullable=False)
+    resolution_note: Mapped[str | None] = mapped_column(Text)
+    resolved_by: Mapped[str | None] = mapped_column(String(120))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

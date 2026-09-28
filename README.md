@@ -127,7 +127,9 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 再检索请求全部结束后，手工调试可运行 `prepare-rebuttal <task_id>`、`run-rebuttal <agent_run_id>`、`audit-revised-claims <task_id>`。Rebuttal 对每条 Critique 给出 ACCEPT、PARTIAL_ACCEPT、REJECT 或 REVISE；REVISE 追加一条以旧 Claim 为 parent 的新 Claim，原断言保留。修订 Claim 从 PENDING 重新经过机械与语义审计，审计命令可在失败后重试未完成的修订。Rebuttal 的模型、Prompt 版本、轮次和冻结可见证据记录于 AgentRun；模型调用记录于 ModelInvocation。
 
-不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_worker_completes_audited_debate_without_manual_cli_steps`。先在独立 PostgreSQL 测试库迁移到 `0015_canonical_claim_dispute_gap`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
+不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_worker_completes_audited_debate_without_manual_cli_steps`。先在独立 PostgreSQL 测试库迁移到 `0016_stop_review`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
+
+停止策略在启动研究任务时通过 `start-research-task <task-id> --workflow-config '{"min_debate_rounds":1,"max_debate_rounds":2,"mandatory_human_review":true}'` 冻结。Worker 按已审计 Claim、开放争议和证据缺口计算并保存每轮 StopEvaluation；人工复核时任务进入 `WAITING_HUMAN`，Job 完成并释放租约。用 `list-human-reviews <task-id>` 查看待处理请求，用 `resolve-human-review <request-id> --reviewer <name> --note <reason>` 记录处理结果并重新排队；Worker 从停止判断阶段续跑，不重做首轮。
 
 验收追踪：AC-1B-03/04 的 Claim 定向质疑、受限再检索、Rebuttal、追加修订与重新审计对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、`audit_service.py`、`research_worker.py`、迁移 0012～0014，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
 

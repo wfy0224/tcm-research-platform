@@ -1,4 +1,4 @@
-"""Lease-guarded research worker through one audited debate round."""
+"""Lease-guarded research worker through audited debate rounds."""
 
 from threading import Event, Thread
 from uuid import UUID
@@ -33,6 +33,7 @@ from tcm_platform.models import (
     Claim,
     Critique,
     EvidenceRequest,
+    HumanReviewRequest,
     ResearchTask,
     TaskCheckpoint,
     TaskJob,
@@ -45,6 +46,7 @@ from tcm_platform.research_runtime import (
 )
 from tcm_platform.research_service import prepare_first_round, retrieve_for_task
 from tcm_platform.retrieval import Embedder, Reranker
+from tcm_platform.stop_service import evaluate_stop
 
 LEASE_SECONDS = 300
 HEARTBEAT_SECONDS = 30
@@ -142,7 +144,7 @@ def run_next_research_job(
                         "task_id": str(task_id), "run_fingerprint": fingerprint},
             ))
 
-    def finish_debate(reason: str) -> UUID:
+    def finish_debate(round_no: int) -> UUID | None:
         nonlocal node_phase
         node_phase = None
         with SessionLocal.begin() as session:
@@ -150,17 +152,42 @@ def run_next_research_job(
             task = session.scalar(select(ResearchTask).where(
                 ResearchTask.id == task_id
             ).with_for_update())
-            if task.status not in {"FIRST_ROUND_COMPLETE", "DEBATING"}:
+            if task.status not in {"FIRST_ROUND_COMPLETE", "DEBATING", "STOP_EVALUATION"}:
                 raise ValueError("research task cannot finish its debate round")
             normalize_task_claims(task_id, actor_id=worker_id, session=session)
-            task.status = "DEBATE_ROUND_COMPLETE"
-            append_event(session, event_type="research_task.debate_round_completed",
-                         actor_id=worker_id, aggregate_id=task_id,
-                         payload={"reason": reason})
+            evaluation = evaluate_stop(session, task_id, round_no)
+            if evaluation.decision == "CONTINUE":
+                task.status = "FIRST_ROUND_COMPLETE"
+                return None
+            if evaluation.decision == "WAITING_HUMAN":
+                task.interrupted_stage = "STOP_EVALUATION"
+                task.resume_stage = "STOP_EVALUATION"
+                task.waiting_reason_code = evaluation.reason_code
+                task.status = "WAITING_HUMAN"
+                source_key = f"{round_no}:{evaluation.reason_code}"
+                request = session.scalar(select(HumanReviewRequest).where(
+                    HumanReviewRequest.task_id == task_id,
+                    HumanReviewRequest.source_key == source_key))
+                if request is None:
+                    session.add(HumanReviewRequest(
+                        task_id=task_id, stop_evaluation_id=evaluation.id,
+                        source_key=source_key, status="PENDING",
+                        interrupted_stage="STOP_EVALUATION", resume_stage="STOP_EVALUATION",
+                        reason_code=evaluation.reason_code))
+                append_event(session, event_type="research_task.waiting_human",
+                             actor_id=worker_id, aggregate_id=task_id,
+                             payload={"reason_code": evaluation.reason_code,
+                                      "round_no": round_no})
+            else:
+                task.status = "DEBATE_ROUND_COMPLETE"
+                append_event(session, event_type="research_task.debate_round_completed",
+                             actor_id=worker_id, aggregate_id=task_id,
+                             payload={"reason": evaluation.reason_code,
+                                      "round_no": round_no})
             complete_job(session, job_id=job_id, worker_id=worker_id,
                          generation=generation,
                          result={"task_id": str(task_id), "status": task.status,
-                                 "reason": reason})
+                                 "reason": evaluation.reason_code})
         return job_id
 
     try:
@@ -218,7 +245,7 @@ def run_next_research_job(
                         node_phase = "FIRST_ROUND_SEMANTIC_AUDIT"
                         semantic_audit_claim(pending_id, model=model, lease_guard=guard)
                 elif not any_claim:
-                    return finish_debate("NO_FIRST_ROUND_CLAIMS")
+                    return finish_debate(1)
                 else:
                     node_phase = "FIRST_ROUND_CLAIMS_NORMALIZED"
                     with SessionLocal.begin() as session:
@@ -230,14 +257,13 @@ def run_next_research_job(
                 with SessionLocal() as session:
                     critic = session.scalar(select(AgentRun).where(
                         AgentRun.task_id == task_id, AgentRun.role == "Critic",
-                        AgentRun.round_no == 2,
-                    ))
+                    ).order_by(AgentRun.round_no.desc()).limit(1))
                     rebuttal = session.scalar(select(AgentRun).where(
                         AgentRun.task_id == task_id, AgentRun.role == "Rebuttal",
-                        AgentRun.round_no == 2,
+                        AgentRun.round_no == (critic.round_no if critic else 2),
                     ))
                     has_critique = session.scalar(select(Critique.id).where(
-                        Critique.task_id == task_id,
+                        Critique.agent_run_id == (critic.id if critic else None),
                     ).limit(1)) is not None
                     has_pending_request = session.scalar(select(EvidenceRequest.id).where(
                         EvidenceRequest.task_id == task_id,
@@ -253,7 +279,8 @@ def run_next_research_job(
                 elif critic_state[1] != "COMPLETED":
                     raise ValueError("Critic AgentRun is not recoverable")
                 elif not has_critique:
-                    return finish_debate("NO_CRITIQUES")
+                    if finish_debate(critic.round_no) is not None:
+                        return job_id
                 elif has_pending_request:
                     node_phase = "EVIDENCE_REQUEST_RESOLVED"
                     retrieve_evidence_requests(task_id, embedder=embedder,
@@ -271,8 +298,15 @@ def run_next_research_job(
                     node_phase = "REVISED_CLAIM_AUDITED"
                     results = audit_revised_claims(task_id, model=model,
                                                    lease_guard=guard)
-                    if not results:
-                        return finish_debate("REBUTTALS_AUDITED")
+                    if not results and finish_debate(critic.round_no) is not None:
+                        return job_id
+            elif status == "STOP_EVALUATION":
+                with SessionLocal() as session:
+                    latest_round = session.scalar(select(AgentRun.round_no).where(
+                        AgentRun.task_id == task_id, AgentRun.role == "Critic",
+                    ).order_by(AgentRun.round_no.desc()).limit(1))
+                if finish_debate(latest_round or 1) is not None:
+                    return job_id
             else:
                 raise ValueError(f"research task cannot run from {status}")
     except LeaseLostError:

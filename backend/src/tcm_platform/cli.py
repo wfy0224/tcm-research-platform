@@ -49,6 +49,7 @@ from tcm_platform.knowledge_service import (
 from tcm_platform.models import (
     AgentRun,
     Claim,
+    HumanReviewRequest,
     ImportJob,
     PipelineStepExecution,
     ResearchTask,
@@ -70,6 +71,7 @@ from tcm_platform.retrieval import build_retrieval_index, search_published
 from tcm_platform.retrieval_benchmark import create_golden_query, run_benchmark
 from tcm_platform.segment_service import process_next_segment
 from tcm_platform.source_import import SourceMetadata, import_file, process_next_import
+from tcm_platform.stop_service import WorkflowConfig, resolve_human_review
 
 
 def main() -> None:
@@ -181,6 +183,13 @@ def main() -> None:
     research.add_argument("--source-id", type=UUID, action="append", default=[])
     start = commands.add_parser("start-research-task", help="freeze knowledge, index and cloud model")
     start.add_argument("task_id", type=UUID)
+    start.add_argument("--workflow-config", help="JSON stopping policy frozen with the task")
+    list_reviews = commands.add_parser("list-human-reviews", help="list research reviews")
+    list_reviews.add_argument("task_id", type=UUID)
+    resolve_review = commands.add_parser("resolve-human-review", help="resolve and requeue a research task")
+    resolve_review.add_argument("request_id", type=UUID)
+    resolve_review.add_argument("--reviewer", required=True)
+    resolve_review.add_argument("--note", required=True)
     plan = commands.add_parser("plan-research-task", help="run the cloud Planner")
     plan.add_argument("task_id", type=UUID)
     retrieve = commands.add_parser("retrieve-research-task", help="fill version-bound evidence pool")
@@ -370,8 +379,22 @@ def main() -> None:
         print(json.dumps({"task_id": str(task_id)}))
     elif args.command == "start-research-task":
         model = research_model_from_environment()
-        fingerprint = start_research_task(args.task_id, model_version=model.model_version)
+        config = WorkflowConfig.model_validate_json(args.workflow_config) if args.workflow_config else None
+        fingerprint = start_research_task(args.task_id, model_version=model.model_version,
+                                          workflow_config=config)
         print(json.dumps({"status": "PLANNING", "run_fingerprint": fingerprint}))
+    elif args.command == "list-human-reviews":
+        with SessionLocal() as session:
+            reviews = list(session.scalars(select(HumanReviewRequest).where(
+                HumanReviewRequest.task_id == args.task_id
+            ).order_by(HumanReviewRequest.created_at, HumanReviewRequest.id)))
+            print(json.dumps([{"request_id": str(item.id), "status": item.status,
+                               "reason_code": item.reason_code,
+                               "interrupted_stage": item.interrupted_stage,
+                               "resume_stage": item.resume_stage} for item in reviews]))
+    elif args.command == "resolve-human-review":
+        task_id = resolve_human_review(args.request_id, reviewer_id=args.reviewer, note=args.note)
+        print(json.dumps({"task_id": str(task_id), "status": "STOP_EVALUATION"}))
     elif args.command == "plan-research-task":
         model = research_model_from_environment()
         ids = execute_planner(args.task_id, model=model)

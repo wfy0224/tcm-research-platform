@@ -111,11 +111,16 @@ def create_research_task(
 
 
 def start_research_task(
-    task_id: UUID, *, model_version: str, actor_id: str = "local-researcher"
+    task_id: UUID, *, model_version: str, actor_id: str = "local-researcher",
+    workflow_config: object | None = None,
 ) -> str:
     """Freeze all version and model choices before any Agent receives context."""
     if not model_version.strip() or len(model_version) > 200:
         raise ValueError("a configured cloud generation model is required")
+    from tcm_platform.stop_service import WorkflowConfig
+    config = workflow_config or WorkflowConfig()
+    if not isinstance(config, WorkflowConfig):
+        config = WorkflowConfig.model_validate(config)
     with SessionLocal.begin() as session:
         task = session.scalar(select(ResearchTask).where(ResearchTask.id == task_id).with_for_update())
         if task is None or task.status != "CREATED":
@@ -134,6 +139,7 @@ def start_research_task(
             "knowledge_version_id": str(version.id),
             "index_build_id": str(build.id),
             "workflow_version": "research-v1",
+            "workflow_config": config.model_dump(mode="json"),
             "retrieval_profile_version": build.configuration.get("strategy", "hybrid-rrf-v1"),
             "embedding_model": build.configuration["embedding_model"],
             "rerank_model": build.configuration.get("rerank_model"),

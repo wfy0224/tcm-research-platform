@@ -33,6 +33,7 @@ from tcm_platform.models import (
     EvidenceGap,
     EvidenceRequest,
     EvidenceRetrievalEvent,
+    HumanReviewRequest,
     IndexBuild,
     KnowledgeRuntimeState,
     KnowledgeVersionItem,
@@ -40,6 +41,7 @@ from tcm_platform.models import (
     Rebuttal,
     ResearchSubquestion,
     ResearchTask,
+    StopEvaluation,
     TaskCheckpoint,
     TaskEvidenceRef,
     TaskJob,
@@ -59,6 +61,7 @@ from tcm_platform.research_service import (
     submit_first_round_output,
 )
 from tcm_platform.research_worker import run_next_research_job
+from tcm_platform.stop_service import WorkflowConfig, evaluate_snapshot, resolve_human_review
 
 
 def test_agent_can_abstain_when_visible_evidence_is_insufficient():
@@ -154,7 +157,7 @@ class DebateGenerator(FakeGenerator):
         return super().complete_json(system_prompt, input_payload)
 
 
-def new_worker_task():
+def new_worker_task(workflow_config=None):
     with SessionLocal() as session:
         runtime = session.get(KnowledgeRuntimeState, 1)
         if runtime.active_knowledge_version_id is None:
@@ -174,7 +177,8 @@ def new_worker_task():
     task_id = create_research_task(
         provenance["quote_text"], source_ids=[UUID(provenance["source_id"])]
     )
-    start_research_task(task_id, model_version=FakeGenerator.model_version)
+    start_research_task(task_id, model_version=FakeGenerator.model_version,
+                        workflow_config=workflow_config)
     return task_id, embedder, reranker
 
 
@@ -1036,3 +1040,68 @@ def test_worker_recovers_expired_lease_after_node_checkpoints():
     with SessionLocal() as session:
         assert session.get(TaskJob, changed_job).status == "COMPLETED"
         assert session.get(TaskJob, changed_job).execution_generation == 3
+def test_frozen_round_limit_replays_from_persisted_evidence():
+    task_id, embedder, reranker = new_worker_task(
+        WorkflowConfig(min_debate_rounds=2, max_debate_rounds=2)
+    )
+    job_id = run_next_research_job(
+        worker_id="test-multi-round", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        job = session.get(TaskJob, job_id)
+        runs = list(session.scalars(select(AgentRun).where(AgentRun.task_id == task_id)))
+        decisions = list(session.scalars(select(StopEvaluation).where(
+            StopEvaluation.task_id == task_id).order_by(StopEvaluation.round_no)))
+        assert task.status == "DEBATE_ROUND_COMPLETE" and job.status == "COMPLETED"
+        assert sum(run.round_no == 1 for run in runs) == 3
+        assert {run.round_no for run in runs if run.role == "Critic"} == {2, 3}
+        assert {run.round_no for run in runs if run.role == "Rebuttal"} == {2, 3}
+        assert [(item.decision, item.reason_code) for item in decisions] == [
+            ("CONTINUE", "MIN_ROUNDS"), ("STOP", "ROUND_LIMIT")]
+        assert [(item.decision, item.reason_code) for item in decisions] == [
+            evaluate_snapshot(item.input_snapshot) for item in decisions]
+        assert task.execution_context["workflow_config"]["max_debate_rounds"] == 2
+
+
+def test_human_review_releases_lease_and_resumes_stop_stage_only():
+    task_id, embedder, reranker = new_worker_task(
+        WorkflowConfig(mandatory_human_review=True)
+    )
+    job_id = run_next_research_job(
+        worker_id="test-human-wait", model=FakeGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        job = session.get(TaskJob, job_id)
+        review = session.scalar(select(HumanReviewRequest).where(
+            HumanReviewRequest.task_id == task_id))
+        first_runs = list(session.scalars(select(AgentRun.id).where(
+            AgentRun.task_id == task_id, AgentRun.round_no == 1)))
+        assert task.status == "WAITING_HUMAN"
+        assert (task.interrupted_stage, task.resume_stage, task.waiting_reason_code) == (
+            "STOP_EVALUATION", "STOP_EVALUATION", "MANDATORY_REVIEW")
+        assert job.status == "COMPLETED" and job.lease_owner is None
+        assert review.status == "PENDING"
+        review_id = review.id
+    assert resolve_human_review(review_id, reviewer_id="human-tester", note="审阅完成") == task_id
+    with pytest.raises(ValueError, match="not pending"):
+        resolve_human_review(review_id, reviewer_id="human-tester", note="duplicate")
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "STOP_EVALUATION"
+        assert session.get(TaskJob, job_id).status == "PENDING"
+    assert run_next_research_job(
+        worker_id="test-human-resume", model=FakeGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    ) == job_id
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        assert session.get(TaskJob, job_id).status == "COMPLETED"
+        assert list(session.scalars(select(AgentRun.id).where(
+            AgentRun.task_id == task_id, AgentRun.round_no == 1))) == first_runs
+        decisions = list(session.scalars(select(StopEvaluation).where(
+            StopEvaluation.task_id == task_id).order_by(StopEvaluation.created_at)))
+        assert [(item.decision, item.reason_code) for item in decisions] == [
+            ("WAITING_HUMAN", "MANDATORY_REVIEW"), ("STOP", "NO_CRITIQUES")]
