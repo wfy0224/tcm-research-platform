@@ -168,7 +168,9 @@ def _lock_research_control(session: Session, task_id: UUID) -> tuple[TaskJob, Re
     task = session.scalar(select(ResearchTask).where(
         ResearchTask.id == task_id
     ).with_for_update())
-    if job is None or task is None or task.status in {"CREATED", "FIRST_ROUND_COMPLETE", "CANCELLED"}:
+    if job is None or task is None or task.status in {
+        "CREATED", "DEBATE_ROUND_COMPLETE", "CANCELLED",
+    }:
         raise ValueError("research task is not controllable")
     return job, task
 

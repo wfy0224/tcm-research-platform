@@ -11,7 +11,7 @@ from tcm_platform.db import SessionLocal
 from tcm_platform.enums import HealthState
 from tcm_platform.retrieval import search_published
 
-SCHEMA_REVISION = "0013_retrieval_request_unique"
+SCHEMA_REVISION = "0014_research_node_checkpoints"
 
 
 class HealthResponse(BaseModel):

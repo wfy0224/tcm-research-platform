@@ -21,6 +21,7 @@ from tcm_platform.models import (
     TaskEvidenceRef,
 )
 from tcm_platform.research_runtime import StructuredGenerator, recorded_complete
+from tcm_platform.research_service import LeaseGuard
 
 SEMANTIC_AUDIT_PROMPT = (
     "你是证据审计员。只判断给定 Claim 能否被其已引用的原文证据支持。"
@@ -53,10 +54,13 @@ class SemanticAuditOutput(BaseModel):
 
 
 def mechanical_audit_claim(
-    claim_id: UUID, *, actor_id: str = "mechanical-auditor"
+    claim_id: UUID, *, actor_id: str = "mechanical-auditor",
+    lease_guard: LeaseGuard | None = None,
 ) -> dict:
     """Recheck every citation against the task's frozen version and source chain."""
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         claim = session.scalar(select(Claim).where(Claim.id == claim_id).with_for_update())
         if claim is None:
             raise ValueError("Claim does not exist")
@@ -124,7 +128,8 @@ def mechanical_audit_claim(
 
 
 def semantic_audit_claim(claim_id: UUID, *, model: StructuredGenerator,
-                         actor_id: str = "semantic-auditor") -> dict:
+                         actor_id: str = "semantic-auditor",
+                         lease_guard: LeaseGuard | None = None) -> dict:
     """Persist a model verdict only if the latest mechanical audit still passes."""
     with SessionLocal() as session:
         claim = session.get(Claim, claim_id)
@@ -158,6 +163,8 @@ def semantic_audit_claim(claim_id: UUID, *, model: StructuredGenerator,
             or any(item not in visible_ids for item in output.cited_evidence_revision_ids)):
         raise ValueError("semantic auditor cited Evidence outside the audited Claim")
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         claim = session.scalar(select(Claim).where(Claim.id == claim_id).with_for_update())
         task = session.get(ResearchTask, claim.task_id)
         latest = session.scalar(select(AuditResult).where(

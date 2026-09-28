@@ -25,7 +25,7 @@ from tcm_platform.models import (
     utc_now,
 )
 from tcm_platform.research_runtime import StructuredGenerator, recorded_complete
-from tcm_platform.research_service import CLAIM_TYPES, add_task_evidence
+from tcm_platform.research_service import CLAIM_TYPES, LeaseGuard, add_task_evidence
 from tcm_platform.retrieval import Embedder, Reranker, search_published
 
 CRITIC_PROMPT = (
@@ -68,8 +68,11 @@ class CriticOutput(BaseModel):
     critiques: list[CritiqueProposal] = Field(max_length=5)
 
 
-def prepare_critic_round(task_id: UUID, *, actor_id: str = "research-runtime") -> UUID:
+def prepare_critic_round(task_id: UUID, *, actor_id: str = "research-runtime",
+                         lease_guard: LeaseGuard | None = None) -> UUID:
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         task = session.scalar(
             select(ResearchTask).where(ResearchTask.id == task_id).with_for_update()
         )
@@ -138,11 +141,14 @@ def critic_visible_context(run_id: UUID) -> dict:
 
 
 def submit_critic_output(run_id: UUID, payload: dict,
-                         *, actor_id: str = "critic-runtime") -> list[UUID]:
+                         *, actor_id: str = "critic-runtime",
+                         lease_guard: LeaseGuard | None = None) -> list[UUID]:
     output = CriticOutput.model_validate(payload)
     if len({item.client_ref for item in output.critiques}) != len(output.critiques):
         raise ValueError("Critic output contains duplicate client_ref")
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         run = session.scalar(select(AgentRun).where(AgentRun.id == run_id).with_for_update())
         if run is None or run.role != "Critic" or run.round_no != 2 or run.status != "PENDING":
             raise ValueError("Critic AgentRun is not accepting output")
@@ -187,7 +193,8 @@ def submit_critic_output(run_id: UUID, payload: dict,
         return ids
 
 
-def execute_critic(run_id: UUID, *, model: StructuredGenerator) -> list[UUID]:
+def execute_critic(run_id: UUID, *, model: StructuredGenerator,
+                   lease_guard: LeaseGuard | None = None) -> list[UUID]:
     with SessionLocal() as session:
         run = session.get(AgentRun, run_id)
         if run is None or run.status != "PENDING" or run.model_version != model.model_version:
@@ -196,12 +203,12 @@ def execute_critic(run_id: UUID, *, model: StructuredGenerator) -> list[UUID]:
     context = critic_visible_context(run_id)
     output = recorded_complete(task_id, run_id, "Critic", model,
                                CRITIC_PROMPT, context)
-    return submit_critic_output(run_id, output)
+    return submit_critic_output(run_id, output, lease_guard=lease_guard)
 
 
 def retrieve_evidence_requests(
     task_id: UUID, *, embedder: Embedder, reranker: Reranker | None = None,
-    limit: int = 10,
+    limit: int = 10, lease_guard: LeaseGuard | None = None,
 ) -> int:
     with SessionLocal() as session:
         task = session.get(ResearchTask, task_id)
@@ -228,7 +235,8 @@ def retrieve_evidence_requests(
             index_build_id=UUID(context["index_build_id"]),
         )
         total += add_task_evidence(task_id, query, results,
-                                   evidence_request_id=request_id)
+                                   evidence_request_id=request_id,
+                                   lease_guard=lease_guard)
     return total
 
 
@@ -286,9 +294,12 @@ class RebuttalOutput(BaseModel):
     rebuttals: list[RebuttalProposal] = Field(max_length=5)
 
 
-def prepare_rebuttal_round(task_id: UUID, *, actor_id: str = "research-runtime") -> UUID:
+def prepare_rebuttal_round(task_id: UUID, *, actor_id: str = "research-runtime",
+                           lease_guard: LeaseGuard | None = None) -> UUID:
     """Freeze every critique and the post-retrieval evidence pool in one run."""
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         task = session.scalar(
             select(ResearchTask).where(ResearchTask.id == task_id).with_for_update()
         )
@@ -381,10 +392,13 @@ def rebuttal_visible_context(run_id: UUID) -> dict:
 
 
 def submit_rebuttal_output(run_id: UUID, payload: dict,
-                           *, actor_id: str = "rebuttal-runtime") -> list[UUID]:
+                           *, actor_id: str = "rebuttal-runtime",
+                           lease_guard: LeaseGuard | None = None) -> list[UUID]:
     """Reject the entire response before writing any Rebuttal or Claim."""
     output = RebuttalOutput.model_validate(payload)
     with SessionLocal.begin() as session:
+        if lease_guard is not None:
+            lease_guard(session)
         run = session.scalar(select(AgentRun).where(AgentRun.id == run_id).with_for_update())
         if run is None or run.role != "Rebuttal" or run.round_no != 2:
             raise ValueError("Rebuttal AgentRun does not exist")
@@ -515,7 +529,8 @@ def submit_rebuttal_output(run_id: UUID, payload: dict,
         return rebuttal_ids
 
 
-def execute_rebuttal(run_id: UUID, *, model: StructuredGenerator) -> list[UUID]:
+def execute_rebuttal(run_id: UUID, *, model: StructuredGenerator,
+                     lease_guard: LeaseGuard | None = None) -> list[UUID]:
     with SessionLocal() as session:
         run = session.get(AgentRun, run_id)
         if run is None or run.status != "PENDING" or run.model_version != model.model_version:
@@ -527,10 +542,11 @@ def execute_rebuttal(run_id: UUID, *, model: StructuredGenerator) -> list[UUID]:
         task_id = run.task_id
     output = recorded_complete(task_id, run_id, "Rebuttal", model,
                                REBUTTAL_PROMPT, rebuttal_visible_context(run_id))
-    return submit_rebuttal_output(run_id, output)
+    return submit_rebuttal_output(run_id, output, lease_guard=lease_guard)
 
 
-def audit_revised_claims(task_id: UUID, *, model: StructuredGenerator) -> list[dict]:
+def audit_revised_claims(task_id: UUID, *, model: StructuredGenerator,
+                         lease_guard: LeaseGuard | None = None) -> list[dict]:
     """Resume only pending revision audits; audit history remains append-only."""
     from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 
@@ -548,10 +564,11 @@ def audit_revised_claims(task_id: UUID, *, model: StructuredGenerator) -> list[d
     results = []
     for claim_id, status in claims:
         if status == "PENDING":
-            mechanical = mechanical_audit_claim(claim_id)
+            mechanical = mechanical_audit_claim(claim_id, lease_guard=lease_guard)
             if mechanical["verdict"] != "PASS":
                 results.append({"claim_id": str(claim_id), **mechanical})
                 continue
-        semantic = semantic_audit_claim(claim_id, model=model)
+        semantic = semantic_audit_claim(claim_id, model=model,
+                                        lease_guard=lease_guard)
         results.append({"claim_id": str(claim_id), **semantic})
     return results

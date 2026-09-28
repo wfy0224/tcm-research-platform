@@ -93,11 +93,11 @@ uv run python -m tcm_platform.cli run-retrieval-benchmark --k 10
 
 评测记录 Precision@K、Recall@K、MRR、nDCG、反证召回率和返回证据的可追溯率，并关联知识版本及索引版本。`GOLD` 和 `COUNTER` 计入必须召回的证据；没有反证标注的题目，其反证召回率记为 0，汇总时应结合题目标签理解。可选使用阿里云百炼，但需设置 `TCM_MODEL_PROVIDER=aliyun`、`DASHSCOPE_API_KEY`、`TCM_DASHSCOPE_WORKSPACE_ID`，可通过 `TCM_DASHSCOPE_REGION` 调整地域。
 
-## 研究任务基础 E7（进行中）
+## 研究任务与一轮纠错 E7/E8（进行中）
 
 已建立研究任务、冻结的执行上下文、任务证据池、检索事件、首轮 AgentRun 与 Claim Pool。Planner 的子问题采用严格 JSON 合约；首轮 Classicist、HistoricalScholar、Theorist 的输入会在任何 Claim 生成前分别冻结。Agent 输出若包含不在任务证据池或本次可见集合中的 EvidenceRevision，整份输出拒绝写入。
 
-生成模型默认使用硅基流动云端对话 API。联调使用用户确认免费的 `Qwen/Qwen3-8B`；运行前仍需显式设置 `TCM_RESEARCH_MODEL`。启动任务会将冻结模型路由的研究 Job 放入 PostgreSQL 队列，运行一个 Worker 即可自动完成 Planner、证据检索和首轮独立研究：
+生成模型默认使用硅基流动云端对话 API。联调模型为 `Qwen/Qwen3-8B`；运行前仍需显式设置 `TCM_RESEARCH_MODEL`。启动任务会将冻结模型路由的研究 Job 放入 PostgreSQL 队列，运行一个 Worker 即可自动完成 Planner、证据检索、首轮独立研究、Claim 审计，以及一轮 Critic→受限再检索→Rebuttal→修订审计：
 
 ```powershell
 $env:TCM_RESEARCH_MODEL = "Qwen/Qwen3-8B"
@@ -106,7 +106,7 @@ uv run python -m tcm_platform.cli start-research-task <task_id>
 uv run python -m tcm_platform.cli run-research-next --task-id <task_id>
 ```
 
-常驻处理可运行 `uv run python -m tcm_platform.cli run-research-worker`。Worker 使用租约和心跳；节点提交前核验租约，进程中断后从已提交的任务状态与 AgentRun 继续。暂停和取消请求在安全点生效；若模型调用正在进行，会等待该调用返回并丢弃其未提交的业务结果。可用 `pause-research-task <task_id>`、`resume-research-task <task_id>`、`cancel-research-task <task_id>` 控制任务。每次生成调用记录模型、请求/输出哈希、耗时、状态和接口返回的 token 用量，不保存原始提示词。也可按下列命令逐步调试：
+常驻处理可运行 `uv run python -m tcm_platform.cli run-research-worker`。Worker 使用租约和心跳；E8 节点的业务写入与节点检查点在同一事务中提交，租约过期后根据已提交的任务状态和 AgentRun 恢复。暂停和取消请求在安全点生效；若模型调用正在进行，会等待该调用返回并丢弃其未提交的业务结果。可用 `pause-research-task <task_id>`、`resume-research-task <task_id>`、`cancel-research-task <task_id>` 控制任务。每次生成调用记录模型、请求/输出哈希、耗时、状态和接口返回的 token 用量，不保存原始提示词。完成一轮后状态为 `DEBATE_ROUND_COMPLETE`；最终争议裁决与报告留给 E9。也可按下列命令逐步调试：
 
 ```powershell
 uv run python -m tcm_platform.cli plan-research-task <task_id>
@@ -117,7 +117,7 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 如需使用 DeepSeek 官方 API，可单独设置 `TCM_RESEARCH_PROVIDER=deepseek`、`TCM_RESEARCH_MODEL=deepseek-flash` 和 `DEEPSEEK_API_KEY`；向量和重排仍可保持硅基流动免费模型。DeepSeek 官方 Flash 按 token 计费，选择该路由前应查看[官方价格](https://api-docs.deepseek.com/quick_start/pricing/)。已启动任务的模型路由不会被后续环境默认值改变。
 
-历史研究角色只有在来源具有明确作者、时代、流派、版本或出版年元数据时才生成 Claim；其余情况记录空结果，避免把普通原文误标为历史事实。这是保守的临时门禁，文本中隐含的历史线索可能暂时无法进入历史角色。`Qwen/Qwen3-8B` 的真实联调曾产生超出原文的解释，因此当前 Claim 只是待审研究草稿，不能直接当作可靠结论。首轮后的语义审计与纠错闭环将在 E8 实现。
+历史研究角色只有在来源具有明确作者、时代、流派、版本或出版年元数据时才生成 Claim；其余情况记录空结果，避免把普通原文误标为历史事实。这是保守的临时门禁，文本中隐含的历史线索可能暂时无法进入历史角色。`Qwen/Qwen3-8B` 的真实联调曾产生超出原文的解释，因此当前 Claim 和自动审计仍是待复核研究材料，不能直接当作可靠结论。
 
 ## Claim 审计 E8（进行中）
 
@@ -125,9 +125,11 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 完成 Claim 审计后，可依次运行 `prepare-critic <task_id>`、`run-critic <agent_run_id>`、`retrieve-evidence-requests <task_id>`。Critic 只看到已完成审计的 Claim 及冻结的任务证据；它提出的 EvidenceRequest 才能触发再检索。检索沿用任务冻结的来源、知识版本、索引与模型路由，并记录每条请求的证据来源事件。
 
-再检索请求全部结束后，运行 `prepare-rebuttal <task_id>`、`run-rebuttal <agent_run_id>`、`audit-revised-claims <task_id>`。Rebuttal 对每条 Critique 给出 ACCEPT、PARTIAL_ACCEPT、REJECT 或 REVISE；REVISE 追加一条以旧 Claim 为 parent 的新 Claim，原断言保留。修订 Claim 从 PENDING 重新经过机械与语义审计，审计命令可在失败后重试未完成的修订。Rebuttal 的模型、Prompt 版本、轮次和冻结可见证据记录于 AgentRun；模型调用记录于 ModelInvocation。Worker 自动串联仍属 E8 后续任务。
+再检索请求全部结束后，手工调试可运行 `prepare-rebuttal <task_id>`、`run-rebuttal <agent_run_id>`、`audit-revised-claims <task_id>`。Rebuttal 对每条 Critique 给出 ACCEPT、PARTIAL_ACCEPT、REJECT 或 REVISE；REVISE 追加一条以旧 Claim 为 parent 的新 Claim，原断言保留。修订 Claim 从 PENDING 重新经过机械与语义审计，审计命令可在失败后重试未完成的修订。Rebuttal 的模型、Prompt 版本、轮次和冻结可见证据记录于 AgentRun；模型调用记录于 ModelInvocation。
 
-验收追踪：AC-1B-03/04 的 Claim 定向质疑、受限再检索、Rebuttal、追加修订与重新审计对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、`audit_service.py`、迁移 0012/0013，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
+不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_worker_completes_audited_debate_without_manual_cli_steps`。先在独立 PostgreSQL 测试库迁移到 `0014_research_node_checkpoints`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
+
+验收追踪：AC-1B-03/04 的 Claim 定向质疑、受限再检索、Rebuttal、追加修订与重新审计对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、`audit_service.py`、`research_worker.py`、迁移 0012～0014，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
 
 ## 设计约束
 

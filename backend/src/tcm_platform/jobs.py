@@ -196,13 +196,13 @@ def recover_expired(session: Session, *, actor_id: str = "recovery") -> int:
         )
     )
     for job in expired:
-        checkpoint = session.scalar(
-            select(TaskCheckpoint).where(
+        checkpoints = session.scalars(
+            select(TaskCheckpoint.result).where(
                 TaskCheckpoint.job_id == job.id,
                 TaskCheckpoint.execution_generation == job.execution_generation,
             )
         )
-        if checkpoint is not None:
+        if any(result.get("kind") != "research.node" for result in checkpoints):
             job.status = JobStatus.COMPLETED.value
         elif job.attempts >= job.max_attempts:
             job.status = JobStatus.FAILED.value

@@ -1,4 +1,4 @@
-"""Lease-guarded, resumable first-round research worker."""
+"""Lease-guarded research worker through one audited debate round."""
 
 from threading import Event, Thread
 from uuid import UUID
@@ -8,6 +8,15 @@ from sqlalchemy import select
 from tcm_platform.audit import append_event
 from tcm_platform.cloud_models import research_model_for_version
 from tcm_platform.db import SessionLocal
+from tcm_platform.debate_service import (
+    audit_revised_claims,
+    execute_critic,
+    execute_rebuttal,
+    prepare_critic_round,
+    prepare_rebuttal_round,
+    retrieve_evidence_requests,
+)
+from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 from tcm_platform.enums import JobStatus
 from tcm_platform.jobs import (
     LeaseLostError,
@@ -18,7 +27,16 @@ from tcm_platform.jobs import (
     heartbeat,
     recover_expired,
 )
-from tcm_platform.models import ResearchTask, TaskCheckpoint, TaskJob, utc_now
+from tcm_platform.models import (
+    AgentRun,
+    Claim,
+    Critique,
+    EvidenceRequest,
+    ResearchTask,
+    TaskCheckpoint,
+    TaskJob,
+    utc_now,
+)
 from tcm_platform.research_runtime import (
     StructuredGenerator,
     execute_first_round,
@@ -100,6 +118,7 @@ def run_next_research_job(
     keeper = Thread(target=_keep_lease, args=(job_id, worker_id, generation, stop, lost),
                     daemon=True)
     keeper.start()
+    node_phase: str | None = None
 
     def guard(session) -> None:
         if lost.is_set():
@@ -109,8 +128,38 @@ def run_next_research_job(
         task = session.scalar(select(ResearchTask).where(
             ResearchTask.id == task_id
         ).with_for_update())
+        if task is None or task.run_fingerprint != fingerprint:
+            raise ValueError("research job differs from frozen task context")
         if task.control_state in {"PAUSE_REQUESTED", "CANCEL_REQUESTED"}:
             raise ResearchControlRequested(task.control_state)
+        if task.control_state != "ACTIVE":
+            raise ValueError("research job control state is not active")
+        if node_phase is not None:
+            session.add(TaskCheckpoint(
+                job_id=job_id, execution_generation=generation,
+                result={"kind": "research.node", "phase": node_phase,
+                        "task_id": str(task_id), "run_fingerprint": fingerprint},
+            ))
+
+    def finish_debate(reason: str) -> UUID:
+        nonlocal node_phase
+        node_phase = None
+        with SessionLocal.begin() as session:
+            guard(session)
+            task = session.scalar(select(ResearchTask).where(
+                ResearchTask.id == task_id
+            ).with_for_update())
+            if task.status not in {"FIRST_ROUND_COMPLETE", "DEBATING"}:
+                raise ValueError("research task cannot finish its debate round")
+            task.status = "DEBATE_ROUND_COMPLETE"
+            append_event(session, event_type="research_task.debate_round_completed",
+                         actor_id=worker_id, aggregate_id=task_id,
+                         payload={"reason": reason})
+            complete_job(session, job_id=job_id, worker_id=worker_id,
+                         generation=generation,
+                         result={"task_id": str(task_id), "status": task.status,
+                                 "reason": reason})
+        return job_id
 
     try:
         if model is None:
@@ -119,6 +168,11 @@ def run_next_research_job(
                 if task is None or task.execution_context is None:
                     raise ValueError("research task has no frozen model route")
                 model = research_model_for_version(task.execution_context["generation_model"])
+        with SessionLocal() as session:
+            task = session.get(ResearchTask, task_id)
+            if (task is None or task.execution_context is None
+                    or model.model_version != task.execution_context["generation_model"]):
+                raise ValueError("research Worker model differs from frozen task route")
         while True:
             with SessionLocal() as session:
                 task = session.get(ResearchTask, task_id)
@@ -144,12 +198,75 @@ def run_next_research_job(
                     if session.get(ResearchTask, task_id).status == "RESEARCHING":
                         raise RuntimeError("first round has no completed state")
             elif status == "FIRST_ROUND_COMPLETE":
-                with SessionLocal.begin() as session:
-                    guard(session)
-                    complete_job(session, job_id=job_id, worker_id=worker_id,
-                                 generation=generation,
-                                 result={"task_id": str(task_id), "status": status})
-                return job_id
+                with SessionLocal() as session:
+                    pending = session.scalar(select(Claim).where(
+                        Claim.task_id == task_id, Claim.parent_claim_id.is_(None),
+                        Claim.audit_status.in_(("PENDING", "PENDING_SEMANTIC")),
+                    ).order_by(Claim.created_at, Claim.id).limit(1))
+                    pending_id = pending.id if pending else None
+                    pending_status = pending.audit_status if pending else None
+                    any_claim = session.scalar(select(Claim.id).where(
+                        Claim.task_id == task_id, Claim.parent_claim_id.is_(None),
+                    ).limit(1)) is not None
+                if pending_id is not None:
+                    if pending_status == "PENDING":
+                        node_phase = "FIRST_ROUND_MECHANICAL_AUDIT"
+                        mechanical_audit_claim(pending_id, lease_guard=guard)
+                    else:
+                        node_phase = "FIRST_ROUND_SEMANTIC_AUDIT"
+                        semantic_audit_claim(pending_id, model=model, lease_guard=guard)
+                elif not any_claim:
+                    return finish_debate("NO_FIRST_ROUND_CLAIMS")
+                else:
+                    node_phase = "CRITIC_PREPARED"
+                    prepare_critic_round(task_id, lease_guard=guard)
+            elif status == "DEBATING":
+                with SessionLocal() as session:
+                    critic = session.scalar(select(AgentRun).where(
+                        AgentRun.task_id == task_id, AgentRun.role == "Critic",
+                        AgentRun.round_no == 2,
+                    ))
+                    rebuttal = session.scalar(select(AgentRun).where(
+                        AgentRun.task_id == task_id, AgentRun.role == "Rebuttal",
+                        AgentRun.round_no == 2,
+                    ))
+                    has_critique = session.scalar(select(Critique.id).where(
+                        Critique.task_id == task_id,
+                    ).limit(1)) is not None
+                    has_pending_request = session.scalar(select(EvidenceRequest.id).where(
+                        EvidenceRequest.task_id == task_id,
+                        EvidenceRequest.status == "PENDING",
+                    ).limit(1)) is not None
+                    critic_state = (critic.id, critic.status) if critic else None
+                    rebuttal_state = (rebuttal.id, rebuttal.status) if rebuttal else None
+                if critic_state is None:
+                    raise ValueError("debating task has no Critic AgentRun")
+                if critic_state[1] == "PENDING":
+                    node_phase = "CRITIC_SUBMITTED"
+                    execute_critic(critic_state[0], model=model, lease_guard=guard)
+                elif critic_state[1] != "COMPLETED":
+                    raise ValueError("Critic AgentRun is not recoverable")
+                elif not has_critique:
+                    return finish_debate("NO_CRITIQUES")
+                elif has_pending_request:
+                    node_phase = "EVIDENCE_REQUEST_RESOLVED"
+                    retrieve_evidence_requests(task_id, embedder=embedder,
+                                               reranker=reranker, limit=limit,
+                                               lease_guard=guard)
+                elif rebuttal_state is None:
+                    node_phase = "REBUTTAL_PREPARED"
+                    prepare_rebuttal_round(task_id, lease_guard=guard)
+                elif rebuttal_state[1] == "PENDING":
+                    node_phase = "REBUTTAL_SUBMITTED"
+                    execute_rebuttal(rebuttal_state[0], model=model, lease_guard=guard)
+                elif rebuttal_state[1] != "COMPLETED":
+                    raise ValueError("Rebuttal AgentRun is not recoverable")
+                else:
+                    node_phase = "REVISED_CLAIM_AUDITED"
+                    results = audit_revised_claims(task_id, model=model,
+                                                   lease_guard=guard)
+                    if not results:
+                        return finish_debate("REBUTTALS_AUDITED")
             else:
                 raise ValueError(f"research task cannot run from {status}")
     except LeaseLostError:

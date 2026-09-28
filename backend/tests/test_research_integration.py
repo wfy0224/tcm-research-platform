@@ -1,3 +1,4 @@
+from datetime import timedelta
 from uuid import UUID, uuid4
 
 import pytest
@@ -37,6 +38,7 @@ from tcm_platform.models import (
     TaskCheckpoint,
     TaskEvidenceRef,
     TaskJob,
+    utc_now,
 )
 from tcm_platform.research_runtime import execute_first_round, execute_planner
 from tcm_platform.research_service import (
@@ -98,6 +100,12 @@ class FakeGenerator:
         self.inputs.append(input_payload)
         if "Planner" in system_prompt:
             return {"subquestions": [input_payload["question"]]}
+        if "证据审计员" in system_prompt:
+            return {"verdict": "SUPPORTED", "rationale_summary": "原文支持断言",
+                    "cited_evidence_revision_ids": [
+                        input_payload["evidence"][0]["evidence_revision_id"]]}
+        if "Critic" in system_prompt:
+            return {"critiques": []}
         role = input_payload["role"]
         claim_type = {
             "Classicist": "DIRECT_TEXT",
@@ -110,6 +118,59 @@ class FakeGenerator:
             "rationale_summary": "Cites the visible source text.",
             "evidence_revision_ids": [input_payload["evidence"][0]["evidence_revision_id"]],
         }]}
+
+
+class DebateGenerator(FakeGenerator):
+    def complete_json(self, system_prompt, input_payload):
+        if "证据审计员" in system_prompt:
+            verdict = ("NOT_VERIFIABLE" if input_payload["assertion_text"].startswith("修订：")
+                       else "SUPPORTED")
+            return {"verdict": verdict, "rationale_summary": "按可见原文审计",
+                    "cited_evidence_revision_ids": [
+                        input_payload["evidence"][0]["evidence_revision_id"]]}
+        if "Critic" in system_prompt:
+            return {"critiques": [{
+                "client_ref": "c1", "target_claim_id": input_payload["claims"][0]["claim_id"],
+                "issue_type": "OVERCLAIM", "rationale_summary": "需限定断言",
+                "evidence_request_query": "太阳病脉象",
+            }]}
+        if "研究反驳 Agent" in system_prompt:
+            critique = input_payload["critiques"][0]
+            evidence_id = input_payload["evidence"][0]["evidence_revision_id"]
+            return {"rebuttals": [{
+                "critique_id": critique["critique_id"], "action": "REVISE",
+                "rationale_summary": "接受限定意见", "evidence_revision_ids": [evidence_id],
+                "revised_claim": {
+                    "claim_type": critique["claim_type"],
+                    "assertion_text": "修订：只保留可见原文所述内容",
+                    "rationale_summary": "删去不能验证的部分",
+                },
+            }]}
+        return super().complete_json(system_prompt, input_payload)
+
+
+def new_worker_task():
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        if runtime.active_knowledge_version_id is None:
+            pytest.skip("no published sample knowledge version")
+        build = session.get(IndexBuild, runtime.active_index_build_id)
+        vector = session.scalar(select(EmbeddingRecord).where(
+            EmbeddingRecord.index_build_id == build.id
+        ))
+        item = session.scalar(select(KnowledgeVersionItem).where(
+            KnowledgeVersionItem.knowledge_version_id == build.knowledge_version_id,
+            KnowledgeVersionItem.evidence_revision_id.is_not(None),
+        ))
+        embedder = FakeEmbedder(build.configuration["embedding_model"], vector.dimensions)
+        reranker = (FakeReranker(build.configuration["rerank_model"])
+                    if build.configuration.get("rerank_model") else None)
+    provenance = trace_evidence(item.evidence_revision_id)
+    task_id = create_research_task(
+        provenance["quote_text"], source_ids=[UUID(provenance["source_id"])]
+    )
+    start_research_task(task_id, model_version=FakeGenerator.model_version)
+    return task_id, embedder, reranker
 
 
 def test_first_round_freezes_context_and_rejects_unseen_evidence_atomically():
@@ -224,10 +285,14 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
     )
     model = FakeGenerator()
     start_research_task(task_id, model_version=model.model_version)
-    job_id = run_next_research_job(
-        worker_id="test-research-worker", model=model, embedder=embedder,
-        reranker=reranker, task_id=task_id,
-    )
+    execute_planner(task_id, model=model)
+    retrieve_for_task(task_id, embedder=embedder, reranker=reranker)
+    prepare_first_round(task_id)
+    execute_first_round(task_id, model=model)
+    with SessionLocal() as session:
+        job_id = session.scalar(select(TaskJob.id).where(
+            TaskJob.idempotency_key == f"research:{task_id}:run:v1"
+        ))
     assert job_id is not None
     with SessionLocal() as session:
         task = session.get(ResearchTask, task_id)
@@ -236,9 +301,8 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
             TaskCheckpoint.job_id == job_id
         ))
         assert task.status == "FIRST_ROUND_COMPLETE"
-        assert job.status == "COMPLETED"
-        assert checkpoint.result == {"task_id": str(task_id),
-                                     "status": "FIRST_ROUND_COMPLETE"}
+        assert job.status == "PENDING"
+        assert checkpoint is None
         claims = list(session.scalars(select(Claim).where(Claim.task_id == task_id)))
         assert len(claims) >= 2
         audited_claim_id = claims[0].id
@@ -485,7 +549,10 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
     assert run_next_research_job(
         worker_id="test-research-worker", model=model, embedder=embedder,
         reranker=reranker, task_id=task_id,
-    ) is None
+    ) == job_id
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        assert session.get(TaskJob, job_id).status == "COMPLETED"
 
 
 def test_research_pause_discarded_planner_output_and_resume():
@@ -539,7 +606,7 @@ def test_research_pause_discarded_planner_output_and_resume():
         embedder=embedder, reranker=reranker, task_id=task_id,
     ) == job_id
     with SessionLocal() as session:
-        assert session.get(ResearchTask, task_id).status == "FIRST_ROUND_COMPLETE"
+        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
         assert session.get(TaskJob, job_id).status == "COMPLETED"
 
 
@@ -592,3 +659,248 @@ def test_research_cancel_during_planner_discards_returned_output():
         assert not list(session.scalars(select(ResearchSubquestion).where(
             ResearchSubquestion.task_id == task_id
         )))
+
+
+def test_worker_completes_audited_debate_without_manual_cli_steps():
+    task_id, embedder, reranker = new_worker_task()
+    job_id = run_next_research_job(
+        worker_id="test-debate-worker", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        job = session.get(TaskJob, job_id)
+        assert task.status == "DEBATE_ROUND_COMPLETE"
+        assert job.status == "COMPLETED" and job.attempts == 1
+        runs = list(session.scalars(select(AgentRun).where(AgentRun.task_id == task_id)))
+        assert sum(run.round_no == 1 for run in runs) == 3
+        assert {run.role for run in runs if run.round_no == 2} == {"Critic", "Rebuttal"}
+        critiques = list(session.scalars(select(Critique).where(Critique.task_id == task_id)))
+        rebuttals = list(session.scalars(select(Rebuttal).where(Rebuttal.task_id == task_id)))
+        assert len(critiques) == len(rebuttals) == 1
+        assert critiques[0].status == "RESPONDED"
+        assert rebuttals[0].critique_id == critiques[0].id
+        revised = session.get(Claim, rebuttals[0].revised_claim_id)
+        original = session.get(Claim, revised.parent_claim_id)
+        assert original.assertion_text != revised.assertion_text
+        assert original.audit_status == "SUPPORTED"
+        assert revised.audit_status == "NOT_VERIFIABLE"
+        audits = list(session.scalars(select(AuditResult).where(
+            AuditResult.claim_id == revised.id
+        ).order_by(AuditResult.sequence_no)))
+        assert [(item.stage, item.verdict) for item in audits] == [
+            ("MECHANICAL", "PASS"), ("SEMANTIC", "NOT_VERIFIABLE"),
+        ]
+        request = session.scalar(select(EvidenceRequest).where(
+            EvidenceRequest.task_id == task_id
+        ))
+        assert request.status in {"RETRIEVED", "NO_RESULT"}
+        events = list(session.scalars(select(EvidenceRetrievalEvent).where(
+            EvidenceRetrievalEvent.evidence_request_id == request.id
+        )))
+        assert len(events) == request.result_count
+        checkpoints = list(session.scalars(select(TaskCheckpoint).where(
+            TaskCheckpoint.job_id == job_id
+        )))
+        phases = {item.result.get("phase") for item in checkpoints}
+        assert {"FIRST_ROUND_MECHANICAL_AUDIT", "FIRST_ROUND_SEMANTIC_AUDIT",
+                "CRITIC_PREPARED", "CRITIC_SUBMITTED", "EVIDENCE_REQUEST_RESOLVED",
+                "REBUTTAL_PREPARED", "REBUTTAL_SUBMITTED", "REVISED_CLAIM_AUDITED"} <= phases
+        assert any(item.result.get("status") == "DEBATE_ROUND_COMPLETE"
+                   for item in checkpoints)
+    assert run_next_research_job(
+        worker_id="test-debate-worker", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    ) is None
+
+
+def test_worker_retries_invalid_critic_output_without_partial_debate():
+    task_id, embedder, reranker = new_worker_task()
+
+    class InvalidCritic(DebateGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "Critic" in system_prompt:
+                payload = super().complete_json(system_prompt, input_payload)
+                payload["critiques"].append({
+                    "client_ref": "bad", "target_claim_id": str(uuid4()),
+                    "issue_type": "OVERCLAIM", "rationale_summary": "池外 Claim",
+                    "evidence_request_query": None,
+                })
+                return payload
+            return super().complete_json(system_prompt, input_payload)
+
+    job_id = run_next_research_job(
+        worker_id="test-invalid-critic", model=InvalidCritic(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal.begin() as session:
+        job = session.get(TaskJob, job_id)
+        assert job.status == "RETRY_WAIT"
+        assert session.scalar(select(Critique.id).where(Critique.task_id == task_id)) is None
+        checkpoints = list(session.scalars(select(TaskCheckpoint).where(
+            TaskCheckpoint.job_id == job_id
+        )))
+        assert all(item.result.get("phase") != "CRITIC_SUBMITTED" for item in checkpoints)
+        job.available_at = utc_now()
+    assert run_next_research_job(
+        worker_id="test-invalid-critic", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    ) == job_id
+    with SessionLocal() as session:
+        assert session.get(TaskJob, job_id).status == "COMPLETED"
+        assert session.get(TaskJob, job_id).attempts == 2
+        assert len(list(session.scalars(select(Critique).where(Critique.task_id == task_id)))) == 1
+        assert len(list(session.scalars(select(Claim).where(
+            Claim.task_id == task_id, Claim.parent_claim_id.is_not(None)
+        )))) == 1
+
+
+def test_worker_resumes_revised_claim_semantic_audit_without_duplicate_revision():
+    task_id, embedder, reranker = new_worker_task()
+
+    class InvalidRevisionAudit(DebateGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if ("证据审计员" in system_prompt
+                    and input_payload["assertion_text"].startswith("修订：")):
+                return {"verdict": "SUPPORTED", "rationale_summary": "非法池外引用",
+                        "cited_evidence_revision_ids": [str(uuid4())]}
+            return super().complete_json(system_prompt, input_payload)
+
+    job_id = run_next_research_job(
+        worker_id="test-revision-retry", model=InvalidRevisionAudit(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal.begin() as session:
+        job = session.get(TaskJob, job_id)
+        assert job.status == "RETRY_WAIT"
+        revised = list(session.scalars(select(Claim).where(
+            Claim.task_id == task_id, Claim.parent_claim_id.is_not(None)
+        )))
+        assert len(revised) == 1 and revised[0].audit_status == "PENDING_SEMANTIC"
+        assert len(list(session.scalars(select(Rebuttal).where(
+            Rebuttal.task_id == task_id
+        )))) == 1
+        job.available_at = utc_now()
+        revised_id = revised[0].id
+    assert run_next_research_job(
+        worker_id="test-revision-retry", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    ) == job_id
+    with SessionLocal() as session:
+        assert session.get(TaskJob, job_id).status == "COMPLETED"
+        revised = list(session.scalars(select(Claim).where(
+            Claim.task_id == task_id, Claim.parent_claim_id.is_not(None)
+        )))
+        assert len(revised) == 1 and revised[0].id == revised_id
+        assert revised[0].audit_status == "NOT_VERIFIABLE"
+        assert len(list(session.scalars(select(Rebuttal).where(
+            Rebuttal.task_id == task_id
+        )))) == 1
+        audits = list(session.scalars(select(AuditResult).where(
+            AuditResult.claim_id == revised_id
+        ).order_by(AuditResult.sequence_no)))
+        assert [item.stage for item in audits] == ["MECHANICAL", "SEMANTIC"]
+
+
+def test_worker_pause_and_cancel_discard_debate_model_output():
+    paused_id, embedder, reranker = new_worker_task()
+
+    class PausingCritic(DebateGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "Critic" in system_prompt:
+                assert request_research_pause(paused_id) == "PAUSE_REQUESTED"
+            return super().complete_json(system_prompt, input_payload)
+
+    paused_job = run_next_research_job(
+        worker_id="test-pause-debate", model=PausingCritic(),
+        embedder=embedder, reranker=reranker, task_id=paused_id,
+    )
+    with SessionLocal() as session:
+        assert session.get(TaskJob, paused_job).status == "PAUSED"
+        assert session.scalar(select(Critique.id).where(Critique.task_id == paused_id)) is None
+    assert resume_research_task(paused_id) == "DEBATING"
+    assert run_next_research_job(
+        worker_id="test-pause-debate", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=paused_id,
+    ) == paused_job
+
+    cancelled_id, embedder, reranker = new_worker_task()
+
+    class CancellingRebuttal(DebateGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "研究反驳 Agent" in system_prompt:
+                assert cancel_research_task(cancelled_id) == "CANCEL_REQUESTED"
+            return super().complete_json(system_prompt, input_payload)
+
+    cancelled_job = run_next_research_job(
+        worker_id="test-cancel-debate", model=CancellingRebuttal(),
+        embedder=embedder, reranker=reranker, task_id=cancelled_id,
+    )
+    with SessionLocal() as session:
+        assert session.get(TaskJob, cancelled_job).status == "CANCELLED"
+        assert session.get(ResearchTask, cancelled_id).status == "CANCELLED"
+        assert session.scalar(select(Rebuttal.id).where(Rebuttal.task_id == cancelled_id)) is None
+        assert session.scalar(select(Claim.id).where(
+            Claim.task_id == cancelled_id, Claim.parent_claim_id.is_not(None)
+        )) is None
+
+
+def test_worker_recovers_expired_lease_after_node_checkpoints():
+    task_id, embedder, reranker = new_worker_task()
+
+    class ExpiringCritic(DebateGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "Critic" in system_prompt:
+                with SessionLocal.begin() as session:
+                    job = session.scalar(select(TaskJob).where(
+                        TaskJob.idempotency_key == f"research:{task_id}:run:v1"
+                    ).with_for_update())
+                    job.lease_expires_at = utc_now() - timedelta(seconds=1)
+            return super().complete_json(system_prompt, input_payload)
+
+    job_id = run_next_research_job(
+        worker_id="test-expired-debate", model=ExpiringCritic(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal() as session:
+        assert session.get(TaskJob, job_id).status == "RUNNING"
+        assert session.scalar(select(Critique.id).where(Critique.task_id == task_id)) is None
+        assert session.scalar(select(TaskCheckpoint.id).where(
+            TaskCheckpoint.job_id == job_id
+        )) is not None
+    assert run_next_research_job(
+        worker_id="test-expired-debate", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    ) == job_id
+    with SessionLocal() as session:
+        job = session.get(TaskJob, job_id)
+        assert job.status == "COMPLETED" and job.execution_generation == 2
+        assert len(list(session.scalars(select(Critique).where(Critique.task_id == task_id)))) == 1
+
+    changed_id, embedder, reranker = new_worker_task()
+
+    class ChangingGenerationCritic(DebateGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "Critic" in system_prompt:
+                with SessionLocal.begin() as session:
+                    job = session.scalar(select(TaskJob).where(
+                        TaskJob.idempotency_key == f"research:{changed_id}:run:v1"
+                    ).with_for_update())
+                    job.execution_generation += 1
+                    job.lease_expires_at = utc_now() - timedelta(seconds=1)
+            return super().complete_json(system_prompt, input_payload)
+
+    changed_job = run_next_research_job(
+        worker_id="test-changed-generation", model=ChangingGenerationCritic(),
+        embedder=embedder, reranker=reranker, task_id=changed_id,
+    )
+    with SessionLocal() as session:
+        assert session.scalar(select(Critique.id).where(Critique.task_id == changed_id)) is None
+        assert session.get(TaskJob, changed_job).execution_generation == 2
+    assert run_next_research_job(
+        worker_id="test-changed-generation", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=changed_id,
+    ) == changed_job
+    with SessionLocal() as session:
+        assert session.get(TaskJob, changed_job).status == "COMPLETED"
+        assert session.get(TaskJob, changed_job).execution_generation == 3

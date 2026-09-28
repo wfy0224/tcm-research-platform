@@ -107,7 +107,7 @@ class TaskJob(Base):
 class TaskCheckpoint(Base):
     __tablename__ = "task_checkpoint"
     __table_args__ = (
-        UniqueConstraint("job_id", "execution_generation", name="uq_checkpoint_generation"),
+        Index("ix_checkpoint_job_generation", "job_id", "execution_generation", "created_at"),
         {"schema": "runtime"},
     )
 
