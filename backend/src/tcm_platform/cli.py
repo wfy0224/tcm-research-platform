@@ -1,6 +1,7 @@
 """Development CLI for the source import and segmentation pipeline."""
 
 import argparse
+import getpass
 import hashlib
 import json
 import time
@@ -48,6 +49,7 @@ from tcm_platform.knowledge_service import (
     trace_evidence,
     trace_knowledge,
 )
+from tcm_platform.model_credentials import store_model_key
 from tcm_platform.models import (
     AgentRun,
     Artifact,
@@ -62,6 +64,7 @@ from tcm_platform.models import (
     TaskJob,
     TextSegmentRevision,
 )
+from tcm_platform.outbound_policy import set_source_outbound_policy
 from tcm_platform.report_export import process_next_report_export, queue_report_export
 from tcm_platform.research_runtime import execute_first_round, execute_planner
 from tcm_platform.research_service import (
@@ -98,8 +101,21 @@ def main() -> None:
     create.add_argument("--publication-year", type=int)
     create.add_argument("--language", default="zh")
     create.add_argument("--copyright-status", default="UNKNOWN")
+    create.add_argument("--data-level", choices=["PUBLIC", "RESTRICTED", "SENSITIVE"],
+                        default="RESTRICTED")
+    create.add_argument("--authorize-outbound", action="store_true")
+    create.add_argument("--outbound-reason")
     create.add_argument("--request-key")
     create.add_argument("--source-id", type=UUID, help="append an immutable revision to an existing source")
+    policy = commands.add_parser("set-source-outbound-policy", help="audit a source outbound grant")
+    policy.add_argument("source_id", type=UUID)
+    policy.add_argument("--data-level", required=True,
+                        choices=["PUBLIC", "RESTRICTED", "SENSITIVE"])
+    policy.add_argument("--authorize", action="store_true")
+    policy.add_argument("--reason", required=True)
+    policy.add_argument("--actor", required=True)
+    key_command = commands.add_parser("set-model-key", help="save a provider key in OS keychain")
+    key_command.add_argument("provider", choices=["aliyun", "siliconflow", "deepseek"])
 
     commands.add_parser("parse-next", help="process one queued source.parse job")
     commands.add_parser("segment-next", help="process one queued source.segment job")
@@ -177,6 +193,7 @@ def main() -> None:
     search = commands.add_parser("search-published", help="search active published Evidence")
     search.add_argument("query")
     search.add_argument("--limit", type=int, default=10)
+    search.add_argument("--allow-query-outbound", action="store_true")
     golden = commands.add_parser("add-golden-query", help="add a labeled retrieval query")
     golden.add_argument("query")
     golden.add_argument("--gold", type=UUID, action="append", default=[])
@@ -186,12 +203,14 @@ def main() -> None:
     golden.add_argument("--source-id", type=UUID, action="append", default=[])
     benchmark = commands.add_parser("run-retrieval-benchmark", help="score active index against golden queries")
     benchmark.add_argument("--k", type=int, default=10)
+    benchmark.add_argument("--allow-query-outbound", action="store_true")
     research = commands.add_parser("create-research-task", help="create a draft scoped research task")
     research.add_argument("question")
     research.add_argument("--source-id", type=UUID, action="append", default=[])
     start = commands.add_parser("start-research-task", help="freeze knowledge, index and cloud model")
     start.add_argument("task_id", type=UUID)
     start.add_argument("--workflow-config", help="JSON stopping policy frozen with the task")
+    start.add_argument("--allow-question-outbound", action="store_true")
     list_reviews = commands.add_parser("list-human-reviews", help="list research reviews")
     list_reviews.add_argument("task_id", type=UUID)
     resolve_review = commands.add_parser("resolve-human-review", help="resolve and requeue a research task")
@@ -275,6 +294,9 @@ def main() -> None:
             publication_year=args.publication_year,
             language=args.language,
             copyright_status=args.copyright_status,
+            data_level=args.data_level,
+            outbound_authorized=args.authorize_outbound,
+            outbound_reason=args.outbound_reason,
         )
         result = import_file(
             args.file,
@@ -283,6 +305,17 @@ def main() -> None:
             source_id=args.source_id,
         )
         print(json.dumps(asdict(result), default=str, ensure_ascii=False))
+    elif args.command == "set-source-outbound-policy":
+        set_source_outbound_policy(args.source_id, data_level=args.data_level,
+                                   authorized=args.authorize, reason=args.reason,
+                                   actor_id=args.actor)
+        print(json.dumps({"source_id": str(args.source_id), "authorized": args.authorize}))
+    elif args.command == "set-model-key":
+        value = getpass.getpass("Provider API key: ")
+        if not value:
+            raise ValueError("empty API key")
+        store_model_key(args.provider, value)
+        print(json.dumps({"provider": args.provider, "stored": True}))
     elif args.command == "parse-next":
         result = process_next_import()
         print(json.dumps(asdict(result) if result else None, default=str, ensure_ascii=False))
@@ -361,6 +394,8 @@ def main() -> None:
                 "strategy": "hybrid-rrf-v1",
                 "embedding_model": embedder.model_version,
                 "rerank_model": reranker.model_version,
+                "embedding_endpoint": embedder.endpoint,
+                "rerank_endpoint": reranker.endpoint,
             }
         build_id = create_index_build(
             args.knowledge_version_id, configuration=configuration
@@ -373,7 +408,8 @@ def main() -> None:
     elif args.command == "search-published":
         embedder, reranker = cloud_clients_from_environment()
         print(json.dumps(search_published(
-            args.query, embedder=embedder, reranker=reranker, limit=args.limit
+            args.query, embedder=embedder, reranker=reranker, limit=args.limit,
+            query_outbound_authorized=args.allow_query_outbound,
         ), ensure_ascii=False))
     elif args.command == "add-golden-query":
         pairs = [
@@ -394,6 +430,7 @@ def main() -> None:
         embedder, reranker = cloud_clients_from_environment()
         print(json.dumps(run_benchmark(
             embedder=embedder, reranker=reranker, k=args.k,
+            query_outbound_authorized=args.allow_query_outbound,
         ), ensure_ascii=False))
     elif args.command == "create-research-task":
         task_id = create_research_task(args.question, source_ids=args.source_id)
@@ -402,7 +439,8 @@ def main() -> None:
         model = research_model_from_environment()
         config = WorkflowConfig.model_validate_json(args.workflow_config) if args.workflow_config else None
         fingerprint = start_research_task(args.task_id, model_version=model.model_version,
-                                          workflow_config=config)
+                                          workflow_config=config,
+                                          question_outbound_authorized=args.allow_question_outbound)
         print(json.dumps({"status": "PLANNING", "run_fingerprint": fingerprint}))
     elif args.command == "list-human-reviews":
         with SessionLocal() as session:

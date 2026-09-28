@@ -15,7 +15,7 @@ $cases = @(
 $failed = 0
 foreach ($case in $cases) {
     $query = [uri]::EscapeDataString($case.Query)
-    $results = Invoke-RestMethod -Uri "$BaseUrl/api/v1/retrieval/search?query=$query&limit=5" -TimeoutSec 60
+    $results = Invoke-RestMethod -Uri "$BaseUrl/api/v1/retrieval/search?query=$query&limit=5&allow_remote_query=true" -TimeoutSec 60
     $rank = 0
     for ($index = 0; $index -lt $results.Count; $index++) {
         if ($results[$index].quote_text.Contains($case.Expected)) {
@@ -32,12 +32,12 @@ foreach ($case in $cases) {
     Write-Output "$($case.Query) | expected_rank=$rank | top_channels=$channels | top_rerank=$rerank"
 }
 $broad = [uri]::EscapeDataString('太阳病')
-$broadResults = Invoke-RestMethod -Uri "$BaseUrl/api/v1/retrieval/search?query=$broad&limit=5" -TimeoutSec 60
+$broadResults = Invoke-RestMethod -Uri "$BaseUrl/api/v1/retrieval/search?query=$broad&limit=5&allow_remote_query=true" -TimeoutSec 60
 if ($broadResults.Count -eq 0 -or $null -eq $broadResults[0].rerank_score -or
     -not ($broadResults[0].matched_channels -contains 'vector')) { $failed++ }
 Write-Output "screenshot_query_returned=$($broadResults.Count) real_rerank=$($broadResults[0].rerank_score)"
 $negative = [uri]::EscapeDataString('现代胰岛素剂量如何计算')
-$negativeResults = Invoke-RestMethod -Uri "$BaseUrl/api/v1/retrieval/search?query=$negative&limit=5" -TimeoutSec 60
+$negativeResults = Invoke-RestMethod -Uri "$BaseUrl/api/v1/retrieval/search?query=$negative&limit=5&allow_remote_query=true" -TimeoutSec 60
 Write-Output "unrelated_query_returned=$($negativeResults.Count) (diagnostic only; no relevance cutoff is calibrated)"
 Write-Output "positive_checks=$($cases.Count + 1) failed=$failed"
 if ($failed -ne 0) { exit 1 }

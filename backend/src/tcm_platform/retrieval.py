@@ -5,6 +5,7 @@ import re
 import unicodedata
 from collections import defaultdict
 from collections.abc import Sequence
+from contextlib import nullcontext
 from typing import Protocol
 from uuid import UUID
 
@@ -24,6 +25,7 @@ from tcm_platform.models import (
     RetrievalChunk,
     utc_now,
 )
+from tcm_platform.outbound_policy import authorize_outbound
 
 HAN = re.compile(r"[\u3400-\u9fff]+|[a-zA-Z0-9]+")
 MAX_CHUNKS = 20_000
@@ -89,6 +91,9 @@ def build_retrieval_index(
         configured_model = build.configuration.get("embedding_model")
         if configured_model != embedder.model_version:
             raise ValueError("embedder does not match the frozen index configuration")
+        if (getattr(embedder, "is_remote", False)
+                and build.configuration.get("embedding_endpoint") != embedder.endpoint):
+            raise ValueError("embedder endpoint differs from frozen index route")
         revisions = list(session.scalars(
             select(EvidenceRevision)
             .join(KnowledgeVersionItem,
@@ -102,16 +107,22 @@ def build_retrieval_index(
             raise ValueError("index snapshot includes evidence without review")
         version_id = version.id
         manifest_hash = version.manifest_hash
+        outbound_mode = build.configuration.get("outbound_mode", "LOCAL_ONLY")
+        outbound_policy_version = build.configuration.get("outbound_policy_version")
+        outbound_sources = [UUID(value) for value in
+                            build.configuration.get("outbound_source_ids", [])]
         records = [
             (
                 revision.id,
                 revision.source_revision_id,
                 (revision.quote_text + "\n" + revision.context_before + "\n"
-                 + revision.context_after)[:MAX_CHUNK_CHARS],
+                 + revision.context_after),
                 revision.citation_locator,
             )
             for revision in revisions
         ]
+        if any(len(record[2]) > MAX_CHUNK_CHARS for record in records):
+            raise ValueError("evidence chunk exceeds index limit; shorten it explicitly")
 
     vectors: list[list[float]] = []
     batch_size = min(32, embedder.max_batch_size)
@@ -119,7 +130,12 @@ def build_retrieval_index(
         raise ValueError("embedder batch size must be positive")
     for offset in range(0, len(records), batch_size):
         texts = [record[2] for record in records[offset:offset + batch_size]]
-        vectors.extend(embedder.embed(texts))
+        scope = (authorize_outbound("embed", embedder.model_version, outbound_sources,
+                                    frozen_mode=outbound_mode,
+                                    frozen_policy_version=outbound_policy_version)
+                 if getattr(embedder, "is_remote", False) else nullcontext())
+        with scope:
+            vectors.extend(embedder.embed(texts))
     dimensions = _validated_vectors(vectors, len(records))
 
     with SessionLocal.begin() as session:
@@ -189,6 +205,8 @@ def search_published(
     source_ids: Sequence[UUID] | None = None,
     knowledge_version_id: UUID | None = None,
     index_build_id: UUID | None = None,
+    query_outbound_authorized: bool = False,
+    task_id: UUID | None = None,
 ) -> list[dict]:
     """Fuse exact, FTS and vector ranks for the active or explicitly frozen version."""
     query = unicodedata.normalize("NFKC", query).strip()
@@ -218,13 +236,33 @@ def search_published(
             raise ValueError("active knowledge/index pair is inconsistent")
         if build.configuration.get("embedding_model") != embedder.model_version:
             raise ValueError("query embedder differs from active index model")
+        if (getattr(embedder, "is_remote", False)
+                and build.configuration.get("embedding_endpoint") != embedder.endpoint):
+            raise ValueError("query embedder endpoint differs from active index route")
         expected_reranker = build.configuration.get("rerank_model")
         if ((expected_reranker is None) != (reranker is None)
                 or (reranker is not None and reranker.model_version != expected_reranker)):
             raise ValueError("query reranker differs from active index model")
+        if (reranker is not None and getattr(reranker, "is_remote", False)
+                and build.configuration.get("rerank_endpoint") != reranker.endpoint):
+            raise ValueError("query reranker endpoint differs from active index route")
         build_id, version_id = build.id, version.id
+        outbound_mode = build.configuration.get("outbound_mode", "LOCAL_ONLY")
+        outbound_policy_version = build.configuration.get("outbound_policy_version")
+        outbound_sources = [UUID(value) for value in
+                            build.configuration.get("outbound_source_ids", [])]
+        if source_ids is not None and not set(source_ids).issubset(set(outbound_sources)):
+            raise PermissionError("source scope exceeds frozen outbound source set")
 
-    query_vector = embedder.embed([query])
+    if getattr(embedder, "is_remote", False) and not query_outbound_authorized:
+        raise PermissionError("query text requires explicit remote-model authorization")
+    embed_scope = (authorize_outbound("embed", embedder.model_version, outbound_sources,
+                                      frozen_mode=outbound_mode,
+                                      frozen_policy_version=outbound_policy_version,
+                                      task_id=task_id)
+                   if getattr(embedder, "is_remote", False) else nullcontext())
+    with embed_scope:
+        query_vector = embedder.embed([query])
     _validated_vectors(query_vector, 1)
     candidate_limit = min(300, max(30, limit * 5))
     # Parameterized SQL keeps query text and vector values out of SQL syntax.
@@ -275,7 +313,15 @@ def search_published(
     traces = {revision_id: trace_evidence(revision_id) for revision_id in ordered}
     rerank_scores: dict[UUID, float] = {}
     if reranker and ordered:
-        rankings = reranker.rerank(query, [traces[item]["quote_text"] for item in ordered])
+        if getattr(reranker, "is_remote", False) and not query_outbound_authorized:
+            raise PermissionError("reranking query requires remote-model authorization")
+        rerank_scope = (authorize_outbound("rerank", reranker.model_version, outbound_sources,
+                                           frozen_mode=outbound_mode,
+                                           frozen_policy_version=outbound_policy_version,
+                                           task_id=task_id)
+                        if getattr(reranker, "is_remote", False) else nullcontext())
+        with rerank_scope:
+            rankings = reranker.rerank(query, [traces[item]["quote_text"] for item in ordered])
         if len({index for index, _ in rankings}) != len(rankings) or any(
             index < 0 or index >= len(ordered) or not math.isfinite(score)
             for index, score in rankings

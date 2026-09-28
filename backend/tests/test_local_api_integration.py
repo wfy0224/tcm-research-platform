@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from pydantic import SecretStr
 from sqlalchemy import select
 
+from tcm_platform import main as main_module
 from tcm_platform.api_contract import (
     Actor,
     ApiError,
@@ -28,6 +29,24 @@ ORIGIN = "http://127.0.0.1:5173"
 
 def _client() -> TestClient:
     return TestClient(app, base_url="http://127.0.0.1:8000")
+
+
+def test_retrieval_query_requires_explicit_remote_consent(monkeypatch):
+    monkeypatch.setattr(main_module, "cloud_clients_from_environment", lambda: (object(), object()))
+
+    def fake_search(query, *, query_outbound_authorized, **kwargs):
+        if not query_outbound_authorized:
+            raise PermissionError("query text requires explicit remote-model authorization")
+        return []
+
+    monkeypatch.setattr(main_module, "search_published", fake_search)
+    with _client() as client:
+        denied = client.get("/api/v1/retrieval/search", params={"query": "太阳病"})
+        assert denied.status_code == 403
+        allowed = client.get("/api/v1/retrieval/search", params={
+            "query": "太阳病", "allow_remote_query": "true",
+        })
+        assert allowed.status_code == 200 and allowed.json() == []
 
 
 def test_one_use_bootstrap_cookie_csrf_origin_and_revocation(monkeypatch):

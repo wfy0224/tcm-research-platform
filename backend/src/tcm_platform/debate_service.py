@@ -241,6 +241,8 @@ def retrieve_evidence_requests(
             source_ids=[UUID(value) for value in context["source_ids"]] or None,
             knowledge_version_id=UUID(context["knowledge_version_id"]),
             index_build_id=UUID(context["index_build_id"]),
+            query_outbound_authorized=context.get("question_outbound_authorized", False),
+            task_id=task_id,
         )
         total += add_task_evidence(task_id, query, results,
                                    evidence_request_id=request_id,

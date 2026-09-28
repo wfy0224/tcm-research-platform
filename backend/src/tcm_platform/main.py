@@ -38,7 +38,7 @@ from tcm_platform.models import (
 )
 from tcm_platform.retrieval import search_published
 
-SCHEMA_REVISION = "0019_local_session_api"
+SCHEMA_REVISION = "0020_outbound_source_policy"
 
 
 class BootstrapRequest(BaseModel):
@@ -271,13 +271,20 @@ def health() -> HealthResponse:
 def search_retrieval(
     query: str = Query(min_length=1, max_length=2_000),
     limit: int = Query(default=10, ge=1, le=100),
+    allow_remote_query: bool = Query(default=False),
 ) -> list[RetrievalEvidenceResponse]:
     try:
         embedder, reranker = cloud_clients_from_environment()
-        traces = search_published(query, embedder=embedder, reranker=reranker, limit=limit)
+        traces = search_published(query, embedder=embedder, reranker=reranker, limit=limit,
+                                  query_outbound_authorized=allow_remote_query)
         return [_public_retrieval_result(trace) for trace in traces]
     except ValueError as exc:
         status = 503 if ("not configured" in str(exc)
                          or "no published knowledge version" in str(exc)) else 400
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        status = 429 if "rate limit" in str(exc) else 503
         raise HTTPException(status_code=status, detail=str(exc)) from exc
 

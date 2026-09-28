@@ -92,6 +92,7 @@ def score_ranked(
 def run_benchmark(
     *, embedder: Embedder, reranker: Reranker | None = None,
     k: int = 10, actor_id: str = "local-benchmark",
+    query_outbound_authorized: bool = False,
 ) -> dict:
     if not 1 <= k <= 100:
         raise ValueError("benchmark k must be 1-100")
@@ -118,6 +119,7 @@ def run_benchmark(
         results = search_published(
             query_text, embedder=embedder, reranker=reranker,
             limit=k, source_ids=source_ids or None,
+            query_outbound_authorized=query_outbound_authorized,
         )
         ids = [UUID(result["evidence_revision_id"]) for result in results]
         resolved = {

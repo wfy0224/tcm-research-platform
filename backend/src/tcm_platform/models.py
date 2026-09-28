@@ -3,6 +3,7 @@ from typing import ClassVar
 from uuid import UUID
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Computed,
     DateTime,
@@ -150,6 +151,8 @@ class SourceDocument(Base):
     publication_year: Mapped[int | None] = mapped_column(Integer)
     language: Mapped[str] = mapped_column(String(30), nullable=False)
     copyright_status: Mapped[str] = mapped_column(String(80), nullable=False)
+    data_level: Mapped[str] = mapped_column(String(30), nullable=False, default="RESTRICTED")
+    outbound_authorized: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
@@ -937,8 +940,8 @@ class ModelInvocation(Base):
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
-    task_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    task_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=True
     )
     agent_run_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("research.agent_run.id")
@@ -952,6 +955,9 @@ class ModelInvocation(Base):
     latency_ms: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     error_class: Mapped[str | None] = mapped_column(String(120))
+    policy_hash: Mapped[str | None] = mapped_column(String(64))
+    policy_version: Mapped[str | None] = mapped_column(String(50))
+    transport_retry_count: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 

@@ -24,7 +24,15 @@ from tcm_platform.models import (
     IndexBuild,
     KnowledgeRuntimeState,
     KnowledgeVersion,
+    SourceDocument,
+    SourceRevision,
     TextSegmentRevision,
+)
+from tcm_platform.outbound_policy import (
+    POLICY_VERSION,
+    current_mode,
+    set_source_outbound_policy,
+    version_source_ids,
 )
 from tcm_platform.retrieval import build_retrieval_index
 from tcm_platform.segment_service import process_next_segment
@@ -44,8 +52,11 @@ def main() -> None:
     canonical_source = SOURCE_PATH.read_bytes().replace(b"\r\n", b"\n")
     if hashlib.sha256(canonical_source).hexdigest() != SOURCE_SHA256:
         raise RuntimeError("source excerpt differs from pinned Wikisource revision")
+    if current_mode() != "CLOUD_ALLOWED":
+        raise RuntimeError("set TCM_OUTBOUND_MODE=CLOUD_ALLOWED for governed preview")
     embedder, reranker = cloud_clients_from_environment()
 
+    legacy_configuration = None
     with SessionLocal() as session:
         runtime = session.get(KnowledgeRuntimeState, 1)
         if runtime and runtime.active_index_build_id:
@@ -53,8 +64,44 @@ def main() -> None:
             if (build.configuration.get("embedding_model") != embedder.model_version
                     or build.configuration.get("rerank_model") != reranker.model_version):
                 raise RuntimeError("active preview index has different cloud models")
-            print("public corpus and real model index are already active")
-            return
+            if (build.configuration.get("outbound_mode") == "CLOUD_ALLOWED"
+                    and build.configuration.get("outbound_policy_version") == POLICY_VERSION
+                    and build.configuration.get("embedding_endpoint") == embedder.endpoint
+                    and build.configuration.get("rerank_endpoint") == reranker.endpoint):
+                print("public corpus and governed model index are already active")
+                return
+            if current_mode() != "CLOUD_ALLOWED":
+                raise RuntimeError("set TCM_OUTBOUND_MODE=CLOUD_ALLOWED before reindexing preview")
+            source_ids = version_source_ids(session, build.knowledge_version_id)
+            if len(source_ids) != 1:
+                raise RuntimeError("legacy preview must contain exactly one pinned source")
+            source_id = source_ids[0]
+            source = session.get(SourceDocument, source_id)
+            revisions = list(session.scalars(select(SourceRevision).where(
+                SourceRevision.source_id == source_id)))
+            if (source is None or source.copyright_status != "PUBLIC_DOMAIN"
+                    or not any(row.file_sha256 == SOURCE_SHA256 for row in revisions)):
+                raise RuntimeError("legacy preview source does not match the authorized corpus")
+            legacy_configuration = build.configuration
+
+    if legacy_configuration is not None:
+        set_source_outbound_policy(
+            source_id, data_level="PUBLIC", authorized=True,
+            reason="User authorized pinned public-domain Shanghan Lun preview corpus",
+            actor_id="preview-curator",
+        )
+        version_id = create_knowledge_version(actor_id="preview-curator")
+        build_id = create_index_build(version_id, configuration={
+            "strategy": legacy_configuration.get("strategy", "hybrid-rrf-v1"),
+            "embedding_model": embedder.model_version,
+            "rerank_model": reranker.model_version,
+            "embedding_endpoint": embedder.endpoint,
+            "rerank_endpoint": reranker.endpoint,
+        }, actor_id="preview-curator")
+        build_retrieval_index(build_id, embedder=embedder, actor_id="preview-curator")
+        activate_knowledge_version(version_id, build_id, actor_id="preview-curator")
+        print("legacy preview was reindexed under the governed outbound policy")
+        return
 
     store = ContentAddressedStore(STORE_PATH)
     imported = import_file(
@@ -63,6 +110,8 @@ def main() -> None:
             source_type="CLASSIC", title="傷寒論（宋本）·辨太陽病脈證並治（上）",
             author="張仲景", era="漢", edition="維基文庫修訂 2607901；非方劑條文摘錄",
             publisher="維基文庫", copyright_status="PUBLIC_DOMAIN", language="zh-Hant",
+            data_level="PUBLIC", outbound_authorized=True,
+            outbound_reason="User authorized public-domain Shanghan Lun preview corpus",
         ),
         request_key="shanghanlun-taiyang-upper-wikisource-2607901", store=store,
         actor_id="preview-import",
@@ -117,6 +166,8 @@ def main() -> None:
         build_id = create_index_build(version_id, configuration={
             "strategy": "hybrid-rrf-v1", "embedding_model": embedder.model_version,
             "rerank_model": reranker.model_version,
+            "embedding_endpoint": embedder.endpoint,
+            "rerank_endpoint": reranker.endpoint,
         }, actor_id="preview-import")
         build_status = "PENDING"
     if build_status == "PENDING":

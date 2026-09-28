@@ -113,10 +113,12 @@ def create_research_task(
 def start_research_task(
     task_id: UUID, *, model_version: str, actor_id: str = "local-researcher",
     workflow_config: object | None = None,
+    question_outbound_authorized: bool = False,
 ) -> str:
     """Freeze all version and model choices before any Agent receives context."""
     if not model_version.strip() or len(model_version) > 200:
         raise ValueError("a configured cloud generation model is required")
+    from tcm_platform.research_runtime import frozen_prompts
     from tcm_platform.stop_service import WorkflowConfig
     config = workflow_config or WorkflowConfig()
     if not isinstance(config, WorkflowConfig):
@@ -144,9 +146,16 @@ def start_research_task(
             "embedding_model": build.configuration["embedding_model"],
             "rerank_model": build.configuration.get("rerank_model"),
             "generation_model": model_version,
+            "outbound_mode": build.configuration.get("outbound_mode", "LOCAL_ONLY"),
+            "outbound_policy_version": build.configuration.get("outbound_policy_version"),
+            "outbound_source_ids": build.configuration.get("outbound_source_ids", []),
+            "question_outbound_authorized": question_outbound_authorized,
             "roles": list(RESEARCH_ROLES),
             "prompt_versions": {"Planner": "planner-v1", "Judge": "judge-v1",
+                                "EvidenceAuditor": "evidence-auditor-v1",
+                                "Critic": "critic-v1", "Rebuttal": "rebuttal-v1",
                                 **{role: f"{role.lower()}-v1" for role in RESEARCH_ROLES}},
+            "frozen_prompts": frozen_prompts(),
             "agent_schema": "research-agent-output/v1",
         }
         task.execution_context = context
@@ -362,6 +371,8 @@ def retrieve_for_task(
             source_ids=[UUID(value) for value in context["source_ids"]] or None,
             knowledge_version_id=UUID(context["knowledge_version_id"]),
             index_build_id=UUID(context["index_build_id"]),
+            query_outbound_authorized=context.get("question_outbound_authorized", False),
+            task_id=task_id,
         )
         total += add_task_evidence(task_id, query, results, lease_guard=lease_guard)
     return total

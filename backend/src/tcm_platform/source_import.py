@@ -4,6 +4,7 @@ import io
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -50,6 +51,9 @@ class SourceMetadata(BaseModel):
     publication_year: int | None = None
     language: str = Field(default="zh", min_length=1, max_length=30)
     copyright_status: str = Field(default="UNKNOWN", min_length=1, max_length=80)
+    data_level: Literal["PUBLIC", "RESTRICTED", "SENSITIVE"] = "RESTRICTED"
+    outbound_authorized: bool = False
+    outbound_reason: str | None = Field(default=None, max_length=500)
 
 
 SOURCE_TYPES = frozenset(
@@ -90,6 +94,10 @@ def import_file(
 ) -> ImportResult:
     if metadata.source_type not in SOURCE_TYPES:
         raise ValueError("unknown source type")
+    if metadata.outbound_authorized and metadata.data_level != "PUBLIC":
+        raise ValueError("only public source data can be authorized for outbound use")
+    if metadata.outbound_authorized and not (metadata.outbound_reason or "").strip():
+        raise ValueError("outbound authorization requires a recorded reason")
     if not request_key or len(request_key) > 200:
         raise ValueError("request_key must be 1-200 characters")
     if not file_path.is_file():
@@ -144,6 +152,8 @@ def import_file(
                 publication_year=metadata.publication_year,
                 language=metadata.language,
                 copyright_status=metadata.copyright_status,
+                data_level=metadata.data_level,
+                outbound_authorized=metadata.outbound_authorized,
                 status="DRAFT",
             )
             session.add(source)
@@ -157,6 +167,9 @@ def import_file(
                 raise ValueError("source_id does not exist")
             if source.title != metadata.title or source.source_type != metadata.source_type:
                 raise ValueError("new revision must keep source title and type")
+            if (source.data_level != metadata.data_level
+                    or source.outbound_authorized != metadata.outbound_authorized):
+                raise ValueError("source outbound policy cannot change through a file revision")
             last_revision = session.scalar(
                 select(func.max(SourceRevision.revision_no)).where(
                     SourceRevision.source_id == source_id
@@ -242,6 +255,9 @@ def import_file(
                 "file_sha256": blob.sha256,
                 "status": import_job.status,
                 "error_code": import_job.error_code,
+                "data_level": metadata.data_level,
+                "outbound_authorized": metadata.outbound_authorized,
+                "outbound_reason": metadata.outbound_reason,
             },
         )
         return _result(session, import_job)

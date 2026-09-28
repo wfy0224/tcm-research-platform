@@ -38,7 +38,7 @@ npm run dev
 
 自动化回归使用固定输出的假向量模型，以稳定验证排序、版本和引用链；这不代表真实云模型已经通过联调。真实检索需要活动索引的 `embedding_model`、`rerank_model` 与 API 当前模型完全一致。不要将 API 指向自动回归数据库中的假模型索引。
 
-隔离预览库可命名为 `tcm_preview_shanghanlun`：先运行迁移，再在后端环境配置 `TCM_DATABASE_URL` 与 `SILICONFLOW_API_KEY`，运行 `python scripts/prepare_shanghanlun_preview.py`。脚本导入[公版《傷寒論》太阳病上篇的 29 条真实原文](backend/fixtures/README.md)，用真实向量模型建索引，再激活知识版本。API 使用同一数据库和密钥启动，并设置 `TCM_DATA_ROOT=/tmp/tcm_preview_shanghanlun_store`、`TCM_PREVIEW_CORPUS=shanghanlun_taiyang_upper`，页面会标注来源与校订边界。`pwsh -NoProfile -File scripts/check_shanghanlun_preview.ps1` 经 5173 代理执行 6 个目标条文查询和截图中的“太阳病”查询，初步检查 7/7 通过；无关问题仍返回候选，**当前没有经过校准的拒答门槛**。这些工程检查不代替专家审核或大规模检索质量评测。正式知识库仍须单独导入、人工审核并用相同的真实模型重建发布索引。
+隔离预览库可命名为 `tcm_preview_shanghanlun`：先运行迁移，设置 `TCM_DATABASE_URL` 和 `TCM_OUTBOUND_MODE=CLOUD_ALLOWED`，并把硅基流动密钥存入 OS Keychain，再运行 `python scripts/prepare_shanghanlun_preview.py`。仅在临时开发容器没有 Keychain 时，才显式设置 `TCM_ALLOW_ENV_API_KEYS=1`，并按变量名注入既有 `SILICONFLOW_API_KEY`；不要把密钥写入命令参数、文件或日志。脚本导入[公版《傷寒論》太阳病上篇的 29 条真实原文](backend/fixtures/README.md)，用真实向量模型建索引，再激活知识版本。旧预览索引没有冻结外发策略，脚本会核对固定语料、登记来源授权并重新建索引；这会再次调用云模型，须按当次授权执行。API 使用同一数据库、Keychain 与数据目录，并设置 `TCM_PREVIEW_CORPUS=shanghanlun_taiyang_upper`。`pwsh -NoProfile -File scripts/check_shanghanlun_preview.ps1` 经 5173 代理执行 6 个目标条文查询和截图中的“太阳病”查询；原先 7/7 的记录是治理改动前的初步联调，治理后仍须重新验证。无关问题仍可能返回候选，**当前没有经过校准的拒答门槛**。这些工程检查不代替专家审核或大规模检索质量评测。
 
 ## 来源导入 E2
 
@@ -86,14 +86,16 @@ uv run python -m tcm_platform.cli create-index-build <knowledge_version_id>
 
 ## 云端模型与混合检索 E6
 
-项目运行时直接调用云端 API，不需要下载或运行本地大模型。默认使用硅基流动的 `BAAI/bge-m3` 向量模型和 `BAAI/bge-reranker-v2-m3` 重排模型。将 `SILICONFLOW_API_KEY` 配置在运行后端的环境中；密钥不会写入数据库、日志或 Git。构建索引时，已审核证据文本会发给向量模型；检索时，查询和候选证据文本会发给向量及重排模型。研究任务的 Planner 与 Agent 也会将任务问题及可见证据发送给云端生成模型。导入需保密的资料前，应先确认可向云端提供这些内容。
+项目运行时直接调用云端 API，不需要下载或运行本地大模型。默认使用硅基流动的 `BAAI/bge-m3` 向量模型和 `BAAI/bge-reranker-v2-m3` 重排模型。外发默认 `LOCAL_ONLY`；云端使用需设置 `TCM_OUTBOUND_MODE=CLOUD_ALLOWED`，并对每个来源显式标记 `PUBLIC`、记录授权理由。旧来源迁移后均为 `RESTRICTED` 且未授权。使用 `set-model-key siliconflow` 在交互式提示中把密钥存入 OS Keychain；仅隔离开发容器可显式设置 `TCM_ALLOW_ENV_API_KEYS=1` 从环境变量读取。密钥不会写入数据库、日志或 Git。构建索引时，已审核证据文本会发给向量模型；检索时，查询和候选证据文本会发给向量及重排模型。研究任务的 Planner 与 Agent 也会将任务问题及可见证据发送给云端生成模型。来源授权撤销后，新外发调用会被拒绝；已发送的数据无法撤回。
+
+`import-source` 可用 `--data-level PUBLIC --authorize-outbound --outbound-reason <理由>` 记录新来源的授权；已有来源用 `set-source-outbound-policy <source_id> --data-level PUBLIC --authorize --reason <理由> --actor <审核人>` 审核。检索 CLI 需加 `--allow-query-outbound`，研究启动需加 `--allow-question-outbound`；网页检索需要勾选本次检索词外发同意。活动索引和研究任务会冻结模式、来源范围、模型与策略版本；旧索引默认按 `LOCAL_ONLY` 处理，需重新构建才能使用云端模型。传输层拒绝超长输入，限制单进程并发与调用频率，对临时网络/HTTP 错误和生成 JSON 格式错误分别有限重试，连续失败短暂打开熔断器。
 
 ```powershell
 $env:TCM_MODEL_PROVIDER = "siliconflow"
-# SILICONFLOW_API_KEY 应通过本机安全环境预先配置
+# Windows 首次配置：uv run python -m tcm_platform.cli set-model-key siliconflow
 uv run python -m tcm_platform.cli build-index <index_build_id>
 uv run python -m tcm_platform.cli activate-knowledge <knowledge_version_id> <index_build_id>
-uv run python -m tcm_platform.cli search-published "太阳病脉浮" --limit 10
+uv run python -m tcm_platform.cli search-published "太阳病脉浮" --limit 10 --allow-query-outbound
 ```
 
 检索融合原文匹配、PostgreSQL 全文检索和 pgvector 相似度，再用云端模型重排；结果只来自当前活动知识版本中经人工审核的 EvidenceRevision，包含来源、原文、上下文、定位和精确段落修订。浏览器工作台通过 `GET /api/v1/retrieval/search?query=...` 展示结果与证据详情。索引构建时一次性校验全文行、向量行及维度；失败时不会切换活动版本。
@@ -116,7 +118,7 @@ uv run python -m tcm_platform.cli run-retrieval-benchmark --k 10
 ```powershell
 $env:TCM_RESEARCH_MODEL = "Qwen/Qwen3-8B"
 uv run python -m tcm_platform.cli create-research-task "太阳病脉象的经典文献依据是什么" --source-id <source_id>
-uv run python -m tcm_platform.cli start-research-task <task_id>
+uv run python -m tcm_platform.cli start-research-task <task_id> --allow-question-outbound
 uv run python -m tcm_platform.cli run-research-next --task-id <task_id>
 ```
 
@@ -141,7 +143,7 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 再检索请求全部结束后，手工调试可运行 `prepare-rebuttal <task_id>`、`run-rebuttal <agent_run_id>`、`audit-revised-claims <task_id>`。Rebuttal 对每条 Critique 给出 ACCEPT、PARTIAL_ACCEPT、REJECT 或 REVISE；REVISE 追加一条以旧 Claim 为 parent 的新 Claim，原断言保留。修订 Claim 从 PENDING 重新经过机械与语义审计，审计命令可在失败后重试未完成的修订。Rebuttal 的模型、Prompt 版本、轮次和冻结可见证据记录于 AgentRun；模型调用记录于 ModelInvocation。
 
-不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_judge_report_preserves_citation_chain_and_is_database_immutable`。先在独立 PostgreSQL 测试库迁移到 `0018_report_export`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、Judge、不可变报告、派生导出、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
+不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_judge_report_preserves_citation_chain_and_is_database_immutable`。先在独立 PostgreSQL 测试库迁移到 `0020_outbound_source_policy`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、Judge、不可变报告、派生导出、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
 
 停止策略在启动研究任务时通过 `start-research-task <task-id> --workflow-config '{"min_debate_rounds":1,"max_debate_rounds":2,"mandatory_human_review":true}'` 冻结。Worker 按已审计 Claim、开放争议和证据缺口计算并保存每轮 StopEvaluation；人工复核时任务进入 `WAITING_HUMAN`，Job 完成并释放租约。用 `list-human-reviews <task-id>` 查看待处理请求，用 `resolve-human-review <request-id> --reviewer <name> --note <reason>` 记录处理结果并重新排队；Worker 从停止判断阶段续跑，不重做首轮。
 

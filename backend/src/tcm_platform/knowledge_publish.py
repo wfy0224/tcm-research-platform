@@ -257,10 +257,21 @@ def create_index_build(
     version_id: UUID, *, configuration: dict, actor_id: str = "local-curator"
 ) -> UUID:
     """Register a derivation request; E6 must verify both real indexes."""
+    from tcm_platform.outbound_policy import POLICY_VERSION, current_mode, version_source_ids
+
     with SessionLocal.begin() as session:
         version = session.get(KnowledgeVersion, version_id)
         if version is None or version.status not in {"PRE_PUBLISH_SNAPSHOT", "INDEXING"}:
             raise ValueError("knowledge version is not ready for index build")
+        if any(key in configuration for key in (
+            "outbound_mode", "outbound_source_ids", "outbound_policy_version"
+        )):
+            raise ValueError("outbound policy is assigned by the service")
+        configuration = {**configuration,
+                         "outbound_mode": current_mode(),
+                         "outbound_policy_version": POLICY_VERSION,
+                         "outbound_source_ids": [str(item) for item in
+                                                 version_source_ids(session, version_id)]}
         build_id = new_id()
         session.add(IndexBuild(
             id=build_id, knowledge_version_id=version_id,

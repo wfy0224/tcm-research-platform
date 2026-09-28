@@ -36,6 +36,7 @@ function App() {
   const [selected, setSelected] = useState<Evidence | null>(null);
   const [searched, setSearched] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [allowRemoteQuery, setAllowRemoteQuery] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,7 +67,8 @@ function App() {
     setSearchError(null);
     setSelected(null);
     try {
-      const params = new URLSearchParams({ query: value, limit: "10" });
+      const params = new URLSearchParams({ query: value, limit: "10",
+        allow_remote_query: String(allowRemoteQuery) });
       const response = await fetch(`/api/v1/retrieval/search?${params}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail ?? `HTTP ${response.status}`);
@@ -101,11 +103,13 @@ function App() {
           <label className="srOnly" htmlFor="knowledge-query">检索问题或关键词</label>
           <input id="knowledge-query" value={query} onChange={(event) => setQuery(event.target.value)}
             placeholder="例如：太阳病的脉象" maxLength={2000} />
-          <button type="submit" disabled={searching || !query.trim()}>
+          <button type="submit" disabled={searching || !query.trim() || !allowRemoteQuery}>
             {searching ? "检索中…" : "检索证据"}
           </button>
         </form>
-        <p className="hint">检索词会发送给已配置的云端模型，用于语义匹配与重排。</p>
+        <label className="hint"><input type="checkbox" checked={allowRemoteQuery}
+          onChange={(event) => setAllowRemoteQuery(event.target.checked)} />
+          同意将本次检索词发送给已配置的云端向量与重排模型。请勿输入私人或敏感信息。</label>
         {searchError && <p className="error" role="alert">{searchError}</p>}
       </section>
 
