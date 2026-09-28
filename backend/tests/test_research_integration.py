@@ -1,15 +1,19 @@
 import io
+import secrets
 import zipfile
 from datetime import timedelta
 from uuid import UUID, uuid4
 from xml.etree import ElementTree as ET
 
 import pytest
+from fastapi.testclient import TestClient
+from pydantic import SecretStr
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 from tcm_platform.claim_normalization import normalize_task_claims
+from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal, engine
 from tcm_platform.debate_service import (
     audit_revised_claims,
@@ -22,6 +26,7 @@ from tcm_platform.debate_service import (
     submit_rebuttal_output,
 )
 from tcm_platform.knowledge_service import trace_evidence
+from tcm_platform.main import app
 from tcm_platform.models import (
     AgentRun,
     Artifact,
@@ -47,6 +52,7 @@ from tcm_platform.models import (
     ResearchSubquestion,
     ResearchSynthesis,
     ResearchTask,
+    SourceDocument,
     StopEvaluation,
     StructuredReport,
     TaskCheckpoint,
@@ -140,6 +146,99 @@ class FakeGenerator:
             "rationale_summary": "Cites the visible source text.",
             "evidence_revision_ids": [input_payload["evidence"][0]["evidence_revision_id"]],
         }]}
+
+
+def test_research_api_creates_idempotent_task_and_serves_final_report(tmp_path, monkeypatch):
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        if runtime.active_knowledge_version_id is None:
+            pytest.skip("no published sample knowledge version")
+        build = session.get(IndexBuild, runtime.active_index_build_id)
+        vector = session.scalar(select(EmbeddingRecord).where(
+            EmbeddingRecord.index_build_id == build.id))
+        item = session.scalar(select(KnowledgeVersionItem).where(
+            KnowledgeVersionItem.knowledge_version_id == build.knowledge_version_id,
+            KnowledgeVersionItem.evidence_revision_id.is_not(None)))
+        embedder = FakeEmbedder(build.configuration["embedding_model"], vector.dimensions)
+        reranker = (FakeReranker(build.configuration["rerank_model"])
+                    if build.configuration.get("rerank_model") else None)
+    provenance = trace_evidence(item.evidence_revision_id)
+    with SessionLocal() as session:
+        source_public_id = session.get(SourceDocument, UUID(provenance["source_id"])).public_id
+
+    secret = secrets.token_urlsafe(32)
+    monkeypatch.setattr(settings, "bootstrap_secret", SecretStr(secret))
+    monkeypatch.setattr(settings, "data_root", tmp_path)
+    origin = "http://127.0.0.1:5173"
+    with TestClient(app, base_url="http://127.0.0.1:8000") as client:
+        assert client.get("/api/v1/research/tasks").status_code == 401
+        bootstrap = client.post("/api/v1/local-session/bootstrap",
+                                headers={"Origin": origin},
+                                json={"bootstrap_secret": secret})
+        assert bootstrap.status_code == 200
+        csrf = bootstrap.json()["csrf_token"]
+        command_headers = {"Origin": origin, "X-CSRF-Token": csrf,
+                           "Idempotency-Key": secrets.token_hex(12)}
+        task_payload = {"question": provenance["quote_text"],
+                        "source_ids": [source_public_id]}
+        denied = client.post("/api/v1/research/tasks", headers={"Origin": origin},
+                             json=task_payload)
+        assert denied.status_code == 403
+        created = client.post("/api/v1/research/tasks", headers=command_headers,
+                              json=task_payload)
+        assert created.status_code == 201
+        public_id = created.json()["task_id"]
+        assert public_id.startswith("RT-")
+        repeated = client.post("/api/v1/research/tasks", headers=command_headers,
+                               json=task_payload)
+        assert repeated.status_code == 201 and repeated.json()["task_id"] == public_id
+        conflicting = client.post("/api/v1/research/tasks", headers=command_headers,
+                                  json={**task_payload, "question": "different question"})
+        assert conflicting.status_code == 409
+        assert conflicting.json()["code"] == "IDEMPOTENCY_CONFLICT"
+        with SessionLocal() as session:
+            task = session.scalar(select(ResearchTask).where(ResearchTask.public_id == public_id))
+            task_id = task.id
+        assert str(task_id) not in public_id
+        assert client.get(f"/api/v1/research/tasks/{task_id}").status_code == 404
+        assert client.get(f"/api/v1/research/tasks/{public_id}/report").status_code == 409
+
+        class ApiFakeGenerator(FakeGenerator):
+            model_version = "siliconflow/test-cloud-structured-v1"
+
+        started = client.post(f"/api/v1/research/tasks/{public_id}/start",
+                              headers=command_headers,
+                              json={"model_version": ApiFakeGenerator.model_version,
+                                    "allow_question_outbound": True})
+        assert started.status_code == 202
+        repeated_start = client.post(f"/api/v1/research/tasks/{public_id}/start",
+                                     headers=command_headers,
+                                     json={"model_version": ApiFakeGenerator.model_version,
+                                           "allow_question_outbound": True})
+        assert repeated_start.status_code == 202
+        assert repeated_start.json()["job_id"] == started.json()["job_id"]
+        assert run_next_research_job(
+            worker_id="test-api-research", model=ApiFakeGenerator(),
+            embedder=embedder, reranker=reranker, task_id=task_id,
+        ) is not None
+        detail = client.get(f"/api/v1/research/tasks/{public_id}")
+        assert detail.status_code == 200
+        assert detail.json()["status"] == "COMPLETED"
+        assert detail.json()["allowed_actions"] == ["export"]
+        report = client.get(f"/api/v1/research/tasks/{public_id}/report")
+        assert report.status_code == 200
+        assert report.json()["question"] == provenance["quote_text"]
+        assert str(task_id) not in str(report.json())
+        assert provenance["evidence_revision_id"] not in str(report.json())
+        queued = client.post(f"/api/v1/research/tasks/{public_id}/exports/markdown",
+                             headers=command_headers)
+        assert queued.status_code == 202
+        assert process_next_report_export() is not None
+        export = client.get(f"/api/v1/research/tasks/{public_id}/exports/markdown")
+        assert export.status_code == 200 and export.json()["status"] == "COMPLETED"
+        download = client.get(export.json()["download_url"])
+        assert download.status_code == 200
+        assert provenance["quote_text"] in download.text
 
 
 class DebateGenerator(FakeGenerator):

@@ -36,6 +36,7 @@ from tcm_platform.models import (
     TextSegment,
     TextSegmentRevision,
 )
+from tcm_platform.research_api import router as research_router
 from tcm_platform.retrieval import search_published
 
 SCHEMA_REVISION = "0020_outbound_source_policy"
@@ -133,6 +134,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="TCM Research Platform", version="0.1.0", lifespan=lifespan)
+app.include_router(research_router)
 
 
 def _request_id(request: Request) -> str:

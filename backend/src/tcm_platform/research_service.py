@@ -3,10 +3,10 @@
 import hashlib
 import json
 from collections.abc import Callable, Mapping, Sequence
-from uuid import UUID
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 
 from tcm_platform.audit import append_event
@@ -90,20 +90,31 @@ def _fingerprint(context: dict) -> str:
 
 
 def create_research_task(
-    question: str, *, source_ids: Sequence[UUID] = (), actor_id: str = "local-researcher"
+    question: str, *, source_ids: Sequence[UUID] = (), actor_id: str = "local-researcher",
+    idempotency_key: str | None = None,
 ) -> UUID:
     question = question.strip()
     if not 1 <= len(question) <= 2_000:
         raise ValueError("research question must be 1-2000 characters")
     if len(source_ids) > 100 or len(set(source_ids)) != len(source_ids):
         raise ValueError("research scope must contain at most 100 unique sources")
+    task_id = (uuid5(NAMESPACE_URL, f"tcm:research:create:{actor_id}:{idempotency_key}")
+               if idempotency_key is not None else new_id())
+    scope = {"source_ids": [str(item) for item in source_ids]}
     with SessionLocal.begin() as session:
+        if idempotency_key is not None:
+            session.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
+                            {"key": f"research:create:{actor_id}:{idempotency_key}"})
+            existing = session.get(ResearchTask, task_id)
+            if existing is not None:
+                if existing.question != question or existing.draft_scope != scope:
+                    raise ValueError("idempotency key was used for a different research task")
+                return task_id
         if any(session.get(SourceDocument, source_id) is None for source_id in source_ids):
             raise ValueError("research scope contains an unknown source")
-        task_id = new_id()
         session.add(ResearchTask(
-            id=task_id, public_id=f"RT-{task_id}", question=question,
-            status="CREATED", draft_scope={"source_ids": [str(item) for item in source_ids]},
+            id=task_id, public_id=f"RT-{new_id()}", question=question,
+            status="CREATED", draft_scope=scope,
         ))
         append_event(session, event_type="research_task.created", actor_id=actor_id,
                      aggregate_id=task_id, payload={"source_count": len(source_ids)})
@@ -114,6 +125,7 @@ def start_research_task(
     task_id: UUID, *, model_version: str, actor_id: str = "local-researcher",
     workflow_config: object | None = None,
     question_outbound_authorized: bool = False,
+    idempotent: bool = False,
 ) -> str:
     """Freeze all version and model choices before any Agent receives context."""
     if not model_version.strip() or len(model_version) > 200:
@@ -125,6 +137,14 @@ def start_research_task(
         config = WorkflowConfig.model_validate(config)
     with SessionLocal.begin() as session:
         task = session.scalar(select(ResearchTask).where(ResearchTask.id == task_id).with_for_update())
+        if task is not None and task.status != "CREATED" and idempotent:
+            context = task.execution_context or {}
+            if (task.status != "CANCELLED" and task.run_fingerprint
+                    and context.get("generation_model") == model_version
+                    and context.get("workflow_config") == config.model_dump(mode="json")
+                    and context.get("question_outbound_authorized")
+                    == question_outbound_authorized):
+                return task.run_fingerprint
         if task is None or task.status != "CREATED":
             raise ValueError("only a CREATED research task can start")
         runtime = session.get(KnowledgeRuntimeState, 1)
