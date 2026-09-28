@@ -68,6 +68,17 @@ def main() -> None:
                     and build.configuration.get("outbound_policy_version") == POLICY_VERSION
                     and build.configuration.get("embedding_endpoint") == embedder.endpoint
                     and build.configuration.get("rerank_endpoint") == reranker.endpoint):
+                active_sources = version_source_ids(session, build.knowledge_version_id)
+                if len(active_sources) != 1:
+                    raise RuntimeError("active preview must contain exactly one pinned source")
+                active_source = session.get(SourceDocument, active_sources[0])
+                if (active_source is None or active_source.data_level != "PUBLIC"
+                        or not active_source.outbound_authorized
+                        or active_source.copyright_status != "PUBLIC_DOMAIN"
+                        or not session.scalar(select(SourceRevision.id).where(
+                            SourceRevision.source_id == active_source.id,
+                            SourceRevision.file_sha256 == SOURCE_SHA256).limit(1))):
+                    raise RuntimeError("active preview source authorization is missing")
                 print("public corpus and governed model index are already active")
                 return
             if current_mode() != "CLOUD_ALLOWED":
