@@ -38,7 +38,7 @@ npm run dev
 
 自动化回归使用固定输出的假向量模型，以稳定验证排序、版本和引用链；这不代表真实云模型已经通过联调。真实检索需要活动索引的 `embedding_model`、`rerank_model` 与 API 当前模型完全一致。不要将 API 指向自动回归数据库中的假模型索引。
 
-隔离预览库可命名为 `tcm_preview_shanghanlun`：先运行迁移，设置 `TCM_DATABASE_URL` 和 `TCM_OUTBOUND_MODE=CLOUD_ALLOWED`，并把硅基流动密钥存入 OS Keychain，再运行 `python scripts/prepare_shanghanlun_preview.py`。仅在临时开发容器没有 Keychain 时，才显式设置 `TCM_ALLOW_ENV_API_KEYS=1`，并按变量名注入既有 `SILICONFLOW_API_KEY`；不要把密钥写入命令参数、文件或日志。脚本导入[公版《傷寒論》太阳病上篇的 29 条真实原文](backend/fixtures/README.md)，用真实向量模型建索引，再激活知识版本。旧预览索引没有冻结外发策略，脚本会核对固定语料、登记来源授权并重新建索引；这会再次调用云模型，须按当次授权执行。API 使用同一数据库、Keychain 与数据目录，并设置 `TCM_PREVIEW_CORPUS=shanghanlun_taiyang_upper`。`pwsh -NoProfile -File scripts/check_shanghanlun_preview.ps1` 经 5173 代理执行 6 个目标条文查询和截图中的“太阳病”查询；原先 7/7 的记录是治理改动前的初步联调，治理后仍须重新验证。无关问题仍可能返回候选，**当前没有经过校准的拒答门槛**。这些工程检查不代替专家审核或大规模检索质量评测。
+隔离预览库可命名为 `tcm_preview_shanghanlun`：先运行迁移，设置 `TCM_DATABASE_URL` 和 `TCM_OUTBOUND_MODE=CLOUD_ALLOWED`，并把硅基流动密钥存入 OS Keychain，再运行 `python scripts/prepare_shanghanlun_preview.py`。仅在临时开发容器没有 Keychain 时，才显式设置 `TCM_ALLOW_ENV_API_KEYS=1`，并按变量名注入既有 `SILICONFLOW_API_KEY`；不要把密钥写入命令参数、文件或日志。脚本导入[公版《傷寒論》太阳病上篇的 29 条真实原文](backend/fixtures/README.md)，用真实向量模型建索引，再激活知识版本。旧预览索引没有冻结外发策略，脚本会核对固定语料、登记来源授权并重新建索引；这会再次调用云模型，须按当次授权执行。API 使用同一数据库、Keychain 与数据目录，并设置 `TCM_PREVIEW_CORPUS=shanghanlun_taiyang_upper`。`pwsh -NoProfile -File scripts/check_shanghanlun_preview.ps1` 经 5173 代理执行 6 个目标条文查询和截图中的“太阳病”查询；治理后于 2026-09-28 重新运行：7/7 正向检查通过，六个目标条文均在前 2 位；这仍非专家质量评测。无关问题仍可能返回候选，**当前没有经过校准的拒答门槛**。这些工程检查不代替专家审核或大规模检索质量评测。
 
 ## 来源导入 E2
 
