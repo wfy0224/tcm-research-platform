@@ -7,6 +7,7 @@ type Health = {
   database: string;
   schema: string;
   blob_store: string;
+  preview_corpus: "none" | "shanghanlun_taiyang_upper";
 };
 
 type Evidence = {
@@ -86,6 +87,9 @@ function App() {
         <span className="eyebrow">中医知识研究 · 第一阶段</span>
         <h1>从原文追溯每一条证据</h1>
         <p>检索已审核、已发布的知识证据。结果融合原文、全文和语义匹配，并显示来源与精确引用位置。</p>
+        {health?.preview_corpus === "shanghanlun_taiyang_upper" && <p className="demoNotice" role="note">
+          真实模型检索预览：当前收录公版《傷寒論》太阳病上篇 29 条原文；来源转写与自动审核尚未经本项目专家复核。无关问题也可能返回候选，请核对原文。
+        </p>}
       </header>
 
       <section className="panel searchPanel" aria-labelledby="search-title">

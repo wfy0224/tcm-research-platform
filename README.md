@@ -34,6 +34,12 @@ npm run dev
 
 测试：`cd backend; uv run pytest`。首次安装依赖需要访问包仓库。
 
+### 真实模型检索预览
+
+自动化回归使用固定输出的假向量模型，以稳定验证排序、版本和引用链；这不代表真实云模型已经通过联调。真实检索需要活动索引的 `embedding_model`、`rerank_model` 与 API 当前模型完全一致。不要将 API 指向自动回归数据库中的假模型索引。
+
+隔离预览库可命名为 `tcm_preview_shanghanlun`：先运行迁移，再在后端环境配置 `TCM_DATABASE_URL` 与 `SILICONFLOW_API_KEY`，运行 `python scripts/prepare_shanghanlun_preview.py`。脚本导入[公版《傷寒論》太阳病上篇的 29 条真实原文](backend/fixtures/README.md)，用真实向量模型建索引，再激活知识版本。API 使用同一数据库和密钥启动，并设置 `TCM_DATA_ROOT=/tmp/tcm_preview_shanghanlun_store`、`TCM_PREVIEW_CORPUS=shanghanlun_taiyang_upper`，页面会标注来源与校订边界。`pwsh -NoProfile -File scripts/check_shanghanlun_preview.ps1` 经 5173 代理执行 6 个目标条文查询和截图中的“太阳病”查询，初步检查 7/7 通过；无关问题仍返回候选，**当前没有经过校准的拒答门槛**。这些工程检查不代替专家审核或大规模检索质量评测。正式知识库仍须单独导入、人工审核并用相同的真实模型重建发布索引。
+
 ## 来源导入 E2
 
 当前通过命令行操作；文件导入 API 与知识工作区界面将在本地会话和权限边界完成后开放。以下命令在 `backend` 目录运行：

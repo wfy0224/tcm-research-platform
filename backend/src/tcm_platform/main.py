@@ -123,6 +123,7 @@ class HealthResponse(BaseModel):
     database: str
     schema_status: str = Field(alias="schema")
     blob_store: str
+    preview_corpus: str
 
 
 @asynccontextmanager
@@ -261,7 +262,9 @@ def health() -> HealthResponse:
         if database == "connected" and schema == "current" and blob_store == "available"
         else HealthState.NOT_READY
     )
-    return HealthResponse(state=state, database=database, schema=schema, blob_store=blob_store)
+    return HealthResponse(state=state, database=database, schema=schema,
+                          blob_store=blob_store,
+                          preview_corpus=settings.preview_corpus)
 
 
 @app.get("/api/v1/retrieval/search", response_model=list[RetrievalEvidenceResponse])

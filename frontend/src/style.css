@@ -8,6 +8,7 @@ button { cursor: pointer; }
 .eyebrow, .sectionLabel { color: #466b59; font-size: 12px; letter-spacing: .12em; font-weight: 700; }
 h1 { font-size: clamp(32px, 5vw, 48px); margin: 14px 0 16px; line-height: 1.2; }
 .intro p { color: #68746d; line-height: 1.8; max-width: 720px; }
+.intro .demoNotice { max-width: none; margin-top: 18px; padding: 12px 16px; border: 1px solid #e7d4ad; border-radius: 10px; background: #fff5e4; color: #77561e; font-size: 14px; }
 .panel, .resultCard { background: white; border: 1px solid #e1e6df; border-radius: 16px; box-shadow: 0 12px 32px #233b2710; }
 .panel { padding: 28px; }
 .panelHead, .resultsHead, .resultMeta, .resultFoot, .drawerHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

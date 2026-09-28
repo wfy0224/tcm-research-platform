@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,6 +16,7 @@ class Settings(BaseSettings):
     session_ttl_seconds: int = Field(default=8 * 3600, ge=300, le=24 * 3600)
     local_allowed_origins: str = "http://127.0.0.1:5173,http://127.0.0.1:8000"
     secure_session_cookie: bool = False
+    preview_corpus: Literal["none", "shanghanlun_taiyang_upper"] = "none"
 
 
 settings = Settings()
