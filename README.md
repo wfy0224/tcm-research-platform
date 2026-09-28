@@ -106,7 +106,7 @@ uv run python -m tcm_platform.cli start-research-task <task_id>
 uv run python -m tcm_platform.cli run-research-next --task-id <task_id>
 ```
 
-常驻处理可运行 `uv run python -m tcm_platform.cli run-research-worker`。Worker 使用租约和心跳；E8 节点的业务写入与节点检查点在同一事务中提交，租约过期后根据已提交的任务状态和 AgentRun 恢复。暂停和取消请求在安全点生效；若模型调用正在进行，会等待该调用返回并丢弃其未提交的业务结果。可用 `pause-research-task <task_id>`、`resume-research-task <task_id>`、`cancel-research-task <task_id>` 控制任务。每次生成调用记录模型、请求/输出哈希、耗时、状态和接口返回的 token 用量，不保存原始提示词。完成一轮后状态为 `DEBATE_ROUND_COMPLETE`；最终争议裁决与报告留给 E9。也可按下列命令逐步调试：
+常驻处理可运行 `uv run python -m tcm_platform.cli run-research-worker`。Worker 使用租约和心跳；业务写入与节点检查点在同一事务中提交，租约过期后根据已提交的任务状态和 AgentRun 恢复。暂停和取消请求在安全点生效；若模型调用正在进行，会等待该调用返回并丢弃其未提交的业务结果。可用 `pause-research-task <task_id>`、`resume-research-task <task_id>`、`cancel-research-task <task_id>` 控制任务。每次生成调用记录模型、请求/输出哈希、耗时、状态和接口返回的 token 用量，不保存原始提示词。停止决策后 Worker 会继续执行 Judge 和结构化报告；只有报告成功落库，任务和 Job 才进入 `COMPLETED`。也可按下列命令逐步调试：
 
 ```powershell
 uv run python -m tcm_platform.cli plan-research-task <task_id>
@@ -127,15 +127,17 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 再检索请求全部结束后，手工调试可运行 `prepare-rebuttal <task_id>`、`run-rebuttal <agent_run_id>`、`audit-revised-claims <task_id>`。Rebuttal 对每条 Critique 给出 ACCEPT、PARTIAL_ACCEPT、REJECT 或 REVISE；REVISE 追加一条以旧 Claim 为 parent 的新 Claim，原断言保留。修订 Claim 从 PENDING 重新经过机械与语义审计，审计命令可在失败后重试未完成的修订。Rebuttal 的模型、Prompt 版本、轮次和冻结可见证据记录于 AgentRun；模型调用记录于 ModelInvocation。
 
-不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_worker_completes_audited_debate_without_manual_cli_steps`。先在独立 PostgreSQL 测试库迁移到 `0016_stop_review`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
+不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_judge_report_preserves_citation_chain_and_is_database_immutable`。先在独立 PostgreSQL 测试库迁移到 `0017_judge_report`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、Judge、不可变报告、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
 
 停止策略在启动研究任务时通过 `start-research-task <task-id> --workflow-config '{"min_debate_rounds":1,"max_debate_rounds":2,"mandatory_human_review":true}'` 冻结。Worker 按已审计 Claim、开放争议和证据缺口计算并保存每轮 StopEvaluation；人工复核时任务进入 `WAITING_HUMAN`，Job 完成并释放租约。用 `list-human-reviews <task-id>` 查看待处理请求，用 `resolve-human-review <request-id> --reviewer <name> --note <reason>` 记录处理结果并重新排队；Worker 从停止判断阶段续跑，不重做首轮。
+
+Judge 只接收已完成审计的 Active Claim、最近 AuditResult、开放 Dispute/EvidenceGap 与冻结知识版本内已审核的精确 EvidenceRevision。输出只能为每条 Claim 选择允许的分类和理由 ID，不能生成新 Claim、改写断言或自由检索。`ResearchSynthesis` 保存 Judge 输入快照，ReportGenerator 仅复制审计文本、争议正反证据与原文定位生成 `StructuredReport`；数据库禁止更新或删除这两类记录。用 `show-structured-report <task_id>` 查看报告 JSON。Markdown/DOCX 导出属于 VIB-57。
 
 验收追踪：AC-1B-03/04 的 Claim 定向质疑、受限再检索、Rebuttal、追加修订与重新审计对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、`audit_service.py`、`research_worker.py`、迁移 0012～0014，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
 
 ## Claim 归并与争议 E9.1
 
-Worker 在首轮审计后和一轮辩论结束时，按断言类型、规范化文本与精确来源版本归并重复 Claim；来源快照的时代和流派一并保留。原 Claim 与修订 Claim 都保留各自 ID，CanonicalClaimMember 指向其最新审计结果。明确的语义审计矛盾和 `CONTRADICTION` 质疑生成 Dispute；审计不充分、无法验证、质疑缺证或再检索无结果生成 EvidenceGap。新审计结果会把已过时的争议和缺口标为 `SUPERSEDED`，保留历史记录。未审计的反面材料不会被标成已证实的反证。命令 `normalize-claims <task_id>` 可幂等重放这些投影。自动归并只处理精确重复断言；跨断言的语义相似和隐含冲突需后续模型或人工提出明确关系，不会靠多数票推断。E9 的停止规则、Judge 与报告仍待后续任务。
+Worker 在首轮审计后和辩论轮次结束时，按断言类型、规范化文本与精确来源版本归并重复 Claim；来源快照的时代和流派一并保留。原 Claim 与修订 Claim 都保留各自 ID，CanonicalClaimMember 指向其最新审计结果。明确的语义审计矛盾和 `CONTRADICTION` 质疑生成 Dispute；审计不充分、无法验证、质疑缺证或再检索无结果生成 EvidenceGap。新审计结果会把已过时的争议和缺口标为 `SUPERSEDED`，保留历史记录。未审计的反面材料不会被标成已证实的反证。命令 `normalize-claims <task_id>` 可幂等重放这些投影。自动归并只处理精确重复断言；跨断言的语义相似和隐含冲突需后续模型或人工提出明确关系，不会靠多数票推断。
 
 ## 设计约束
 

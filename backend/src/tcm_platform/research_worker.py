@@ -28,6 +28,7 @@ from tcm_platform.jobs import (
     heartbeat,
     recover_expired,
 )
+from tcm_platform.judge_service import execute_judge, persist_structured_report, prepare_judge
 from tcm_platform.models import (
     AgentRun,
     Claim,
@@ -178,17 +179,23 @@ def run_next_research_job(
                              actor_id=worker_id, aggregate_id=task_id,
                              payload={"reason_code": evaluation.reason_code,
                                       "round_no": round_no})
+                complete_job(session, job_id=job_id, worker_id=worker_id,
+                             generation=generation,
+                             result={"task_id": str(task_id), "status": task.status,
+                                     "reason": evaluation.reason_code})
+                return job_id
             else:
                 task.status = "DEBATE_ROUND_COMPLETE"
                 append_event(session, event_type="research_task.debate_round_completed",
                              actor_id=worker_id, aggregate_id=task_id,
                              payload={"reason": evaluation.reason_code,
                                       "round_no": round_no})
-            complete_job(session, job_id=job_id, worker_id=worker_id,
-                         generation=generation,
-                         result={"task_id": str(task_id), "status": task.status,
-                                 "reason": evaluation.reason_code})
-        return job_id
+                session.add(TaskCheckpoint(
+                    job_id=job_id, execution_generation=generation,
+                    result={"kind": "research.node", "phase": "DEBATE_ROUND_COMPLETE",
+                            "status": task.status, "reason": evaluation.reason_code},
+                ))
+        return None
 
     try:
         if model is None:
@@ -245,7 +252,8 @@ def run_next_research_job(
                         node_phase = "FIRST_ROUND_SEMANTIC_AUDIT"
                         semantic_audit_claim(pending_id, model=model, lease_guard=guard)
                 elif not any_claim:
-                    return finish_debate(1)
+                    if finish_debate(1) is not None:
+                        return job_id
                 else:
                     node_phase = "FIRST_ROUND_CLAIMS_NORMALIZED"
                     with SessionLocal.begin() as session:
@@ -307,6 +315,31 @@ def run_next_research_job(
                     ).order_by(AgentRun.round_no.desc()).limit(1))
                 if finish_debate(latest_round or 1) is not None:
                     return job_id
+            elif status == "DEBATE_ROUND_COMPLETE":
+                node_phase = "JUDGE_PREPARED"
+                prepare_judge(task_id, lease_guard=guard)
+            elif status == "JUDGING":
+                with SessionLocal() as session:
+                    judge = session.scalar(select(AgentRun).where(
+                        AgentRun.task_id == task_id, AgentRun.role == "Judge",
+                        AgentRun.round_no == 0))
+                    judge_state = (judge.id, judge.status) if judge else None
+                if judge_state is None or judge_state[1] != "PENDING":
+                    raise ValueError("Judge AgentRun is not recoverable")
+                node_phase = "JUDGE_SYNTHESIZED"
+                execute_judge(judge_state[0], model=model, lease_guard=guard)
+            elif status == "REPORTING":
+                node_phase = "STRUCTURED_REPORT_SAVED"
+                with SessionLocal.begin() as session:
+                    guard(session)
+                    report = persist_structured_report(session, task_id)
+                    task = session.get(ResearchTask, task_id)
+                    task.status = "COMPLETED"
+                    complete_job(session, job_id=job_id, worker_id=worker_id,
+                                 generation=generation,
+                                 result={"task_id": str(task_id), "status": task.status,
+                                         "report_id": str(report.id)})
+                return job_id
             else:
                 raise ValueError(f"research task cannot run from {status}")
     except LeaseLostError:

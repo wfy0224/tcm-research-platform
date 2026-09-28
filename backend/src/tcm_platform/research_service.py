@@ -145,7 +145,7 @@ def start_research_task(
             "rerank_model": build.configuration.get("rerank_model"),
             "generation_model": model_version,
             "roles": list(RESEARCH_ROLES),
-            "prompt_versions": {"Planner": "planner-v1",
+            "prompt_versions": {"Planner": "planner-v1", "Judge": "judge-v1",
                                 **{role: f"{role.lower()}-v1" for role in RESEARCH_ROLES}},
             "agent_schema": "research-agent-output/v1",
         }
@@ -175,7 +175,7 @@ def _lock_research_control(session: Session, task_id: UUID) -> tuple[TaskJob, Re
         ResearchTask.id == task_id
     ).with_for_update())
     if job is None or task is None or task.status in {
-        "CREATED", "DEBATE_ROUND_COMPLETE", "CANCELLED",
+        "CREATED", "COMPLETED", "CANCELLED",
     }:
         raise ValueError("research task is not controllable")
     return job, task

@@ -40,8 +40,10 @@ from tcm_platform.models import (
     ModelInvocation,
     Rebuttal,
     ResearchSubquestion,
+    ResearchSynthesis,
     ResearchTask,
     StopEvaluation,
+    StructuredReport,
     TaskCheckpoint,
     TaskEvidenceRef,
     TaskJob,
@@ -114,6 +116,11 @@ class FakeGenerator:
                         input_payload["evidence"][0]["evidence_revision_id"]]}
         if "Critic" in system_prompt:
             return {"critiques": []}
+        if "Judge" in system_prompt:
+            return {"findings": [{"claim_id": claim["claim_id"],
+                                  "category": claim["allowed_category"],
+                                  "reason_id": claim["allowed_reason_ids"][0]}
+                                 for claim in input_payload["claims"]]}
         role = input_payload["role"]
         claim_type = {
             "Classicist": "DIRECT_TEXT",
@@ -560,7 +567,7 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
         reranker=reranker, task_id=task_id,
     ) == job_id
     with SessionLocal() as session:
-        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
         assert session.get(TaskJob, job_id).status == "COMPLETED"
 
 
@@ -615,7 +622,7 @@ def test_research_pause_discarded_planner_output_and_resume():
         embedder=embedder, reranker=reranker, task_id=task_id,
     ) == job_id
     with SessionLocal() as session:
-        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
         assert session.get(TaskJob, job_id).status == "COMPLETED"
 
 
@@ -679,7 +686,7 @@ def test_worker_completes_audited_debate_without_manual_cli_steps():
     with SessionLocal() as session:
         task = session.get(ResearchTask, task_id)
         job = session.get(TaskJob, job_id)
-        assert task.status == "DEBATE_ROUND_COMPLETE"
+        assert task.status == "COMPLETED"
         assert job.status == "COMPLETED" and job.attempts == 1
         runs = list(session.scalars(select(AgentRun).where(AgentRun.task_id == task_id)))
         assert sum(run.round_no == 1 for run in runs) == 3
@@ -761,7 +768,7 @@ def test_claim_normalization_preserves_conflict_and_replays_without_duplicates()
     run_next_research_job(worker_id="test-conflict-normalizer", model=ConflictGenerator(),
                           embedder=embedder, reranker=reranker, task_id=task_id)
     with SessionLocal() as session:
-        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
         disputes = list(session.scalars(select(Dispute).where(Dispute.task_id == task_id)))
         assert {item.reason_code for item in disputes} == {
             "AUDIT_CONTRADICTION", "CRITIQUE_CONTRADICTION",
@@ -773,6 +780,12 @@ def test_claim_normalization_preserves_conflict_and_replays_without_duplicates()
         )))
         assert any(item.reason_code == "NOT_VERIFIABLE" for item in gaps)
         assert any(item.reason_code == "SUPPORTING_EVIDENCE_UNVERIFIED" for item in gaps)
+        report = session.scalar(select(StructuredReport).where(
+            StructuredReport.task_id == task_id))
+        assert report.content["counts"]["DISPUTED"] >= 1
+        assert report.content["counts"]["UNRESOLVED"] >= 1
+        assert report.content["open_disputes"]
+        assert report.content["unresolved_gaps"]
         counts = (len(list(session.scalars(select(CanonicalClaim).where(
             CanonicalClaim.task_id == task_id
         )))), len(disputes), len(gaps))
@@ -838,7 +851,7 @@ def test_canonical_claim_groups_duplicate_assertions_without_removing_claims():
     run_next_research_job(worker_id="test-duplicate-normalizer", model=DuplicateGenerator(),
                           embedder=embedder, reranker=reranker, task_id=task_id)
     with SessionLocal() as session:
-        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
         claims = list(session.scalars(select(Claim).where(
             Claim.task_id == task_id, Claim.assertion_text == "同一原文断言"
         )))
@@ -1054,7 +1067,7 @@ def test_frozen_round_limit_replays_from_persisted_evidence():
         runs = list(session.scalars(select(AgentRun).where(AgentRun.task_id == task_id)))
         decisions = list(session.scalars(select(StopEvaluation).where(
             StopEvaluation.task_id == task_id).order_by(StopEvaluation.round_no)))
-        assert task.status == "DEBATE_ROUND_COMPLETE" and job.status == "COMPLETED"
+        assert task.status == "COMPLETED" and job.status == "COMPLETED"
         assert sum(run.round_no == 1 for run in runs) == 3
         assert {run.round_no for run in runs if run.role == "Critic"} == {2, 3}
         assert {run.round_no for run in runs if run.role == "Rebuttal"} == {2, 3}
@@ -1097,7 +1110,7 @@ def test_human_review_releases_lease_and_resumes_stop_stage_only():
         embedder=embedder, reranker=reranker, task_id=task_id,
     ) == job_id
     with SessionLocal() as session:
-        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
         assert session.get(TaskJob, job_id).status == "COMPLETED"
         assert list(session.scalars(select(AgentRun.id).where(
             AgentRun.task_id == task_id, AgentRun.round_no == 1))) == first_runs
@@ -1105,3 +1118,167 @@ def test_human_review_releases_lease_and_resumes_stop_stage_only():
             StopEvaluation.task_id == task_id).order_by(StopEvaluation.created_at)))
         assert [(item.decision, item.reason_code) for item in decisions] == [
             ("WAITING_HUMAN", "MANDATORY_REVIEW"), ("STOP", "NO_CRITIQUES")]
+
+
+def test_judge_report_preserves_citation_chain_and_is_database_immutable():
+    task_id, embedder, reranker = new_worker_task()
+    job_id = run_next_research_job(
+        worker_id="test-judge-report", model=DebateGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        job = session.get(TaskJob, job_id)
+        synthesis = session.scalar(select(ResearchSynthesis).where(
+            ResearchSynthesis.task_id == task_id))
+        report = session.scalar(select(StructuredReport).where(
+            StructuredReport.task_id == task_id))
+        assert task.status == job.status == "COMPLETED"
+        assert report.synthesis_id == synthesis.id
+        assert report.context_snapshot == task.execution_context
+        assert synthesis.input_snapshot["stop_evaluation_id"] == report.content["stop_evaluation_id"]
+        assert set(report.content["sections"]) == {
+            "HIGH_CONFIDENCE", "CONDITIONAL", "DISPUTED", "UNSUPPORTED", "UNRESOLVED"}
+        assert report.content["counts"]["HIGH_CONFIDENCE"] >= 1
+        assert report.content["counts"]["UNRESOLVED"] >= 1
+        findings = [row for rows in report.content["sections"].values() for row in rows]
+        audited_ids = set(session.scalars(select(Claim.id).where(Claim.task_id == task_id)))
+        assert {UUID(row["claim_id"]) for row in findings} == audited_ids
+        for row in findings:
+            assert session.get(AuditResult, UUID(row["audit_result_id"])) is not None
+            for evidence in row["evidence"]:
+                assert evidence["quote_text"]
+                assert evidence["source_revision_id"]
+                assert evidence["citation_locator"]["start"]
+        report_id = report.id
+        frozen_content = report.content
+    with pytest.raises(SQLAlchemyError, match="immutable"), SessionLocal.begin() as session:
+        session.execute(text("UPDATE research.structured_report SET content = '{}' "
+                             "WHERE id = :id"), {"id": report_id})
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        runtime.active_knowledge_version_id = None
+        runtime.active_index_build_id = None
+        session.flush()
+        assert session.get(StructuredReport, report_id).content == frozen_content
+        session.rollback()
+
+
+def test_invalid_judge_output_retries_without_claim_or_report_writes():
+    task_id, embedder, reranker = new_worker_task()
+
+    class InvalidJudge(FakeGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "Judge" in system_prompt:
+                output = super().complete_json(system_prompt, input_payload)
+                output["findings"][0]["claim_id"] = str(uuid4())
+                return output
+            return super().complete_json(system_prompt, input_payload)
+
+    job_id = run_next_research_job(
+        worker_id="test-invalid-judge", model=InvalidJudge(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal.begin() as session:
+        job = session.get(TaskJob, job_id)
+        assert job.status == "RETRY_WAIT" and "Judge must classify" in job.last_error
+        assert session.get(ResearchTask, task_id).status == "JUDGING"
+        assert session.scalar(select(ResearchSynthesis.id).where(
+            ResearchSynthesis.task_id == task_id)) is None
+        assert session.scalar(select(StructuredReport.id).where(
+            StructuredReport.task_id == task_id)) is None
+        first_runs = list(session.scalars(select(AgentRun.id).where(
+            AgentRun.task_id == task_id, AgentRun.round_no == 1)))
+        job.available_at = utc_now()
+    assert run_next_research_job(
+        worker_id="test-valid-judge-retry", model=FakeGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    ) == job_id
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
+        assert session.scalar(select(StructuredReport.id).where(
+            StructuredReport.task_id == task_id)) is not None
+        assert list(session.scalars(select(AgentRun.id).where(
+            AgentRun.task_id == task_id, AgentRun.round_no == 1))) == first_runs
+
+
+def test_report_failure_does_not_complete_task_and_retry_is_idempotent(monkeypatch):
+    from tcm_platform import research_worker
+
+    task_id, embedder, reranker = new_worker_task()
+    original = research_worker.persist_structured_report
+
+    def fail_after_insert(session, report_task_id):
+        original(session, report_task_id)
+        raise RuntimeError("simulated report persistence failure")
+
+    monkeypatch.setattr(research_worker, "persist_structured_report", fail_after_insert)
+    job_id = run_next_research_job(
+        worker_id="test-report-failure", model=FakeGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal.begin() as session:
+        job = session.get(TaskJob, job_id)
+        assert job.status == "RETRY_WAIT"
+        assert session.get(ResearchTask, task_id).status == "REPORTING"
+        assert session.scalar(select(ResearchSynthesis.id).where(
+            ResearchSynthesis.task_id == task_id)) is not None
+        assert session.scalar(select(StructuredReport.id).where(
+            StructuredReport.task_id == task_id)) is None
+        job.available_at = utc_now()
+    monkeypatch.setattr(research_worker, "persist_structured_report", original)
+    assert run_next_research_job(
+        worker_id="test-report-retry", model=FakeGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    ) == job_id
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
+        assert session.get(TaskJob, job_id).status == "COMPLETED"
+        assert len(list(session.scalars(select(StructuredReport).where(
+            StructuredReport.task_id == task_id)))) == 1
+
+
+def test_report_distinguishes_unsupported_and_conditional_claims():
+    class MixedAuditGenerator(FakeGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "证据审计员" in system_prompt:
+                assertion = input_payload["assertion_text"]
+                verdict = ("UNSUPPORTED" if assertion.startswith("Classicist") else
+                           "PARTIALLY_SUPPORTED" if assertion.startswith("Theorist") else
+                           "SUPPORTED")
+                return {"verdict": verdict, "rationale_summary": "按原文核对",
+                        "cited_evidence_revision_ids": [
+                            input_payload["evidence"][0]["evidence_revision_id"]]}
+            return super().complete_json(system_prompt, input_payload)
+
+    task_id, embedder, reranker = new_worker_task()
+    run_next_research_job(worker_id="test-mixed-report", model=MixedAuditGenerator(),
+                          embedder=embedder, reranker=reranker, task_id=task_id)
+    with SessionLocal() as session:
+        report = session.scalar(select(StructuredReport).where(
+            StructuredReport.task_id == task_id))
+        assert report.content["counts"]["UNSUPPORTED"] == 1
+        assert report.content["counts"]["CONDITIONAL"] == 1
+        assert sum(report.content["counts"].values()) == 2
+
+
+def test_all_agents_abstain_still_persists_an_empty_auditable_report():
+    class AbstainingGenerator(FakeGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if input_payload.get("role"):
+                return {"claims": []}
+            return super().complete_json(system_prompt, input_payload)
+
+    task_id, embedder, reranker = new_worker_task()
+    job_id = run_next_research_job(
+        worker_id="test-empty-report", model=AbstainingGenerator(),
+        embedder=embedder, reranker=reranker, task_id=task_id,
+    )
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
+        assert session.get(TaskJob, job_id).status == "COMPLETED"
+        report = session.scalar(select(StructuredReport).where(
+            StructuredReport.task_id == task_id))
+        assert sum(report.content["counts"].values()) == 0
+        stop = session.get(StopEvaluation, UUID(report.content["stop_evaluation_id"]))
+        assert stop.reason_code == "NO_FIRST_ROUND_CLAIMS"

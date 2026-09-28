@@ -1227,3 +1227,43 @@ class HumanReviewRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+
+class ResearchSynthesis(Base):
+    __tablename__ = "research_synthesis"
+    __table_args__ = (
+        UniqueConstraint("task_id", name="uq_research_synthesis_task"),
+        UniqueConstraint("judge_run_id", name="uq_research_synthesis_run"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    judge_run_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.agent_run.id"), nullable=False
+    )
+    input_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    findings: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class StructuredReport(Base):
+    __tablename__ = "structured_report"
+    __table_args__ = (UniqueConstraint("task_id", name="uq_structured_report_task"),
+                      {"schema": "research"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    synthesis_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_synthesis.id"), nullable=False
+    )
+    schema_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    context_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    content: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+

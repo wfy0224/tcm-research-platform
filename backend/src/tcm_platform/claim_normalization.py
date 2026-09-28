@@ -75,7 +75,7 @@ def normalize_task_claims(
     ).with_for_update())
     if task is None or task.status not in {
         "FIRST_ROUND_COMPLETE", "DEBATING", "STOP_EVALUATION",
-        "DEBATE_ROUND_COMPLETE",
+        "DEBATE_ROUND_COMPLETE", "COMPLETED",
     } or task.control_state != "ACTIVE":
         raise ValueError("research task is not ready for Claim normalization")
 

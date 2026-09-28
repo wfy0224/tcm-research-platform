@@ -54,6 +54,7 @@ from tcm_platform.models import (
     PipelineStepExecution,
     ResearchTask,
     SourceRevision,
+    StructuredReport,
     TextSegmentRevision,
 )
 from tcm_platform.research_runtime import execute_first_round, execute_planner
@@ -190,6 +191,8 @@ def main() -> None:
     resolve_review.add_argument("request_id", type=UUID)
     resolve_review.add_argument("--reviewer", required=True)
     resolve_review.add_argument("--note", required=True)
+    show_report = commands.add_parser("show-structured-report", help="show immutable research report")
+    show_report.add_argument("task_id", type=UUID)
     plan = commands.add_parser("plan-research-task", help="run the cloud Planner")
     plan.add_argument("task_id", type=UUID)
     retrieve = commands.add_parser("retrieve-research-task", help="fill version-bound evidence pool")
@@ -395,6 +398,14 @@ def main() -> None:
     elif args.command == "resolve-human-review":
         task_id = resolve_human_review(args.request_id, reviewer_id=args.reviewer, note=args.note)
         print(json.dumps({"task_id": str(task_id), "status": "STOP_EVALUATION"}))
+    elif args.command == "show-structured-report":
+        with SessionLocal() as session:
+            report = session.scalar(select(StructuredReport).where(
+                StructuredReport.task_id == args.task_id))
+            if report is None:
+                raise ValueError("research task has no structured report")
+            print(json.dumps({"report_id": str(report.id), "content_hash": report.content_hash,
+                              "content": report.content}, ensure_ascii=False))
     elif args.command == "plan-research-task":
         model = research_model_from_environment()
         ids = execute_planner(args.task_id, model=model)
