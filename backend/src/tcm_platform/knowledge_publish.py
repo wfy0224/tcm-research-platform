@@ -14,6 +14,7 @@ from tcm_platform.knowledge_service import trace_evidence, trace_knowledge
 from tcm_platform.models import (
     Concept,
     ConceptEvidence,
+    EmbeddingRecord,
     EvidenceRevision,
     FormulaEvidence,
     FormulaRevision,
@@ -27,6 +28,7 @@ from tcm_platform.models import (
     KnowledgeVersionItem,
     QualityIssue,
     RelationEvidence,
+    RetrievalChunk,
     SourceRevision,
     TextSegmentRevision,
     utc_now,
@@ -307,6 +309,8 @@ def activate_knowledge_version(
         runtime = session.scalar(
             select(KnowledgeRuntimeState).where(KnowledgeRuntimeState.id == 1).with_for_update()
         )
+        if runtime is None:
+            raise RuntimeError("knowledge runtime state is not initialized")
         version = session.scalar(
             select(KnowledgeVersion).where(KnowledgeVersion.id == version_id).with_for_update()
         )
@@ -332,6 +336,21 @@ def activate_knowledge_version(
                 raise ValueError("snapshot contains an object without human approval")
         if not items["evidence_revision"]:
             raise ValueError("snapshot has no evidence")
+        chunks = list(session.execute(select(
+            RetrievalChunk.id, RetrievalChunk.evidence_revision_id
+        ).where(RetrievalChunk.index_build_id == build_id)))
+        indexed_ids = {revision_id for _, revision_id in chunks}
+        chunk_ids = {chunk_id for chunk_id, _ in chunks}
+        embedded_chunk_ids = set(session.scalars(select(EmbeddingRecord.chunk_id).where(
+            EmbeddingRecord.index_build_id == build_id,
+            EmbeddingRecord.model_version == build.configuration.get("embedding_model"),
+        )))
+        if (indexed_ids != set(items["evidence_revision"])
+                or len(chunks) != len(indexed_ids)
+                or embedded_chunk_ids != chunk_ids):
+            raise ValueError("target FTS/vector index is incomplete")
+        previous_version_id = runtime.active_knowledge_version_id
+        previous_build_id = runtime.active_index_build_id
         version.status = "READY"
         version.ready_at = version.ready_at or utc_now()
         runtime.active_knowledge_version_id = version_id
@@ -339,7 +358,16 @@ def activate_knowledge_version(
         runtime.updated_at = utc_now()
         append_event(
             session, event_type="knowledge_version.activated", actor_id=actor_id,
-            aggregate_id=version_id, payload={"index_build_id": str(build_id)},
+            aggregate_id=version_id,
+            payload={
+                "index_build_id": str(build_id),
+                "previous_knowledge_version_id": (
+                    str(previous_version_id) if previous_version_id else None
+                ),
+                "previous_index_build_id": str(previous_build_id) if previous_build_id else None,
+                "historical_switch": previous_version_id is not None
+                and version.version_no < session.get(KnowledgeVersion, previous_version_id).version_no,
+            },
         )
 
 
@@ -350,10 +378,54 @@ def compare_knowledge_versions(left_id: UUID, right_id: UUID) -> dict:
         if session.get(KnowledgeVersion, right_id) is None:
             raise ValueError("right knowledge version does not exist")
         left, right = _version_items(session, left_id), _version_items(session, right_id)
-        return {
+        difference = {
             kind: {
                 "added": sorted(str(item) for item in set(right[kind]) - set(left[kind])),
                 "removed": sorted(str(item) for item in set(left[kind]) - set(right[kind])),
             }
             for kind in REVIEW_TARGETS
         }
+        revisions = {}
+        for kind, model, identity_field in (
+            ("evidence_revision", EvidenceRevision, "evidence_id"),
+            ("formula_revision", FormulaRevision, "formula_id"),
+        ):
+            ids = set(left[kind]) | set(right[kind])
+            rows = list(session.scalars(select(model).where(model.id.in_(ids))))
+            by_id = {row.id: row for row in rows}
+            left_by_identity = {getattr(by_id[item], identity_field): item for item in left[kind]}
+            right_by_identity = {getattr(by_id[item], identity_field): item for item in right[kind]}
+            changes = []
+            for identity_id in sorted(set(left_by_identity) & set(right_by_identity)):
+                old_id, new_id = left_by_identity[identity_id], right_by_identity[identity_id]
+                if old_id == new_id:
+                    continue
+                change = {
+                    "identity_id": str(identity_id),
+                    "from_revision_id": str(old_id),
+                    "to_revision_id": str(new_id),
+                }
+                if kind == "evidence_revision":
+                    citations = []
+                    for target_kind, link_model, field in (
+                        ("concept", ConceptEvidence, ConceptEvidence.concept_id),
+                        ("relation", RelationEvidence, RelationEvidence.relation_id),
+                        ("herb", HerbEvidence, HerbEvidence.herb_id),
+                        ("formula_revision", FormulaEvidence,
+                         FormulaEvidence.formula_revision_id),
+                    ):
+                        linked_ids = session.scalars(select(field).where(
+                            link_model.evidence_revision_id == old_id
+                        ))
+                        citations.extend({
+                            "kind": target_kind,
+                            "object_id": str(linked_id),
+                            "retained_in_target": linked_id in right[target_kind],
+                        } for linked_id in linked_ids)
+                    change["citation_impact"] = sorted(
+                        citations, key=lambda item: (item["kind"], item["object_id"])
+                    )
+                changes.append(change)
+            revisions[kind] = changes
+        difference["revision_changes"] = revisions
+        return difference

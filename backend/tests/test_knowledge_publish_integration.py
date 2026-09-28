@@ -17,6 +17,8 @@ from tcm_platform.knowledge_publish import (
 from tcm_platform.knowledge_service import create_concept, create_evidence
 from tcm_platform.main import _public_retrieval_result
 from tcm_platform.models import (
+    EmbeddingRecord,
+    EventLog,
     EvidenceRevision,
     HumanReview,
     IndexBuild,
@@ -144,3 +146,57 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
         runtime = session.get(KnowledgeRuntimeState, 1)
         assert runtime.active_knowledge_version_id == version_id
         assert runtime.active_index_build_id == build_id
+
+    newer_version_id = create_knowledge_version()
+    newer_build_id = create_index_build(newer_version_id, configuration={
+        "strategy": "hybrid-v1", "embedding_model": FakeEmbedder.model_version,
+    })
+    build_retrieval_index(newer_build_id, embedder=FakeEmbedder())
+    activate_knowledge_version(newer_version_id, newer_build_id)
+    activate_knowledge_version(version_id, build_id)
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        assert (runtime.active_knowledge_version_id, runtime.active_index_build_id) == (
+            version_id, build_id
+        )
+
+        event = session.scalar(select(EventLog).where(
+            EventLog.event_type == "knowledge_version.activated",
+            EventLog.aggregate_id == str(version_id),
+        ).order_by(EventLog.sequence_no.desc()))
+        assert event.payload["previous_knowledge_version_id"] == str(newer_version_id)
+        assert event.payload["previous_index_build_id"] == str(newer_build_id)
+        assert event.payload["historical_switch"] is True
+
+    with SessionLocal.begin() as session:
+        record = session.scalar(select(EmbeddingRecord).where(
+            EmbeddingRecord.index_build_id == newer_build_id
+        ))
+        session.delete(record)
+    with pytest.raises(ValueError, match="target FTS/vector index is incomplete"):
+        activate_knowledge_version(newer_version_id, newer_build_id)
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        assert (runtime.active_knowledge_version_id, runtime.active_index_build_id) == (
+            version_id, build_id
+        )
+
+    with SessionLocal() as session:
+        stable_evidence_id = session.get(EvidenceRevision, evidence_id).evidence_id
+    revised_evidence_id = create_evidence(
+        [segment.id], strength="INDIRECT", evidence_id=stable_evidence_id
+    )
+    review_object(
+        "evidence_revision", revised_evidence_id,
+        reviewer_id="expert-1", decision="APPROVE", note="校订引用强度",
+    )
+    revised_version_id = create_knowledge_version()
+    comparison = compare_knowledge_versions(version_id, revised_version_id)
+    assert comparison["revision_changes"]["evidence_revision"] == [{
+        "identity_id": str(stable_evidence_id),
+        "from_revision_id": str(evidence_id),
+        "to_revision_id": str(revised_evidence_id),
+        "citation_impact": [{
+            "kind": "concept", "object_id": str(concept_id), "retained_in_target": True,
+        }],
+    }]
