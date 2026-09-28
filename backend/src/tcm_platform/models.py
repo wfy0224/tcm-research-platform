@@ -80,6 +80,7 @@ class TaskJob(Base):
     __tablename__ = "task_job"
     __table_args__ = (
         UniqueConstraint("idempotency_key", name="uq_job_idempotency_key"),
+        UniqueConstraint("public_id", name="uq_task_job_public_id"),
         CheckConstraint("attempts >= 0 AND max_attempts >= 1"),
         Index("ix_task_job_claim", "status", "available_at", "priority", "created_at"),
         Index("ix_task_job_lease", "status", "lease_expires_at"),
@@ -87,6 +88,8 @@ class TaskJob(Base):
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    public_id: Mapped[str] = mapped_column(String(80), nullable=False,
+                                           default=lambda: f"JOB-{new_id()}")
     idempotency_key: Mapped[str] = mapped_column(String(200), nullable=False)
     job_type: Mapped[str] = mapped_column(String(100), nullable=False)
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
@@ -1295,4 +1298,33 @@ class ReportExport(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class LocalBootstrapGrant(Base):
+    __tablename__ = "local_bootstrap_grant"
+    __table_args__ = ({"schema": "governance"},)
+
+    secret_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class LocalSession(Base):
+    __tablename__ = "local_session"
+    __table_args__ = (UniqueConstraint("public_id", name="uq_local_session_public_id"),
+                      UniqueConstraint("token_hash", name="uq_local_session_token_hash"),
+                      {"schema": "governance"})
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    public_id: Mapped[str] = mapped_column(String(80), nullable=False,
+                                           default=lambda: f"LS-{new_id()}")
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    csrf_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    actor_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    capabilities: Mapped[list] = mapped_column(JSONB, nullable=False)
+    row_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 

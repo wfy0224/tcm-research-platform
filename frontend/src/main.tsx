@@ -10,14 +10,15 @@ type Health = {
 };
 
 type Evidence = {
-  evidence_revision_id: string;
+  evidence_id: string;
+  evidence_revision_no: number;
   source_title: string;
   source_revision_no: number;
   quote_text: string;
   context_before: string;
   context_after: string;
   citation_locator: Record<string, unknown>;
-  segment_revision_ids: string[];
+  segment_ids: string[];
   matched_channels: string[];
   rerank_score: number | null;
 };
@@ -110,7 +111,7 @@ function App() {
           {results.length === 0 ? <p className="empty">当前知识版本中没有找到匹配证据。</p> : (
             <div className="resultList">
               {results.map((item) => (
-                <article className="resultCard" key={item.evidence_revision_id}>
+                <article className="resultCard" key={`${item.evidence_id}:${item.evidence_revision_no}`}>
                   <div className="resultMeta">
                     <strong>{item.source_title}</strong><span>来源修订 {item.source_revision_no}</span>
                   </div>
@@ -164,8 +165,8 @@ function App() {
               <h4>引用定位</h4>
               <pre>{JSON.stringify(selected.citation_locator, null, 2)}</pre>
               <h4>精确修订</h4>
-              <p className="idText">证据：{selected.evidence_revision_id}</p>
-              {selected.segment_revision_ids.map((id) => <p className="idText" key={id}>段落：{id}</p>)}
+              <p className="idText">证据：{selected.evidence_id} · 修订 {selected.evidence_revision_no}</p>
+              {selected.segment_ids.map((id) => <p className="idText" key={id}>段落：{id}</p>)}
             </div>
           </aside>
         </div>

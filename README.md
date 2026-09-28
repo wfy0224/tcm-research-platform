@@ -24,6 +24,14 @@ npm run dev
 
 打开 `http://127.0.0.1:5173`，可检索活动知识版本并查看每条证据的原文、上下文与引用定位。API 健康状态见 `http://127.0.0.1:8000/api/v1/system/health`。默认连接串仅用于本地开发；正式环境通过 `TCM_DATABASE_URL` 和 `TCM_DATA_ROOT` 配置。
 
+### 本地 API 会话与命令合约
+
+当前预览页保留只读的健康检查与已发布知识检索；检索的 HTTP 响应使用来源、证据和段落公开编号，内部修订 UUID 只用于服务和 CLI。任务查询 `GET /api/v1/jobs/{JOB-...}` 需要本地会话，且只接受公开编号。
+
+桌面主进程在启动 API 时生成至少 32 字符的一次性随机密钥，通过 `TCM_BOOTSTRAP_SECRET` 注入进程；前端从主进程取得密钥后，向 `POST /api/v1/local-session/bootstrap` 提交 `{"bootstrap_secret":"..."}`。请求必须携带精确匹配 `TCM_LOCAL_ALLOWED_ORIGINS` 的 `Origin`。成功响应设置 HttpOnly、SameSite=Strict 的会话 Cookie，仅在这次响应体返回 CSRF token。密钥只可兑换一次，默认 5 分钟过期；没有主进程注入密钥时 bootstrap 返回 503。正式 HTTPS 回环部署需设置 `TCM_SECURE_SESSION_COOKIE=true`。桌面主进程接线属于后续 Desktop Supervisor 任务。
+
+业务命令统一校验会话能力、精确 Origin 和 `X-CSRF-Token`；创建类命令要求 `Idempotency-Key`，有版本竞争的更新要求 `If-Match`，长任务返回 202、公开 `job_id` 和 `Location`。错误响应包含 `code`、`category`、`retryable`、`request_id`、`audit_ref` 和 `detail`。当前只开放会话管理与任务查询；来源和研究命令将在对应 API 任务接入这些合约。会话详情 `GET /api/v1/local-session` 返回 ETag；撤销会话 `DELETE /api/v1/local-session` 要求 `If-Match` 与 CSRF token。
+
 测试：`cd backend; uv run pytest`。首次安装依赖需要访问包仓库。
 
 ## 来源导入 E2

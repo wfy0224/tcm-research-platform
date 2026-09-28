@@ -15,6 +15,7 @@ from tcm_platform.knowledge_publish import (
     review_object,
 )
 from tcm_platform.knowledge_service import create_concept, create_evidence
+from tcm_platform.main import _public_retrieval_result
 from tcm_platform.models import (
     EvidenceRevision,
     HumanReview,
@@ -124,6 +125,14 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
     assert results
     assert results[0]["evidence_revision_id"] == str(evidence_id)
     assert results[0]["quote_text"] == "太阳之为病，脉浮。"
+    public_result = _public_retrieval_result(results[0]).model_dump()
+    assert public_result["evidence_id"].startswith("EV-")
+    assert public_result["evidence_revision_no"] == 1
+    assert public_result["source_id"].startswith("SRC-")
+    assert all(value.startswith("SEG-") for value in public_result["segment_ids"])
+    assert public_result["citation_locator"]["start"] == results[0]["citation_locator"]["start"]
+    assert str(evidence_id) not in str(public_result)
+    assert str(imported.source_revision_id) not in str(public_result)
     query_id = create_golden_query(
         "太阳之为病", {evidence_id: "GOLD"}, source_ids=[imported.source_id]
     )
