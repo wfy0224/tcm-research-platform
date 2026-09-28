@@ -39,7 +39,7 @@ from tcm_platform.models import (
 from tcm_platform.research_api import router as research_router
 from tcm_platform.retrieval import search_published
 
-SCHEMA_REVISION = "0021_knowledge_supersession"
+SCHEMA_REVISION = "0022_reference_manifest"
 
 
 class BootstrapRequest(BaseModel):

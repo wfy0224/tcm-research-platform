@@ -26,8 +26,17 @@ from tcm_platform.models import (
     KnowledgeRuntimeState,
     KnowledgeVersion,
     KnowledgeVersionItem,
+    KnowledgeVersionReference,
     QualityIssue,
+    ResearchTask,
+    TaskEvidenceRef,
     TextSegmentRevision,
+)
+from tcm_platform.research_runtime import execute_planner
+from tcm_platform.research_service import (
+    create_research_task,
+    retrieve_for_task,
+    start_research_task,
 )
 from tcm_platform.retrieval import build_retrieval_index, search_published
 from tcm_platform.retrieval_benchmark import create_golden_query, run_benchmark
@@ -62,6 +71,13 @@ class FakeEmbedder:
 
     def embed(self, texts):
         return [[1.0, float(len(value) % 7 + 1), 2.0] for value in texts]
+
+
+class FakePlanner:
+    model_version = "test/frozen-task-planner-v1"
+
+    def complete_json(self, _system_prompt, input_payload):
+        return {"subquestions": [input_payload["question"]]}
 
 
 def test_review_snapshot_and_index_publish_barrier(tmp_path):
@@ -200,6 +216,10 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
 
     with SessionLocal() as session:
         stable_evidence_id = session.get(EvidenceRevision, evidence_id).evidence_id
+    frozen_task_id = create_research_task(
+        "太阳之为病", source_ids=[imported.source_id]
+    )
+    start_research_task(frozen_task_id, model_version=FakePlanner.model_version)
     revised_evidence_id = create_evidence(
         [segment.id], strength="INDIRECT", evidence_id=stable_evidence_id
     )
@@ -209,6 +229,11 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
     )
     revised_version_id = create_knowledge_version()
     comparison = compare_knowledge_versions(version_id, revised_version_id)
+    historical = comparison["historical_reference_changes"]["added"]
+    assert {item["object_id"] for item in historical if
+            item["evidence_revision_id"] == str(evidence_id)} >= {
+        str(concept_id), str(related_concept_id), str(relation_id)
+    }
     evidence_change = comparison["revision_changes"]["evidence_revision"]
     assert len(evidence_change) == 1
     assert evidence_change[0]["identity_id"] == str(stable_evidence_id)
@@ -217,6 +242,29 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
     assert {item["object_id"] for item in evidence_change[0]["citation_impact"]} == {
         str(concept_id), str(related_concept_id), str(relation_id)
     }
+    revised_build_id = create_index_build(revised_version_id, configuration={
+        "strategy": "hybrid-v1", "embedding_model": FakeEmbedder.model_version,
+    })
+    build_retrieval_index(revised_build_id, embedder=FakeEmbedder())
+    activate_knowledge_version(revised_version_id, revised_build_id)
+    revised_results = search_published(
+        "太阳之为病", embedder=FakeEmbedder(), source_ids=[imported.source_id]
+    )
+    assert revised_results
+    assert {result["evidence_revision_id"] for result in revised_results} == {
+        str(revised_evidence_id)
+    }
+    execute_planner(frozen_task_id, model=FakePlanner())
+    assert retrieve_for_task(frozen_task_id, embedder=FakeEmbedder()) == 1
+    with SessionLocal() as session:
+        frozen_task = session.get(ResearchTask, frozen_task_id)
+        assert frozen_task.execution_context["knowledge_version_id"] == str(version_id)
+        assert frozen_task.execution_context["index_build_id"] == str(build_id)
+        frozen_evidence = set(session.scalars(select(TaskEvidenceRef.evidence_revision_id).where(
+            TaskEvidenceRef.task_id == frozen_task_id,
+        )))
+        assert frozen_evidence == {evidence_id}
+    activate_knowledge_version(version_id, build_id)
     replacement_concept_id = create_concept(
         "太阳病校订", concept_type="DISEASE", evidence_revision_id=revised_evidence_id
     )
@@ -261,6 +309,14 @@ def test_review_snapshot_and_index_publish_barrier(tmp_path):
             KnowledgeVersionItem.concept_id == concept_id,
         )))
         assert len(original_items) == 1
+        corrected_refs = list(session.scalars(select(KnowledgeVersionReference).where(
+            KnowledgeVersionReference.knowledge_version_id == corrected_version_id,
+            KnowledgeVersionReference.target_id.in_([
+                concept_id, related_concept_id, relation_id,
+                replacement_concept_id, replacement_related_id, replacement_relation_id,
+            ]),
+        )))
+        assert not corrected_refs
     corrected_build_id = create_index_build(corrected_version_id, configuration={
         "strategy": "hybrid-v1", "embedding_model": FakeEmbedder.model_version,
     })

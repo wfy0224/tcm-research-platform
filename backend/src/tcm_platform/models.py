@@ -673,6 +673,7 @@ class KnowledgeVersion(Base):
     version_no: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(40), nullable=False)
     manifest_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    reference_manifest_hash: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -710,6 +711,27 @@ class KnowledgeVersionItem(Base):
     )
     herb_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("knowledge.herb.id")
+    )
+
+
+class KnowledgeVersionReference(Base):
+    """Historical EvidenceRevision cited by a frozen object but not indexed as current."""
+
+    __tablename__ = "knowledge_version_reference"
+    __table_args__ = (
+        UniqueConstraint("knowledge_version_id", "target_kind", "target_id",
+                         "evidence_revision_id", name="uq_kv_reference"),
+        {"schema": "governance"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    knowledge_version_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("governance.knowledge_version.id"), nullable=False
+    )
+    target_kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    target_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    evidence_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
     )
 
 

@@ -86,6 +86,8 @@ uv run python -m tcm_platform.cli create-index-build <knowledge_version_id>
 
 校订已发布的概念、关系或药物时，先用现有 `create-concept`、`create-relation` 或 `create-herb` 建新草稿并审核，再执行 `supersede-knowledge <concept|relation|herb> <旧对象 ID> <新对象 ID>` 登记追加修订。新快照选择已审核的新对象；旧知识版本仍保留原对象。若关系仍指向已替换概念，或方剂仍指向已替换药物，须先修订这些引用后才能创建新快照。`compare-knowledge` 会显示修订谱系和旧 Evidence 引用影响。
 
+新快照若保留了引用旧 EvidenceRevision 的已审核知识对象，会把这些历史引用单独冻结并校验哈希；历史引用用于溯源和版本比较，不进入当前 Evidence 检索索引。旧研究任务继续使用启动时冻结的知识版本与索引。
+
 ## 云端模型与混合检索 E6
 
 项目运行时直接调用云端 API，不需要下载或运行本地大模型。默认使用硅基流动的 `BAAI/bge-m3` 向量模型和 `BAAI/bge-reranker-v2-m3` 重排模型。外发默认 `LOCAL_ONLY`；云端使用需设置 `TCM_OUTBOUND_MODE=CLOUD_ALLOWED`，并对每个来源显式标记 `PUBLIC`、记录授权理由。旧来源迁移后均为 `RESTRICTED` 且未授权。使用 `set-model-key siliconflow` 在交互式提示中把密钥存入 OS Keychain；仅隔离开发容器可显式设置 `TCM_ALLOW_ENV_API_KEYS=1` 从环境变量读取。密钥不会写入数据库、日志或 Git。构建索引时，已审核证据文本会发给向量模型；检索时，查询和候选证据文本会发给向量及重排模型。研究任务的 Planner 与 Agent 也会将任务问题及可见证据发送给云端生成模型。来源授权撤销后，新外发调用会被拒绝；已发送的数据无法撤回。

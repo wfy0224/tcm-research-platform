@@ -28,6 +28,7 @@ from tcm_platform.models import (
     KnowledgeSupersession,
     KnowledgeVersion,
     KnowledgeVersionItem,
+    KnowledgeVersionReference,
     QualityIssue,
     RelationEvidence,
     RetrievalChunk,
@@ -332,6 +333,37 @@ def _manifest(items: dict[str, list[UUID]]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
+def _historical_references(
+    session: Session, items: dict[str, list[UUID]]
+) -> set[tuple[str, UUID, UUID]]:
+    active_evidence = set(items["evidence_revision"])
+    references = set()
+    for kind, link_model, object_field in (
+        ("concept", ConceptEvidence, ConceptEvidence.concept_id),
+        ("relation", RelationEvidence, RelationEvidence.relation_id),
+        ("herb", HerbEvidence, HerbEvidence.herb_id),
+        ("formula_revision", FormulaEvidence, FormulaEvidence.formula_revision_id),
+    ):
+        if not items[kind]:
+            continue
+        for object_id, evidence_id in session.execute(select(
+            object_field, link_model.evidence_revision_id
+        ).where(object_field.in_(items[kind]))):
+            if evidence_id not in active_evidence:
+                if session.get(EvidenceRevision, evidence_id).status != "REVIEWED":
+                    raise ValueError("historical reference is not reviewed")
+                references.add((kind, object_id, evidence_id))
+    return references
+
+
+def _reference_manifest(references: set[tuple[str, UUID, UUID]]) -> str:
+    canonical = json.dumps(sorted(
+        [kind, str(object_id), str(evidence_id)]
+        for kind, object_id, evidence_id in references
+    ), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
 def create_knowledge_version(*, actor_id: str = "local-curator") -> UUID:
     """Freeze reviewed object IDs; an open blocker stops the snapshot."""
     with SessionLocal.begin() as session:
@@ -346,12 +378,15 @@ def create_knowledge_version(*, actor_id: str = "local-curator") -> UUID:
         if not items["evidence_revision"]:
             raise ValueError("knowledge version requires reviewed evidence")
         _validate_replacement_references(session, items)
+        references = _historical_references(session, items)
         version_no = (session.scalar(select(func.max(KnowledgeVersion.version_no))) or 0) + 1
         version_id = new_id()
         manifest = _manifest(items)
+        reference_manifest = _reference_manifest(references)
         session.add(KnowledgeVersion(
             id=version_id, public_id=f"KV-{version_no:06d}", version_no=version_no,
             status="PRE_PUBLISH_SNAPSHOT", manifest_hash=manifest,
+            reference_manifest_hash=reference_manifest,
         ))
         session.flush()
         session.add_all([
@@ -361,10 +396,19 @@ def create_knowledge_version(*, actor_id: str = "local-curator") -> UUID:
             )
             for kind, ids in items.items() for object_id in ids
         ])
+        session.add_all([
+            KnowledgeVersionReference(
+                id=new_id(), knowledge_version_id=version_id,
+                target_kind=kind, target_id=object_id, evidence_revision_id=evidence_id,
+            ) for kind, object_id, evidence_id in sorted(references)
+        ])
         append_event(
             session, event_type="knowledge_version.snapshotted", actor_id=actor_id,
             aggregate_id=version_id,
-            payload={"manifest_hash": manifest, "item_count": sum(map(len, items.values()))},
+            payload={"manifest_hash": manifest,
+                     "reference_manifest_hash": reference_manifest,
+                     "reference_count": len(references),
+                     "item_count": sum(map(len, items.values()))},
         )
         return version_id
 
@@ -442,6 +486,17 @@ def activate_knowledge_version(
         items = _version_items(session, version_id)
         if _manifest(items) != version.manifest_hash:
             raise ValueError("knowledge version snapshot manifest differs")
+        if version.reference_manifest_hash is not None:
+            frozen_references = {tuple(row) for row in session.execute(select(
+                KnowledgeVersionReference.target_kind,
+                KnowledgeVersionReference.target_id,
+                KnowledgeVersionReference.evidence_revision_id,
+            ).where(KnowledgeVersionReference.knowledge_version_id == version_id))}
+            current_references = _historical_references(session, items)
+            if (frozen_references != current_references
+                    or _reference_manifest(frozen_references)
+                    != version.reference_manifest_hash):
+                raise ValueError("knowledge version historical references differ")
         if _open_blockers(session):
             raise ValueError("open blocking quality issues prevent activation")
         for kind, ids in items.items():
@@ -558,4 +613,22 @@ def compare_knowledge_versions(left_id: UUID, right_id: UUID) -> dict:
             } for root in sorted(set(left_by_root) & set(right_by_root))
                 if left_by_root[root] != right_by_root[root]]
         difference["revision_changes"] = revisions
+        frozen = {}
+        for side, version_id in (("left", left_id), ("right", right_id)):
+            frozen[side] = {tuple(row) for row in session.execute(select(
+                KnowledgeVersionReference.target_kind,
+                KnowledgeVersionReference.target_id,
+                KnowledgeVersionReference.evidence_revision_id,
+            ).where(KnowledgeVersionReference.knowledge_version_id == version_id))}
+        difference["historical_reference_changes"] = {
+            direction: [
+                {"kind": kind, "object_id": str(object_id),
+                 "evidence_revision_id": str(evidence_id)}
+                for kind, object_id, evidence_id in sorted(rows)
+            ]
+            for direction, rows in (
+                ("added", frozen["right"] - frozen["left"]),
+                ("removed", frozen["left"] - frozen["right"]),
+            )
+        }
         return difference
