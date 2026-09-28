@@ -11,7 +11,7 @@ from tcm_platform.db import SessionLocal
 from tcm_platform.enums import HealthState
 from tcm_platform.retrieval import search_published
 
-SCHEMA_REVISION = "0017_judge_report"
+SCHEMA_REVISION = "0018_report_export"
 
 
 class HealthResponse(BaseModel):

@@ -1,5 +1,8 @@
+import io
+import zipfile
 from datetime import timedelta
 from uuid import UUID, uuid4
+from xml.etree import ElementTree as ET
 
 import pytest
 from sqlalchemy import select, text
@@ -21,6 +24,7 @@ from tcm_platform.debate_service import (
 from tcm_platform.knowledge_service import trace_evidence
 from tcm_platform.models import (
     AgentRun,
+    Artifact,
     AuditResult,
     CanonicalClaim,
     CanonicalClaimMember,
@@ -39,6 +43,7 @@ from tcm_platform.models import (
     KnowledgeVersionItem,
     ModelInvocation,
     Rebuttal,
+    ReportExport,
     ResearchSubquestion,
     ResearchSynthesis,
     ResearchTask,
@@ -49,6 +54,7 @@ from tcm_platform.models import (
     TaskJob,
     utc_now,
 )
+from tcm_platform.report_export import process_next_report_export, queue_report_export
 from tcm_platform.research_runtime import execute_first_round, execute_planner
 from tcm_platform.research_service import (
     add_task_evidence,
@@ -64,6 +70,7 @@ from tcm_platform.research_service import (
 )
 from tcm_platform.research_worker import run_next_research_job
 from tcm_platform.stop_service import WorkflowConfig, evaluate_snapshot, resolve_human_review
+from tcm_platform.storage import ContentAddressedStore
 
 
 def test_agent_can_abstain_when_visible_evidence_is_insufficient():
@@ -1262,7 +1269,7 @@ def test_report_distinguishes_unsupported_and_conditional_claims():
         assert sum(report.content["counts"].values()) == 2
 
 
-def test_all_agents_abstain_still_persists_an_empty_auditable_report():
+def test_all_agents_abstain_still_persists_an_empty_auditable_report(tmp_path):
     class AbstainingGenerator(FakeGenerator):
         def complete_json(self, system_prompt, input_payload):
             if input_payload.get("role"):
@@ -1282,3 +1289,123 @@ def test_all_agents_abstain_still_persists_an_empty_auditable_report():
         assert sum(report.content["counts"].values()) == 0
         stop = session.get(StopEvaluation, UUID(report.content["stop_evaluation_id"]))
         assert stop.reason_code == "NO_FIRST_ROUND_CLAIMS"
+    store = ContentAddressedStore(tmp_path / "empty-report-cas")
+    export_id = queue_report_export(task_id, "markdown")
+    assert process_next_report_export(store=store, export_id=export_id) == export_id
+    with SessionLocal() as session:
+        export = session.get(ReportExport, export_id)
+        blob = session.get(Artifact, export.artifact_id)
+        assert "本报告无已验证的原文证据" in store.path_for(blob.blob_sha256).read_text()
+
+
+def test_report_exports_are_derived_artifacts_with_internal_citation_links(tmp_path):
+    task_id, embedder, reranker = new_worker_task()
+    run_next_research_job(worker_id="test-report-export-source", model=DebateGenerator(),
+                          embedder=embedder, reranker=reranker, task_id=task_id)
+    store = ContentAddressedStore(tmp_path / "report-cas")
+    markdown_id = queue_report_export(task_id, "markdown")
+    docx_id = queue_report_export(task_id, "docx")
+    assert queue_report_export(task_id, "markdown") == markdown_id
+    assert process_next_report_export(store=store, export_id=markdown_id) == markdown_id
+    assert process_next_report_export(store=store, export_id=docx_id) == docx_id
+    with SessionLocal() as session:
+        task = session.get(ResearchTask, task_id)
+        report = session.scalar(select(StructuredReport).where(
+            StructuredReport.task_id == task_id))
+        markdown = session.get(ReportExport, markdown_id)
+        docx = session.get(ReportExport, docx_id)
+        assert task.status == "COMPLETED"
+        assert markdown.report_id == docx.report_id == report.id
+        assert markdown.renderer_version == docx.renderer_version
+        assert markdown.artifact_id != docx.artifact_id
+        assert len(markdown.process_snapshot["agent_runs"]) >= 1
+        assert len(markdown.process_snapshot["audits"]) >= 1
+        markdown_job = session.get(TaskJob, markdown.job_id)
+        assert markdown_job.status == "COMPLETED"
+        assert markdown_job.attempts == 1
+        md_blob = session.get(Artifact, markdown.artifact_id).blob_sha256
+        docx_blob = session.get(Artifact, docx.artifact_id).blob_sha256
+        finding = next(row for rows in report.content["sections"].values()
+                       for row in rows if row["evidence"])
+        quote = finding["evidence"][0]["quote_text"]
+        evidence_revision_id = finding["evidence"][0]["evidence_revision_id"]
+    markdown_text = store.path_for(md_blob).read_text(encoding="utf-8")
+    assert quote in markdown_text
+    assert f"#evidence{evidence_revision_id.replace('-', '')}" in markdown_text
+    assert "研究过程" in markdown_text
+    with zipfile.ZipFile(io.BytesIO(store.path_for(docx_blob).read_bytes())) as archive:
+        root = ET.fromstring(archive.read("word/document.xml"))
+        text_content = "".join(node.text or "" for node in root.iter()
+                               if node.tag.endswith("}t"))
+        assert quote in text_content
+        assert "研究过程" in text_content
+        assert any(node.attrib.get("{http://schemas.openxmlformats.org/"
+                                   "wordprocessingml/2006/main}anchor") ==
+                   "evidence" + evidence_revision_id.replace("-", "")
+                   for node in root.iter() if node.tag.endswith("}hyperlink"))
+    assert queue_report_export(task_id, "docx") == docx_id
+    assert process_next_report_export(store=store, export_id=docx_id) is None
+
+
+def test_failed_export_retries_without_reopening_research_task(tmp_path, monkeypatch):
+    task_id, embedder, reranker = new_worker_task()
+    run_next_research_job(worker_id="test-export-failure-source", model=DebateGenerator(),
+                          embedder=embedder, reranker=reranker, task_id=task_id)
+    store = ContentAddressedStore(tmp_path / "retry-cas")
+    export_id = queue_report_export(task_id, "docx")
+    from tcm_platform import report_export
+
+    original = report_export.render_docx
+
+    def broken_renderer(content, process):
+        raise RuntimeError("simulated renderer failure")
+
+    monkeypatch.setattr(report_export, "render_docx", broken_renderer)
+    for attempt in range(3):
+        if attempt:
+            assert queue_report_export(task_id, "docx") == export_id
+        assert process_next_report_export(store=store, export_id=export_id) == export_id
+    with SessionLocal() as session:
+        export = session.get(ReportExport, export_id)
+        job = session.get(TaskJob, export.job_id)
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
+        assert job.status == "FAILED"
+        assert job.attempts == 3
+        assert export.artifact_id is None
+    monkeypatch.setattr(report_export, "render_docx", original)
+    assert queue_report_export(task_id, "docx") == export_id
+    assert process_next_report_export(store=store, export_id=export_id) == export_id
+    with SessionLocal() as session:
+        export = session.get(ReportExport, export_id)
+        job = session.get(TaskJob, export.job_id)
+        assert job.status == "COMPLETED"
+        assert job.attempts == 4
+        assert export.artifact_id is not None
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
+
+
+def test_export_registration_failure_rolls_back_artifact_and_retries(tmp_path, monkeypatch):
+    task_id, embedder, reranker = new_worker_task()
+    run_next_research_job(worker_id="test-export-register-source", model=DebateGenerator(),
+                          embedder=embedder, reranker=reranker, task_id=task_id)
+    store = ContentAddressedStore(tmp_path / "register-cas")
+    export_id = queue_report_export(task_id, "markdown")
+    original = store.register
+
+    def broken_register(*args, **kwargs):
+        raise OSError("simulated artifact registration failure")
+
+    monkeypatch.setattr(store, "register", broken_register)
+    assert process_next_report_export(store=store, export_id=export_id) == export_id
+    with SessionLocal() as session:
+        export = session.get(ReportExport, export_id)
+        assert export.artifact_id is None
+        assert session.get(TaskJob, export.job_id).status == "RETRY_WAIT"
+        assert session.get(ResearchTask, task_id).status == "COMPLETED"
+    monkeypatch.setattr(store, "register", original)
+    assert queue_report_export(task_id, "markdown") == export_id
+    assert process_next_report_export(store=store, export_id=export_id) == export_id
+    with SessionLocal() as session:
+        export = session.get(ReportExport, export_id)
+        assert export.artifact_id is not None
+        assert session.get(TaskJob, export.job_id).status == "COMPLETED"

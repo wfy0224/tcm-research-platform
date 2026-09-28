@@ -1267,3 +1267,32 @@ class StructuredReport(Base):
     content: Mapped[dict] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
+
+class ReportExport(Base):
+    __tablename__ = "report_export"
+    __table_args__ = (
+        UniqueConstraint("report_id", "file_format", "renderer_version",
+                         name="uq_report_export_version"),
+        UniqueConstraint("job_id", name="uq_report_export_job"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    report_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.structured_report.id"), nullable=False
+    )
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    file_format: Mapped[str] = mapped_column(String(10), nullable=False)
+    renderer_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    process_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    job_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("runtime.task_job.id"), nullable=False
+    )
+    artifact_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("storage.artifact.id")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+

@@ -1,6 +1,7 @@
 """Development CLI for the source import and segmentation pipeline."""
 
 import argparse
+import hashlib
 import json
 import time
 from dataclasses import asdict
@@ -16,6 +17,7 @@ from tcm_platform.cloud_models import (
     research_model_for_version,
     research_model_from_environment,
 )
+from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal
 from tcm_platform.debate_service import (
     audit_revised_claims,
@@ -48,15 +50,19 @@ from tcm_platform.knowledge_service import (
 )
 from tcm_platform.models import (
     AgentRun,
+    Artifact,
     Claim,
     HumanReviewRequest,
     ImportJob,
     PipelineStepExecution,
+    ReportExport,
     ResearchTask,
     SourceRevision,
     StructuredReport,
+    TaskJob,
     TextSegmentRevision,
 )
+from tcm_platform.report_export import process_next_report_export, queue_report_export
 from tcm_platform.research_runtime import execute_first_round, execute_planner
 from tcm_platform.research_service import (
     cancel_research_task,
@@ -73,6 +79,7 @@ from tcm_platform.retrieval_benchmark import create_golden_query, run_benchmark
 from tcm_platform.segment_service import process_next_segment
 from tcm_platform.source_import import SourceMetadata, import_file, process_next_import
 from tcm_platform.stop_service import WorkflowConfig, resolve_human_review
+from tcm_platform.storage import ContentAddressedStore
 
 
 def main() -> None:
@@ -193,6 +200,17 @@ def main() -> None:
     resolve_review.add_argument("--note", required=True)
     show_report = commands.add_parser("show-structured-report", help="show immutable research report")
     show_report.add_argument("task_id", type=UUID)
+    queue_export = commands.add_parser("queue-report-export", help="queue derived report artifact")
+    queue_export.add_argument("task_id", type=UUID)
+    queue_export.add_argument("--format", required=True, choices=["markdown", "docx"])
+    run_export = commands.add_parser("run-report-export-next", help="process one export job")
+    run_export.add_argument("--export-id", type=UUID)
+    run_export.add_argument("--worker-id", default="local-export-worker")
+    show_export = commands.add_parser("show-report-export", help="show export job and artifact")
+    show_export.add_argument("export_id", type=UUID)
+    save_export = commands.add_parser("save-report-export", help="copy a completed export to a file")
+    save_export.add_argument("export_id", type=UUID)
+    save_export.add_argument("output", type=Path)
     plan = commands.add_parser("plan-research-task", help="run the cloud Planner")
     plan.add_argument("task_id", type=UUID)
     retrieve = commands.add_parser("retrieve-research-task", help="fill version-bound evidence pool")
@@ -406,6 +424,43 @@ def main() -> None:
                 raise ValueError("research task has no structured report")
             print(json.dumps({"report_id": str(report.id), "content_hash": report.content_hash,
                               "content": report.content}, ensure_ascii=False))
+    elif args.command == "queue-report-export":
+        export_id = queue_report_export(args.task_id, args.format)
+        print(json.dumps({"export_id": str(export_id)}))
+    elif args.command == "run-report-export-next":
+        export_id = process_next_report_export(worker_id=args.worker_id,
+                                               export_id=args.export_id)
+        print(json.dumps({"export_id": str(export_id) if export_id else None}))
+    elif args.command == "show-report-export":
+        with SessionLocal() as session:
+            export = session.get(ReportExport, args.export_id)
+            if export is None:
+                raise ValueError("report export does not exist")
+            job = session.get(TaskJob, export.job_id)
+            artifact = session.get(Artifact, export.artifact_id) if export.artifact_id else None
+            print(json.dumps({"export_id": str(export.id), "task_id": str(export.task_id),
+                              "format": export.file_format,
+                              "renderer_version": export.renderer_version,
+                              "status": job.status, "attempts": job.attempts,
+                              "last_error": job.last_error,
+                              "artifact_id": str(artifact.id) if artifact else None,
+                              "blob_sha256": artifact.blob_sha256 if artifact else None},
+                             ensure_ascii=False))
+    elif args.command == "save-report-export":
+        with SessionLocal() as session:
+            export = session.get(ReportExport, args.export_id)
+            if export is None or export.artifact_id is None:
+                raise ValueError("report export is not completed")
+            artifact = session.get(Artifact, export.artifact_id)
+            digest = artifact.blob_sha256
+        source = ContentAddressedStore(settings.data_root).path_for(digest)
+        content = source.read_bytes()
+        if hashlib.sha256(content).hexdigest() != digest:
+            raise ValueError("report export blob checksum differs from artifact")
+        with args.output.open("xb") as stream:
+            stream.write(content)
+        print(json.dumps({"export_id": str(args.export_id), "output": str(args.output),
+                          "blob_sha256": digest, "size_bytes": len(content)}))
     elif args.command == "plan-research-task":
         model = research_model_from_environment()
         ids = execute_planner(args.task_id, model=model)

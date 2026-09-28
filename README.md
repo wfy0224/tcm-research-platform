@@ -127,11 +127,13 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 再检索请求全部结束后，手工调试可运行 `prepare-rebuttal <task_id>`、`run-rebuttal <agent_run_id>`、`audit-revised-claims <task_id>`。Rebuttal 对每条 Critique 给出 ACCEPT、PARTIAL_ACCEPT、REJECT 或 REVISE；REVISE 追加一条以旧 Claim 为 parent 的新 Claim，原断言保留。修订 Claim 从 PENDING 重新经过机械与语义审计，审计命令可在失败后重试未完成的修订。Rebuttal 的模型、Prompt 版本、轮次和冻结可见证据记录于 AgentRun；模型调用记录于 ModelInvocation。
 
-不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_judge_report_preserves_citation_chain_and_is_database_immutable`。先在独立 PostgreSQL 测试库迁移到 `0017_judge_report`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、Judge、不可变报告、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
+不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_judge_report_preserves_citation_chain_and_is_database_immutable`。先在独立 PostgreSQL 测试库迁移到 `0018_report_export`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、Judge、不可变报告、派生导出、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
 
 停止策略在启动研究任务时通过 `start-research-task <task-id> --workflow-config '{"min_debate_rounds":1,"max_debate_rounds":2,"mandatory_human_review":true}'` 冻结。Worker 按已审计 Claim、开放争议和证据缺口计算并保存每轮 StopEvaluation；人工复核时任务进入 `WAITING_HUMAN`，Job 完成并释放租约。用 `list-human-reviews <task-id>` 查看待处理请求，用 `resolve-human-review <request-id> --reviewer <name> --note <reason>` 记录处理结果并重新排队；Worker 从停止判断阶段续跑，不重做首轮。
 
-Judge 只接收已完成审计的 Active Claim、最近 AuditResult、开放 Dispute/EvidenceGap 与冻结知识版本内已审核的精确 EvidenceRevision。输出只能为每条 Claim 选择允许的分类和理由 ID，不能生成新 Claim、改写断言或自由检索。`ResearchSynthesis` 保存 Judge 输入快照，ReportGenerator 仅复制审计文本、争议正反证据与原文定位生成 `StructuredReport`；数据库禁止更新或删除这两类记录。用 `show-structured-report <task_id>` 查看报告 JSON。Markdown/DOCX 导出属于 VIB-57。
+Judge 只接收已完成审计的 Active Claim、最近 AuditResult、开放 Dispute/EvidenceGap 与冻结知识版本内已审核的精确 EvidenceRevision。输出只能为每条 Claim 选择允许的分类和理由 ID，不能生成新 Claim、改写断言或自由检索。`ResearchSynthesis` 保存 Judge 输入快照，ReportGenerator 仅复制审计文本、争议正反证据与原文定位生成 `StructuredReport`；数据库禁止更新或删除这两类记录。用 `show-structured-report <task_id>` 查看报告 JSON。
+
+研究任务完成后，可用 `queue-report-export <task_id> --format markdown` 或 `--format docx` 排队独立导出，再用 `run-report-export-next --export-id <export_id>` 处理。`show-report-export <export_id>` 显示格式、渲染版本、Job 状态和 Artifact 哈希；`save-report-export <export_id> <output_path>` 将已完成文件保存到本地，不覆盖已有文件。相同报告、格式与渲染版本重复排队返回同一导出；失败可再次排队重试，不改变已完成研究任务。两种文件均列出五类结论、原文证据、争议、限制与研究过程，并提供内部引用跳转及可复制的来源修订和定位文字。当前网页尚无报告页面；研究详情与下载 API 属于后续工作台任务。
 
 验收追踪：AC-1B-03/04 的 Claim 定向质疑、受限再检索、Rebuttal、追加修订与重新审计对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、`audit_service.py`、`research_worker.py`、迁移 0012～0014，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
 
