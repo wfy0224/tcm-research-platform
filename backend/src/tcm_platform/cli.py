@@ -10,6 +10,7 @@ from uuid import UUID
 from sqlalchemy import select
 
 from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
+from tcm_platform.claim_normalization import normalize_task_claims
 from tcm_platform.cloud_models import (
     cloud_clients_from_environment,
     research_model_for_version,
@@ -220,6 +221,10 @@ def main() -> None:
         "audit-revised-claims", help="audit pending Claim revisions"
     )
     audit_revisions.add_argument("task_id", type=UUID)
+    normalize = commands.add_parser(
+        "normalize-claims", help="replay audited Claim normalization and dispute detection"
+    )
+    normalize.add_argument("task_id", type=UUID)
     activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
     activate.add_argument("knowledge_version_id", type=UUID)
     activate.add_argument("index_build_id", type=UUID)
@@ -439,6 +444,8 @@ def main() -> None:
         model = research_model_for_version(model_version)
         print(json.dumps({"results": audit_revised_claims(args.task_id, model=model)},
                          ensure_ascii=False))
+    elif args.command == "normalize-claims":
+        print(json.dumps(normalize_task_claims(args.task_id), ensure_ascii=False))
     elif args.command in {"run-research-next", "run-research-worker"}:
         embedder, reranker = cloud_clients_from_environment()
         if args.command == "run-research-next":

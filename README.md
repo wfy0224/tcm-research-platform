@@ -127,9 +127,13 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 再检索请求全部结束后，手工调试可运行 `prepare-rebuttal <task_id>`、`run-rebuttal <agent_run_id>`、`audit-revised-claims <task_id>`。Rebuttal 对每条 Critique 给出 ACCEPT、PARTIAL_ACCEPT、REJECT 或 REVISE；REVISE 追加一条以旧 Claim 为 parent 的新 Claim，原断言保留。修订 Claim 从 PENDING 重新经过机械与语义审计，审计命令可在失败后重试未完成的修订。Rebuttal 的模型、Prompt 版本、轮次和冻结可见证据记录于 AgentRun；模型调用记录于 ModelInvocation。
 
-不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_worker_completes_audited_debate_without_manual_cli_steps`。先在独立 PostgreSQL 测试库迁移到 `0014_research_node_checkpoints`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
+不调用云端模型的可回放样例是 `backend/tests/test_research_integration.py::test_worker_completes_audited_debate_without_manual_cli_steps`。先在独立 PostgreSQL 测试库迁移到 `0015_canonical_claim_dispute_gap`，然后按顺序运行 `tests/test_knowledge_publish_integration.py tests/test_research_integration.py`；前者发布样本知识，后者验证完整轮次、节点检查点、暂停取消、租约恢复与非法输出重试。检查 pytest 的 skip 原因，不能把 skip 当作通过。
 
 验收追踪：AC-1B-03/04 的 Claim 定向质疑、受限再检索、Rebuttal、追加修订与重新审计对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、`audit_service.py`、`research_worker.py`、迁移 0012～0014，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
+
+## Claim 归并与争议 E9.1
+
+Worker 在首轮审计后和一轮辩论结束时，按断言类型、规范化文本与精确来源版本归并重复 Claim；来源快照的时代和流派一并保留。原 Claim 与修订 Claim 都保留各自 ID，CanonicalClaimMember 指向其最新审计结果。明确的语义审计矛盾和 `CONTRADICTION` 质疑生成 Dispute；审计不充分、无法验证、质疑缺证或再检索无结果生成 EvidenceGap。新审计结果会把已过时的争议和缺口标为 `SUPERSEDED`，保留历史记录。未审计的反面材料不会被标成已证实的反证。命令 `normalize-claims <task_id>` 可幂等重放这些投影。自动归并只处理精确重复断言；跨断言的语义相似和隐含冲突需后续模型或人工提出明确关系，不会靠多数票推断。E9 的停止规则、Judge 与报告仍待后续任务。
 
 ## 设计约束
 

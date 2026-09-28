@@ -6,6 +6,8 @@ from uuid import UUID
 from sqlalchemy import select
 
 from tcm_platform.audit import append_event
+from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
+from tcm_platform.claim_normalization import normalize_task_claims
 from tcm_platform.cloud_models import research_model_for_version
 from tcm_platform.db import SessionLocal
 from tcm_platform.debate_service import (
@@ -16,7 +18,6 @@ from tcm_platform.debate_service import (
     prepare_rebuttal_round,
     retrieve_evidence_requests,
 )
-from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 from tcm_platform.enums import JobStatus
 from tcm_platform.jobs import (
     LeaseLostError,
@@ -151,6 +152,7 @@ def run_next_research_job(
             ).with_for_update())
             if task.status not in {"FIRST_ROUND_COMPLETE", "DEBATING"}:
                 raise ValueError("research task cannot finish its debate round")
+            normalize_task_claims(task_id, actor_id=worker_id, session=session)
             task.status = "DEBATE_ROUND_COMPLETE"
             append_event(session, event_type="research_task.debate_round_completed",
                          actor_id=worker_id, aggregate_id=task_id,
@@ -218,6 +220,10 @@ def run_next_research_job(
                 elif not any_claim:
                     return finish_debate("NO_FIRST_ROUND_CLAIMS")
                 else:
+                    node_phase = "FIRST_ROUND_CLAIMS_NORMALIZED"
+                    with SessionLocal.begin() as session:
+                        guard(session)
+                        normalize_task_claims(task_id, actor_id=worker_id, session=session)
                     node_phase = "CRITIC_PREPARED"
                     prepare_critic_round(task_id, lease_guard=guard)
             elif status == "DEBATING":

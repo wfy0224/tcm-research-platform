@@ -6,6 +6,7 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
+from tcm_platform.claim_normalization import normalize_task_claims
 from tcm_platform.db import SessionLocal, engine
 from tcm_platform.debate_service import (
     audit_revised_claims,
@@ -21,20 +22,24 @@ from tcm_platform.knowledge_service import trace_evidence
 from tcm_platform.models import (
     AgentRun,
     AuditResult,
+    CanonicalClaim,
+    CanonicalClaimMember,
     Claim,
     ClaimEvidence,
     Critique,
+    Dispute,
     EmbeddingRecord,
     EventLog,
+    EvidenceGap,
     EvidenceRequest,
     EvidenceRetrievalEvent,
     IndexBuild,
     KnowledgeRuntimeState,
     KnowledgeVersionItem,
     ModelInvocation,
+    Rebuttal,
     ResearchSubquestion,
     ResearchTask,
-    Rebuttal,
     TaskCheckpoint,
     TaskEvidenceRef,
     TaskJob,
@@ -685,6 +690,21 @@ def test_worker_completes_audited_debate_without_manual_cli_steps():
         assert original.assertion_text != revised.assertion_text
         assert original.audit_status == "SUPPORTED"
         assert revised.audit_status == "NOT_VERIFIABLE"
+        members = list(session.scalars(select(CanonicalClaimMember).join(
+            Claim, Claim.id == CanonicalClaimMember.claim_id
+        ).where(Claim.task_id == task_id)))
+        assert len(members) == len(list(session.scalars(select(Claim).where(
+            Claim.task_id == task_id
+        ))))
+        member_by_claim = {item.claim_id: item for item in members}
+        assert member_by_claim[original.id].canonical_claim_id != (
+            member_by_claim[revised.id].canonical_claim_id
+        )
+        assert session.get(CanonicalClaim, member_by_claim[original.id].canonical_claim_id)
+        assert session.scalar(select(EvidenceGap.id).where(
+            EvidenceGap.task_id == task_id, EvidenceGap.claim_id == revised.id,
+            EvidenceGap.reason_code == "NOT_VERIFIABLE",
+        )) is not None
         audits = list(session.scalars(select(AuditResult).where(
             AuditResult.claim_id == revised.id
         ).order_by(AuditResult.sequence_no)))
@@ -712,6 +732,118 @@ def test_worker_completes_audited_debate_without_manual_cli_steps():
         worker_id="test-debate-worker", model=DebateGenerator(),
         embedder=embedder, reranker=reranker, task_id=task_id,
     ) is None
+
+
+def test_claim_normalization_preserves_conflict_and_replays_without_duplicates():
+    class ConflictGenerator(DebateGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "证据审计员" in system_prompt:
+                assertion = input_payload["assertion_text"]
+                verdict = ("CONTRADICTED" if assertion.startswith("Classicist")
+                           else "NOT_VERIFIABLE" if assertion.startswith("Theorist")
+                           else "SUPPORTED")
+                return {"verdict": verdict, "rationale_summary": "按原文审计",
+                        "cited_evidence_revision_ids": [
+                            input_payload["evidence"][0]["evidence_revision_id"]]}
+            if "Critic" in system_prompt:
+                return {"critiques": [{
+                    "client_ref": "c1", "target_claim_id": input_payload["claims"][0]["claim_id"],
+                    "issue_type": "CONTRADICTION", "rationale_summary": "存在相反解释",
+                    "evidence_request_query": None,
+                }]}
+            return super().complete_json(system_prompt, input_payload)
+
+    task_id, embedder, reranker = new_worker_task()
+    run_next_research_job(worker_id="test-conflict-normalizer", model=ConflictGenerator(),
+                          embedder=embedder, reranker=reranker, task_id=task_id)
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        disputes = list(session.scalars(select(Dispute).where(Dispute.task_id == task_id)))
+        assert {item.reason_code for item in disputes} == {
+            "AUDIT_CONTRADICTION", "CRITIQUE_CONTRADICTION",
+        }
+        assert any(item.opposing_evidence_ids for item in disputes)
+        assert any(item.supporting_evidence_ids == [] for item in disputes)
+        gaps = list(session.scalars(select(EvidenceGap).where(
+            EvidenceGap.task_id == task_id
+        )))
+        assert any(item.reason_code == "NOT_VERIFIABLE" for item in gaps)
+        assert any(item.reason_code == "SUPPORTING_EVIDENCE_UNVERIFIED" for item in gaps)
+        counts = (len(list(session.scalars(select(CanonicalClaim).where(
+            CanonicalClaim.task_id == task_id
+        )))), len(disputes), len(gaps))
+    assert normalize_task_claims(task_id) == {
+        "canonical_claims": 0, "members": 0, "disputes": 0, "gaps": 0,
+        "superseded": 0,
+    }
+    with SessionLocal() as session:
+        assert counts == (
+            len(list(session.scalars(select(CanonicalClaim).where(
+                CanonicalClaim.task_id == task_id
+            )))),
+            len(list(session.scalars(select(Dispute).where(Dispute.task_id == task_id)))),
+            len(list(session.scalars(select(EvidenceGap).where(EvidenceGap.task_id == task_id)))),
+        )
+    with SessionLocal.begin() as session:
+        critique = session.scalar(select(Critique).where(Critique.task_id == task_id))
+        target = session.get(Claim, critique.target_claim_id)
+        prior = session.scalar(select(AuditResult).where(
+            AuditResult.claim_id == target.id
+        ).order_by(AuditResult.sequence_no.desc()).limit(1))
+        assert prior.verdict == "CONTRADICTED"
+        session.add(AuditResult(
+            id=uuid4(), task_id=task_id, claim_id=target.id,
+            sequence_no=prior.sequence_no + 1, stage="SEMANTIC",
+            verdict="SUPPORTED", rationale_summary="复核后有支持",
+            evidence_revision_ids=prior.evidence_revision_ids,
+            model_version=prior.model_version,
+        ))
+        target.audit_status = "SUPPORTED"
+    replay = normalize_task_claims(task_id)
+    assert replay["canonical_claims"] == replay["members"] == 0
+    assert replay["disputes"] == replay["gaps"] == 1
+    assert replay["superseded"] >= 2
+    with SessionLocal() as session:
+        assert session.scalar(select(Dispute.id).where(
+            Dispute.task_id == task_id,
+            Dispute.reason_code == "AUDIT_CONTRADICTION",
+            Dispute.status == "OPEN",
+        )) is None
+        assert session.scalar(select(Dispute.id).where(
+            Dispute.task_id == task_id,
+            Dispute.reason_code == "CRITIQUE_CONTRADICTION",
+            Dispute.status == "OPEN",
+        )) is not None
+
+
+def test_canonical_claim_groups_duplicate_assertions_without_removing_claims():
+    class DuplicateGenerator(FakeGenerator):
+        def complete_json(self, system_prompt, input_payload):
+            if "Critic" in system_prompt:
+                return {"critiques": []}
+            if input_payload.get("role") == "Classicist":
+                evidence_id = input_payload["evidence"][0]["evidence_revision_id"]
+                return {"claims": [{
+                    "client_ref": ref, "claim_type": "DIRECT_TEXT",
+                    "assertion_text": "同一原文断言", "rationale_summary": "同一证据",
+                    "evidence_revision_ids": [evidence_id],
+                } for ref in ("first", "second")]}
+            return super().complete_json(system_prompt, input_payload)
+
+    task_id, embedder, reranker = new_worker_task()
+    run_next_research_job(worker_id="test-duplicate-normalizer", model=DuplicateGenerator(),
+                          embedder=embedder, reranker=reranker, task_id=task_id)
+    with SessionLocal() as session:
+        assert session.get(ResearchTask, task_id).status == "DEBATE_ROUND_COMPLETE"
+        claims = list(session.scalars(select(Claim).where(
+            Claim.task_id == task_id, Claim.assertion_text == "同一原文断言"
+        )))
+        assert len(claims) == 2
+        members = list(session.scalars(select(CanonicalClaimMember).where(
+            CanonicalClaimMember.claim_id.in_([item.id for item in claims])
+        )))
+        assert len(members) == 2
+        assert members[0].canonical_claim_id == members[1].canonical_claim_id
 
 
 def test_worker_retries_invalid_critic_output_without_partial_debate():

@@ -1077,3 +1077,106 @@ class Rebuttal(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
+
+class CanonicalClaim(Base):
+    __tablename__ = "canonical_claim"
+    __table_args__ = (
+        UniqueConstraint("task_id", "fingerprint", name="uq_canonical_claim_fingerprint"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    claim_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    assertion_text: Mapped[str] = mapped_column(Text, nullable=False)
+    source_context: Mapped[list] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class CanonicalClaimMember(Base):
+    __tablename__ = "canonical_claim_member"
+    __table_args__ = (
+        UniqueConstraint("claim_id", name="uq_canonical_claim_member_claim"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    canonical_claim_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.canonical_claim.id"), nullable=False
+    )
+    claim_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id"), nullable=False
+    )
+    audit_result_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.audit_result.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class Dispute(Base):
+    __tablename__ = "dispute"
+    __table_args__ = (
+        UniqueConstraint("task_id", "source_key", name="uq_dispute_source"),
+        Index("ix_dispute_task", "task_id", "created_at"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    source_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    canonical_claim_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.canonical_claim.id"), nullable=False
+    )
+    target_claim_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id"), nullable=False
+    )
+    competing_claim_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id")
+    )
+    critique_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.critique.id")
+    )
+    audit_result_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.audit_result.id")
+    )
+    reason_code: Mapped[str] = mapped_column(String(40), nullable=False)
+    rationale_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    supporting_evidence_ids: Mapped[list] = mapped_column(JSONB, nullable=False)
+    opposing_evidence_ids: Mapped[list] = mapped_column(JSONB, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="OPEN")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class EvidenceGap(Base):
+    __tablename__ = "evidence_gap"
+    __table_args__ = (
+        UniqueConstraint("task_id", "source_key", name="uq_evidence_gap_source"),
+        Index("ix_evidence_gap_task", "task_id", "created_at"),
+        {"schema": "research"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.research_task.id"), nullable=False
+    )
+    source_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    claim_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.claim.id"), nullable=False
+    )
+    critique_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.critique.id")
+    )
+    audit_result_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("research.audit_result.id")
+    )
+    reason_code: Mapped[str] = mapped_column(String(40), nullable=False)
+    rationale_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    cited_evidence_ids: Mapped[list] = mapped_column(JSONB, nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="OPEN")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
