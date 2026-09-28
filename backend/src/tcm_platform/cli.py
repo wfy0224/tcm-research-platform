@@ -17,8 +17,11 @@ from tcm_platform.cloud_models import (
 )
 from tcm_platform.db import SessionLocal
 from tcm_platform.debate_service import (
+    audit_revised_claims,
     execute_critic,
+    execute_rebuttal,
     prepare_critic_round,
+    prepare_rebuttal_round,
     retrieve_evidence_requests,
 )
 from tcm_platform.ids import new_id
@@ -205,6 +208,18 @@ def main() -> None:
     run_critic.add_argument("agent_run_id", type=UUID)
     retrieve_requests = commands.add_parser("retrieve-evidence-requests", help="resolve Critic evidence requests")
     retrieve_requests.add_argument("task_id", type=UUID)
+    prepare_rebuttal = commands.add_parser(
+        "prepare-rebuttal", help="freeze Critiques and visible evidence"
+    )
+    prepare_rebuttal.add_argument("task_id", type=UUID)
+    run_rebuttal = commands.add_parser(
+        "run-rebuttal", help="answer Critiques and append Claim revisions"
+    )
+    run_rebuttal.add_argument("agent_run_id", type=UUID)
+    audit_revisions = commands.add_parser(
+        "audit-revised-claims", help="audit pending Claim revisions"
+    )
+    audit_revisions.add_argument("task_id", type=UUID)
     activate = commands.add_parser("activate-knowledge", help="switch active version after index checks")
     activate.add_argument("knowledge_version_id", type=UUID)
     activate.add_argument("index_build_id", type=UUID)
@@ -403,6 +418,27 @@ def main() -> None:
         count = retrieve_evidence_requests(args.task_id, embedder=embedder,
                                            reranker=reranker)
         print(json.dumps({"new_evidence_count": count}))
+    elif args.command == "prepare-rebuttal":
+        print(json.dumps({"agent_run_id": str(prepare_rebuttal_round(args.task_id))}))
+    elif args.command == "run-rebuttal":
+        with SessionLocal() as session:
+            run = session.get(AgentRun, args.agent_run_id)
+            if run is None or run.role != "Rebuttal":
+                raise ValueError("Rebuttal AgentRun does not exist")
+            model_version = run.model_version
+        model = research_model_for_version(model_version)
+        print(json.dumps({"rebuttal_ids": [str(item) for item in execute_rebuttal(
+            args.agent_run_id, model=model,
+        )]}))
+    elif args.command == "audit-revised-claims":
+        with SessionLocal() as session:
+            task = session.get(ResearchTask, args.task_id)
+            if task is None or task.execution_context is None:
+                raise ValueError("research task does not exist or has not started")
+            model_version = task.execution_context["generation_model"]
+        model = research_model_for_version(model_version)
+        print(json.dumps({"results": audit_revised_claims(args.task_id, model=model)},
+                         ensure_ascii=False))
     elif args.command in {"run-research-next", "run-research-worker"}:
         embedder, reranker = cloud_clients_from_environment()
         if args.command == "run-research-next":

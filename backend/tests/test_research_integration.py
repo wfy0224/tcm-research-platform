@@ -7,10 +7,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 from tcm_platform.db import SessionLocal, engine
 from tcm_platform.debate_service import (
+    audit_revised_claims,
     execute_critic,
+    execute_rebuttal,
     prepare_critic_round,
+    prepare_rebuttal_round,
     retrieve_evidence_requests,
     submit_critic_output,
+    submit_rebuttal_output,
 )
 from tcm_platform.knowledge_service import trace_evidence
 from tcm_platform.models import (
@@ -29,6 +33,7 @@ from tcm_platform.models import (
     ModelInvocation,
     ResearchSubquestion,
     ResearchTask,
+    Rebuttal,
     TaskCheckpoint,
     TaskEvidenceRef,
     TaskJob,
@@ -297,19 +302,30 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
             assert "Critic" in system_prompt
             assert [item["claim_id"] for item in input_payload["claims"]] == [str(audited_claim_id)]
             assert input_payload["claims"][0]["audit_status"] == "SUPPORTED"
-            return {"critiques": [{
-                "client_ref": "c1", "target_claim_id": str(audited_claim_id),
-                "issue_type": "EVIDENCE_GAP", "rationale_summary": "需核对更多原文",
-                "evidence_request_query": "太阳病脉象",
-            }]}
+            return {"critiques": [
+                {"client_ref": "c1", "target_claim_id": str(audited_claim_id),
+                 "issue_type": "EVIDENCE_GAP", "rationale_summary": "需核对更多原文",
+                 "evidence_request_query": "太阳病脉象"},
+                {"client_ref": "c2", "target_claim_id": str(audited_claim_id),
+                 "issue_type": "OVERCLAIM", "rationale_summary": "可能过度推断",
+                 "evidence_request_query": None},
+                {"client_ref": "c3", "target_claim_id": str(audited_claim_id),
+                 "issue_type": "HISTORICAL_SCOPE", "rationale_summary": "时代边界待限定",
+                 "evidence_request_query": None},
+                {"client_ref": "c4", "target_claim_id": str(audited_claim_id),
+                 "issue_type": "TEXTUAL_MISREAD", "rationale_summary": "原文可能误读",
+                 "evidence_request_query": None},
+            ]}
 
     critique_ids = execute_critic(critic_run_id, model=FakeCritic())
-    assert len(critique_ids) == 1
+    assert len(critique_ids) == 4
     with SessionLocal() as session:
         request_id = session.scalar(select(EvidenceRequest.id).where(
             EvidenceRequest.critique_id == critique_ids[0]
         ))
         query = session.get(EvidenceRequest, request_id).query_text
+    with pytest.raises(ValueError, match="EvidenceRequests must resolve"):
+        prepare_rebuttal_round(task_id)
     with pytest.raises(ValueError, match="outside the frozen task scope"):
         add_task_evidence(task_id, query, [{"evidence_revision_id": str(uuid4())}],
                           evidence_request_id=request_id)
@@ -343,6 +359,129 @@ def test_research_worker_resumes_from_frozen_task_and_checkpoints():
             EvidenceRetrievalEvent.evidence_request_id == request.id
         )))
         assert len(events) == request.result_count
+
+    rebuttal_run_id = prepare_rebuttal_round(task_id)
+    assert prepare_rebuttal_round(task_id) == rebuttal_run_id
+    with SessionLocal() as session:
+        original = session.get(Claim, audited_claim_id)
+        original_text = original.assertion_text
+        original_audit = original.audit_status
+        original_claim_type = original.claim_type
+        rebuttal_run = session.get(AgentRun, rebuttal_run_id)
+        assert str(critique_ids[0]) == rebuttal_run.input_snapshot["critiques"][0]["critique_id"]
+        assert evidence_id in rebuttal_run.visible_evidence_ids
+
+    def revision_payload(evidence_ids):
+        return {"rebuttals": [
+            {"critique_id": str(critique_ids[0]), "action": "REVISE",
+             "rationale_summary": "接受需要限定的质疑并修订断言",
+             "evidence_revision_ids": evidence_ids,
+             "revised_claim": {
+                 "claim_type": original_claim_type, "assertion_text": "只陈述证据所见原文",
+                 "rationale_summary": "删除原断言中无法核验的解释",
+             }},
+            {"critique_id": str(critique_ids[1]), "action": "ACCEPT",
+             "rationale_summary": "接受该质疑", "evidence_revision_ids": [],
+             "revised_claim": None},
+            {"critique_id": str(critique_ids[2]), "action": "PARTIAL_ACCEPT",
+             "rationale_summary": "接受部分时代边界意见", "evidence_revision_ids": [],
+             "revised_claim": None},
+            {"critique_id": str(critique_ids[3]), "action": "REJECT",
+             "rationale_summary": "原文可反驳误读质疑",
+             "evidence_revision_ids": [evidence_id], "revised_claim": None},
+        ]}
+
+    with pytest.raises(ValueError, match="outside visible"):
+        submit_rebuttal_output(rebuttal_run_id, revision_payload([str(uuid4())]))
+    cross_task_payload = revision_payload([evidence_id])
+    cross_task_payload["rebuttals"][1]["critique_id"] = str(uuid4())
+    with pytest.raises(ValueError, match="exactly once"):
+        submit_rebuttal_output(rebuttal_run_id, cross_task_payload)
+    with pytest.raises(ValueError, match="exactly once"):
+        submit_rebuttal_output(rebuttal_run_id, {"rebuttals": []})
+    with SessionLocal() as session:
+        assert session.scalar(select(Rebuttal.id).where(Rebuttal.task_id == task_id)) is None
+        assert session.scalar(select(Claim.id).where(
+            Claim.parent_claim_id == audited_claim_id
+        )) is None
+        assert session.get(AgentRun, rebuttal_run_id).status == "PENDING"
+    with SessionLocal.begin() as session:
+        session.get(Claim, audited_claim_id).assertion_text = "冻结后被修改的断言"
+    with pytest.raises(ValueError, match="target changed after input freeze"):
+        submit_rebuttal_output(rebuttal_run_id, revision_payload([evidence_id]))
+    with SessionLocal.begin() as session:
+        session.get(Claim, audited_claim_id).assertion_text = original_text
+
+    class FakeRebuttal:
+        model_version = FakeGenerator.model_version
+
+        def complete_json(self, system_prompt, input_payload):
+            assert "研究反驳 Agent" in system_prompt
+            assert input_payload["critiques"][0]["target_claim_id"] == str(audited_claim_id)
+            return revision_payload([evidence_id])
+
+    rebuttal_ids = execute_rebuttal(rebuttal_run_id, model=FakeRebuttal())
+    assert len(rebuttal_ids) == 4
+    assert submit_rebuttal_output(rebuttal_run_id, revision_payload([evidence_id])) == rebuttal_ids
+    with SessionLocal() as session:
+        assert len(list(session.scalars(select(Rebuttal).where(
+            Rebuttal.task_id == task_id
+        )))) == 4
+        assert len(list(session.scalars(select(Claim).where(
+            Claim.parent_claim_id == audited_claim_id
+        )))) == 1
+        rebuttal = session.get(Rebuttal, rebuttal_ids[0])
+        revised = session.get(Claim, rebuttal.revised_claim_id)
+        original = session.get(Claim, audited_claim_id)
+        assert rebuttal.critique_id == critique_ids[0] and rebuttal.action == "REVISE"
+        assert [session.get(Rebuttal, value).action for value in rebuttal_ids] == [
+            "REVISE", "ACCEPT", "PARTIAL_ACCEPT", "REJECT",
+        ]
+        assert revised.parent_claim_id == original.id
+        assert revised.agent_run_id == rebuttal_run_id
+        assert revised.agent_role == original.agent_role
+        assert revised.audit_status == "PENDING"
+        assert original.assertion_text == original_text and original.audit_status == original_audit
+        revised_id = revised.id
+
+    class FakeRevisionAuditor:
+        model_version = FakeGenerator.model_version
+
+        def complete_json(self, system_prompt, input_payload):
+            assert input_payload["claim_id"] == str(revised_id)
+            return {"verdict": "NOT_VERIFIABLE",
+                    "rationale_summary": "原文不足以确认修订断言，也不能据此判假",
+                    "cited_evidence_revision_ids": [evidence_id]}
+
+    class FakeInvalidRevisionAuditor:
+        model_version = FakeGenerator.model_version
+
+        def complete_json(self, system_prompt, input_payload):
+            return {"verdict": "SUPPORTED", "rationale_summary": "引用池外证据",
+                    "cited_evidence_revision_ids": [str(uuid4())]}
+
+    with pytest.raises(ValueError, match="outside the audited Claim"):
+        audit_revised_claims(task_id, model=FakeInvalidRevisionAuditor())
+    with SessionLocal() as session:
+        assert session.get(Claim, revised_id).audit_status == "PENDING_SEMANTIC"
+        history = list(session.scalars(select(AuditResult).where(
+            AuditResult.claim_id == revised_id
+        )))
+        assert len(history) == 1 and history[0].stage == "MECHANICAL"
+
+    audit_results = audit_revised_claims(task_id, model=FakeRevisionAuditor())
+    assert audit_results[0]["claim_id"] == str(revised_id)
+    assert audit_results[0]["verdict"] == "NOT_VERIFIABLE"
+    assert audit_revised_claims(task_id, model=FakeRevisionAuditor()) == []
+    with SessionLocal() as session:
+        history = list(session.scalars(select(AuditResult).where(
+            AuditResult.claim_id == revised_id
+        ).order_by(AuditResult.sequence_no)))
+        assert [(item.stage, item.verdict) for item in history] == [
+            ("MECHANICAL", "PASS"), ("SEMANTIC", "NOT_VERIFIABLE"),
+        ]
+        assert session.get(Claim, revised_id).audit_status == "NOT_VERIFIABLE"
+        assert session.get(Claim, audited_claim_id).assertion_text == original_text
     assert run_next_research_job(
         worker_id="test-research-worker", model=model, embedder=embedder,
         reranker=reranker, task_id=task_id,
