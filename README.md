@@ -34,6 +34,8 @@ npm run dev
 
 `/api/v1/knowledge` 已提供来源导入与列表、来源修订分段、Evidence 草稿及 batch/detail、Concept/Relation/Herb/Formula 草稿与详情、人工审核、质量问题与质量报告、知识快照、发布 Job、版本比较及受控切换。来源导入请求使用严格 JSON：`metadata`、`file_format`（`txt`/`pdf`/`docx`）、`content_base64`，可选已有 `source_id`；同一 `Idempotency-Key` 重试返回同一来源修订和解析 Job。草稿 Evidence 引用段落公开编号及来源修订号，例如 `SEG-...@1`；审核对象引用 `EV-...@1` 或知识对象公开编号。导入解析后运行 `parse-next` 和 `segment-next`；发布请求冻结模型/端点配置并返回 Job，运行 `publish-next` 才会建立索引并通过门禁激活。发布失败保留旧活动 KV/Index，修复模型或索引问题后可用新 `Idempotency-Key` 重提同一版本；`GET /api/v1/jobs/{JOB-...}` 和版本详情可查询结果。真实发布会调用配置的向量模型，执行前需确认来源外发授权、模型配置及调用费用。
 
+真实模型的隔离冒烟脚本为 `backend/scripts/check_knowledge_api_live.py`：它只接受 `tcm_vib60_live_test` 数据库与专用 `/tmp/tcm_vib60_live_store`，默认只检查环境并报告 `real_calls: 0`；加 `--execute` 才会导入一条已固定的公版原文，通过 API 发布并执行一次真实检索。需显式设置 `TCM_OUTBOUND_MODE=CLOUD_ALLOWED`、`TCM_ALLOW_ENV_API_KEYS=1`，将既有 `SILICONFLOW_API_KEY` 仅注入该临时容器进程，并设置 `PYTHONPATH=/workspace/backend/src`。脚本不得指向预览库；真实调用和费用应在执行前确认。
+
 测试：`cd backend; uv run pytest`。首次安装依赖需要访问包仓库。
 
 ### 真实模型检索预览
