@@ -203,7 +203,7 @@ def test_research_api_creates_idempotent_task_and_serves_final_report(tmp_path, 
         assert client.get(f"/api/v1/research/tasks/{task_id}").status_code == 404
         assert client.get(f"/api/v1/research/tasks/{public_id}/report").status_code == 409
 
-        class ApiFakeGenerator(FakeGenerator):
+        class ApiFakeGenerator(DebateGenerator):
             model_version = "siliconflow/test-cloud-structured-v1"
 
         started = client.post(f"/api/v1/research/tasks/{public_id}/start",
@@ -217,6 +217,29 @@ def test_research_api_creates_idempotent_task_and_serves_final_report(tmp_path, 
                                            "allow_question_outbound": True})
         assert repeated_start.status_code == 202
         assert repeated_start.json()["job_id"] == started.json()["job_id"]
+        pause_url = f"/api/v1/research/tasks/{public_id}/pause"
+        resume_url = f"/api/v1/research/tasks/{public_id}/resume"
+        paused = client.post(pause_url, headers=command_headers)
+        assert paused.status_code == 200 and paused.json()["control_state"] == "PAUSED"
+        assert "resume" in paused.json()["allowed_actions"]
+        assert client.post(pause_url, headers=command_headers).json() == paused.json()
+        resumed = client.post(resume_url, headers=command_headers)
+        assert resumed.status_code == 200 and resumed.json()["control_state"] == "ACTIVE"
+        assert client.post(resume_url, headers=command_headers).json() == resumed.json()
+        assert client.post(pause_url, headers=command_headers).json()["control_state"] == "ACTIVE"
+        next_headers = {**command_headers, "Idempotency-Key": secrets.token_hex(12)}
+        assert client.post(pause_url, headers=next_headers).json()["control_state"] == "PAUSED"
+        pause_noop_headers = {**command_headers, "Idempotency-Key": secrets.token_hex(12)}
+        assert client.post(pause_url, headers=pause_noop_headers).json()["control_state"] == "PAUSED"
+        assert client.post(resume_url, headers=command_headers).json()["control_state"] == "PAUSED"
+        assert client.post(resume_url, headers=next_headers).json()["control_state"] == "ACTIVE"
+        resume_noop_headers = {**command_headers, "Idempotency-Key": secrets.token_hex(12)}
+        assert client.post(resume_url, headers=resume_noop_headers).json()["control_state"] == "ACTIVE"
+        assert client.post(pause_url, headers=pause_noop_headers).json()["control_state"] == "ACTIVE"
+        pause_again_headers = {**command_headers, "Idempotency-Key": secrets.token_hex(12)}
+        assert client.post(pause_url, headers=pause_again_headers).json()["control_state"] == "PAUSED"
+        assert client.post(resume_url, headers=resume_noop_headers).json()["control_state"] == "PAUSED"
+        assert client.post(resume_url, headers=pause_again_headers).json()["control_state"] == "ACTIVE"
         assert run_next_research_job(
             worker_id="test-api-research", model=ApiFakeGenerator(),
             embedder=embedder, reranker=reranker, task_id=task_id,
@@ -230,6 +253,32 @@ def test_research_api_creates_idempotent_task_and_serves_final_report(tmp_path, 
         assert report.json()["question"] == provenance["quote_text"]
         assert str(task_id) not in str(report.json())
         assert provenance["evidence_revision_id"] not in str(report.json())
+        details = client.get(f"/api/v1/research/tasks/{public_id}/details")
+        assert details.status_code == 200
+        assert details.json()["claims"] and details.json()["audits"]
+        assert details.json()["agent_runs"] and details.json()["stop_evaluations"]
+        assert details.json()["debate"]["critiques"]
+        assert details.json()["debate"]["rebuttals"]
+        assert details.json()["disputes"] or details.json()["evidence_gaps"]
+        assert str(task_id) not in details.text
+        assert provenance["evidence_revision_id"] not in details.text
+        for section in ("claims", "audits", "debate", "disputes", "human-reviews"):
+            response = client.get(f"/api/v1/research/tasks/{public_id}/{section}")
+            assert response.status_code == 200
+        event_url = f"/api/v1/research/tasks/{public_id}/events?follow=false"
+        stream = client.get(event_url)
+        assert stream.status_code == 200
+        assert stream.headers["content-type"].startswith("text/event-stream")
+        assert stream.text.startswith("event: snapshot\n")
+        assert "event: research_task.started\n" in stream.text
+        assert provenance["quote_text"] not in stream.text
+        event_ids = [int(line.removeprefix("id: ")) for line in stream.text.splitlines()
+                     if line.startswith("id: ")]
+        replay = client.get(event_url, headers={"Last-Event-ID": str(event_ids[-1])})
+        assert replay.status_code == 200 and replay.text.startswith("event: snapshot\n")
+        assert "id: " not in replay.text
+        assert client.get(event_url, headers={"Last-Event-ID": "bad"}).status_code == 400
+        assert client.get(event_url, headers={"Last-Event-ID": "9" * 100}).status_code == 400
         queued = client.post(f"/api/v1/research/tasks/{public_id}/exports/markdown",
                              headers=command_headers)
         assert queued.status_code == 202
@@ -239,6 +288,15 @@ def test_research_api_creates_idempotent_task_and_serves_final_report(tmp_path, 
         download = client.get(export.json()["download_url"])
         assert download.status_code == 200
         assert provenance["quote_text"] in download.text
+
+        created_cancel = client.post("/api/v1/research/tasks",
+                                     headers={**command_headers,
+                                              "Idempotency-Key": secrets.token_hex(12)},
+                                     json={"question": "cancel before start", "source_ids": []})
+        cancel_url = f"/api/v1/research/tasks/{created_cancel.json()['task_id']}/cancel"
+        cancelled = client.post(cancel_url, headers=command_headers)
+        assert cancelled.status_code == 200 and cancelled.json()["status"] == "CANCELLED"
+        assert client.post(cancel_url, headers=command_headers).json() == cancelled.json()
 
 
 class DebateGenerator(FakeGenerator):
@@ -1184,7 +1242,7 @@ def test_frozen_round_limit_replays_from_persisted_evidence():
         assert task.execution_context["workflow_config"]["max_debate_rounds"] == 2
 
 
-def test_human_review_releases_lease_and_resumes_stop_stage_only():
+def test_human_review_releases_lease_and_resumes_stop_stage_only(tmp_path, monkeypatch):
     task_id, embedder, reranker = new_worker_task(
         WorkflowConfig(mandatory_human_review=True)
     )
@@ -1205,7 +1263,33 @@ def test_human_review_releases_lease_and_resumes_stop_stage_only():
         assert job.status == "COMPLETED" and job.lease_owner is None
         assert review.status == "PENDING"
         review_id = review.id
-    assert resolve_human_review(review_id, reviewer_id="human-tester", note="审阅完成") == task_id
+        public_id = task.public_id
+    secret = secrets.token_urlsafe(32)
+    monkeypatch.setattr(settings, "bootstrap_secret", SecretStr(secret))
+    monkeypatch.setattr(settings, "data_root", tmp_path)
+    origin = "http://127.0.0.1:5173"
+    with TestClient(app, base_url="http://127.0.0.1:8000") as client:
+        bootstrap = client.post("/api/v1/local-session/bootstrap",
+                                headers={"Origin": origin},
+                                json={"bootstrap_secret": secret})
+        assert bootstrap.status_code == 200
+        headers = {"Origin": origin, "X-CSRF-Token": bootstrap.json()["csrf_token"],
+                   "Idempotency-Key": secrets.token_hex(12)}
+        review_url = f"/api/v1/research/tasks/{public_id}/human-reviews"
+        detail = client.get(f"/api/v1/research/tasks/{public_id}")
+        assert detail.json()["allowed_actions"] == ["resolve_review"]
+        response = client.get(review_url)
+        assert response.status_code == 200
+        review_ref = response.json()["human_reviews"][0]["id"]
+        assert review_ref.startswith("HREV-") and str(review_id) not in response.text
+        resolution_url = f"{review_url}/{review_ref}/resolve"
+        resolved = client.post(resolution_url, headers=headers, json={"note": "审阅完成"})
+        assert resolved.status_code == 200
+        assert resolved.json()["status"] == "STOP_EVALUATION"
+        assert client.post(resolution_url, headers=headers,
+                           json={"note": "审阅完成"}).status_code == 200
+        assert client.post(resolution_url, headers=headers,
+                           json={"note": "different note"}).status_code == 409
     with pytest.raises(ValueError, match="not pending"):
         resolve_human_review(review_id, reviewer_id="human-tester", note="duplicate")
     with SessionLocal() as session:

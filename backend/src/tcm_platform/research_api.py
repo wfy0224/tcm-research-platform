@@ -1,10 +1,12 @@
-"""Public research controls and final report projection for the local application."""
+"""Public research controls, persisted detail views and task event stream."""
 
+import asyncio
+import json
 from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
@@ -20,8 +22,10 @@ from tcm_platform.db import SessionLocal
 from tcm_platform.local_auth import COOKIE_NAME, current_actor, require_csrf
 from tcm_platform.models import (
     Artifact,
+    EventLog,
     Evidence,
     EvidenceRevision,
+    HumanReviewRequest,
     ReportExport,
     ResearchTask,
     SourceDocument,
@@ -29,7 +33,15 @@ from tcm_platform.models import (
     TaskJob,
 )
 from tcm_platform.report_export import queue_report_export
-from tcm_platform.research_service import create_research_task, start_research_task
+from tcm_platform.research_service import (
+    cancel_research_task,
+    create_research_task,
+    request_research_pause,
+    resume_research_task,
+    start_research_task,
+)
+from tcm_platform.research_views import public_ref, task_details
+from tcm_platform.stop_service import resolve_human_review
 from tcm_platform.storage import ContentAddressedStore
 
 router = APIRouter(prefix="/api/v1/research", tags=["research"])
@@ -47,6 +59,10 @@ class CreateTaskRequest(StrictModel):
 class StartTaskRequest(StrictModel):
     model_version: str = Field(min_length=3, max_length=200)
     allow_question_outbound: bool = False
+
+
+class ResolveReviewRequest(StrictModel):
+    note: str = Field(min_length=1, max_length=2_000)
 
 
 class TaskResponse(StrictModel):
@@ -102,7 +118,21 @@ def _task_response(session, task: ResearchTask) -> TaskResponse:
         StructuredReport.task_id == task.id)) is not None
     actions = []
     if task.status == "CREATED":
-        actions.append("start")
+        actions.extend(("start", "cancel"))
+    elif task.status == "WAITING_HUMAN":
+        if session.scalar(select(HumanReviewRequest.id).where(
+            HumanReviewRequest.task_id == task.id,
+            HumanReviewRequest.status == "PENDING")) is not None:
+            actions.append("resolve_review")
+    elif task.status not in {"COMPLETED", "CANCELLED"} and job is not None:
+        if task.control_state == "ACTIVE" and job.status in {
+            "RUNNING", "PENDING", "RETRY_WAIT",
+        }:
+            actions.extend(("pause", "cancel"))
+        elif task.control_state in {"PAUSED", "PAUSE_REQUESTED"}:
+            actions.extend(("resume", "cancel"))
+        elif task.control_state == "CANCEL_REQUESTED":
+            actions.append("cancel")
     if task.status == "COMPLETED" and report_available:
         actions.append("export")
     return TaskResponse(
@@ -178,6 +208,173 @@ def start_task(task_public_id: str, payload: StartTaskRequest, request: Request,
         job = session.scalar(select(TaskJob).where(
             TaskJob.idempotency_key == f"research:{task_id}:run:v1"))
         return accepted_job_response(job)
+
+
+def _control(task_public_id: str, request: Request, actor: Actor,
+             action: Literal["pause", "resume", "cancel"]) -> TaskResponse:
+    key = required_idempotency_key(request.headers.get("Idempotency-Key"))
+    with SessionLocal() as session:
+        task_id = resolve_public_id(session, "research_task", task_public_id, actor)
+    command = {"pause": request_research_pause, "resume": resume_research_task,
+               "cancel": cancel_research_task}[action]
+    try:
+        if action == "cancel":
+            command(task_id, actor_id=actor.actor_id)
+        else:
+            command(task_id, actor_id=actor.actor_id, idempotency_key=key)
+    except ValueError as exc:
+        raise ApiError("RESEARCH_CONTROL_CONFLICT", status=409, category="conflict",
+                       detail=str(exc)) from exc
+    with SessionLocal() as session:
+        return _task_response(session, session.get(ResearchTask, task_id))
+
+
+@router.post("/tasks/{task_public_id}/pause", response_model=TaskResponse)
+def pause_task(task_public_id: str, request: Request,
+               actor: Annotated[Actor, Depends(_write_actor)]) -> TaskResponse:
+    return _control(task_public_id, request, actor, "pause")
+
+
+@router.post("/tasks/{task_public_id}/resume", response_model=TaskResponse)
+def resume_task(task_public_id: str, request: Request,
+                actor: Annotated[Actor, Depends(_write_actor)]) -> TaskResponse:
+    return _control(task_public_id, request, actor, "resume")
+
+
+@router.post("/tasks/{task_public_id}/cancel", response_model=TaskResponse)
+def cancel_task(task_public_id: str, request: Request,
+                actor: Annotated[Actor, Depends(_write_actor)]) -> TaskResponse:
+    return _control(task_public_id, request, actor, "cancel")
+
+
+def _details(task_public_id: str, actor: Actor) -> dict:
+    with SessionLocal() as session:
+        task_id = resolve_public_id(session, "research_task", task_public_id, actor)
+        return {"task_id": task_public_id, **task_details(session, task_id)}
+
+
+@router.get("/tasks/{task_public_id}/details")
+def get_details(task_public_id: str,
+                actor: Annotated[Actor, Depends(_read_actor)]) -> dict:
+    return _details(task_public_id, actor)
+
+
+@router.get("/tasks/{task_public_id}/claims")
+def get_claims(task_public_id: str,
+               actor: Annotated[Actor, Depends(_read_actor)]) -> dict:
+    detail = _details(task_public_id, actor)
+    return {"task_id": task_public_id, "claims": detail["claims"]}
+
+
+@router.get("/tasks/{task_public_id}/audits")
+def get_audits(task_public_id: str,
+               actor: Annotated[Actor, Depends(_read_actor)]) -> dict:
+    detail = _details(task_public_id, actor)
+    return {"task_id": task_public_id, "audits": detail["audits"]}
+
+
+@router.get("/tasks/{task_public_id}/debate")
+def get_debate(task_public_id: str,
+               actor: Annotated[Actor, Depends(_read_actor)]) -> dict:
+    detail = _details(task_public_id, actor)
+    return {"task_id": task_public_id, "debate": detail["debate"]}
+
+
+@router.get("/tasks/{task_public_id}/disputes")
+def get_disputes(task_public_id: str,
+                 actor: Annotated[Actor, Depends(_read_actor)]) -> dict:
+    detail = _details(task_public_id, actor)
+    return {"task_id": task_public_id, "disputes": detail["disputes"],
+            "evidence_gaps": detail["evidence_gaps"]}
+
+
+@router.get("/tasks/{task_public_id}/human-reviews")
+def get_human_reviews(task_public_id: str,
+                      actor: Annotated[Actor, Depends(_read_actor)]) -> dict:
+    detail = _details(task_public_id, actor)
+    return {"task_id": task_public_id, "human_reviews": detail["human_reviews"]}
+
+
+@router.post("/tasks/{task_public_id}/human-reviews/{review_ref}/resolve",
+             response_model=TaskResponse)
+def resolve_review(task_public_id: str, review_ref: str, payload: ResolveReviewRequest,
+                   request: Request,
+                   actor: Annotated[Actor, Depends(_write_actor)]) -> TaskResponse:
+    required_idempotency_key(request.headers.get("Idempotency-Key"))
+    with SessionLocal() as session:
+        task_id = resolve_public_id(session, "research_task", task_public_id, actor)
+        reviews = session.scalars(select(HumanReviewRequest).where(
+            HumanReviewRequest.task_id == task_id)).all()
+        review = next((row for row in reviews if public_ref("HREV", row.id) == review_ref),
+                      None)
+        if review is None:
+            raise ApiError("RESOURCE_NOT_FOUND", status=404, category="reference",
+                           detail="human review does not exist")
+        if review.status == "RESOLVED" and review.resolved_by == actor.actor_id \
+                and review.resolution_note == payload.note.strip():
+            return _task_response(session, session.get(ResearchTask, task_id))
+        review_id = review.id
+    try:
+        resolve_human_review(review_id, reviewer_id=actor.actor_id, note=payload.note,
+                             idempotent=True)
+    except ValueError as exc:
+        raise ApiError("HUMAN_REVIEW_CONFLICT", status=409, category="conflict",
+                       detail=str(exc)) from exc
+    with SessionLocal() as session:
+        return _task_response(session, session.get(ResearchTask, task_id))
+
+
+@router.get("/tasks/{task_public_id}/events")
+async def stream_task_events(task_public_id: str, request: Request,
+                             actor: Annotated[Actor, Depends(_read_actor)],
+                             follow: bool = True) -> StreamingResponse:
+    raw_cursor = request.headers.get("Last-Event-ID", "0")
+    if (not raw_cursor.isascii() or not raw_cursor.isdecimal()
+            or len(raw_cursor) > 10 or int(raw_cursor) > 2_147_483_647):
+        raise ApiError("INVALID_EVENT_CURSOR", status=400, category="validation",
+                       detail="Last-Event-ID must be a nonnegative decimal sequence")
+    cursor = int(raw_cursor)
+    with SessionLocal() as session:
+        task_id = resolve_public_id(session, "research_task", task_public_id, actor)
+        latest = session.scalar(select(EventLog.sequence_no).order_by(
+            EventLog.sequence_no.desc()).limit(1)) or 0
+    if cursor > latest:
+        raise ApiError("INVALID_EVENT_CURSOR", status=400, category="validation",
+                       detail="Last-Event-ID is ahead of the event log")
+
+    async def events():
+        nonlocal cursor
+        snapshot = {"task_id": task_public_id,
+                    "url": f"/api/v1/research/tasks/{task_public_id}"}
+        yield f"event: snapshot\ndata: {json.dumps(snapshot)}\n\n"
+        while True:
+            if await request.is_disconnected():
+                return
+            try:
+                current_actor(request.cookies.get(COOKIE_NAME)).require("research.read")
+            except ApiError:
+                return
+            with SessionLocal() as session:
+                rows = session.scalars(select(EventLog).where(
+                    EventLog.aggregate_id == str(task_id),
+                    EventLog.event_type.like("research_task.%"),
+                    EventLog.sequence_no > cursor).order_by(
+                    EventLog.sequence_no).limit(100)).all()
+                batch = [(row.sequence_no, row.event_type) for row in rows]
+            for sequence_no, event_type in batch:
+                cursor = sequence_no
+                data = json.dumps({"task_id": task_public_id})
+                yield f"id: {cursor}\nevent: {event_type}\ndata: {data}\n\n"
+            if len(batch) == 100:
+                continue
+            if not follow:
+                return
+            yield ": keepalive\n\n"
+            await asyncio.sleep(1)
+
+    return StreamingResponse(events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-store",
+                                      "X-Accel-Buffering": "no"})
 
 
 def _public_evidence(session, row: dict) -> dict:

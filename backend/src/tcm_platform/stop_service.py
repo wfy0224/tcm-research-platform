@@ -129,12 +129,17 @@ def evaluate_stop(session: Session, task_id: UUID, round_no: int) -> StopEvaluat
     return evaluation
 
 
-def resolve_human_review(request_id: UUID, *, reviewer_id: str, note: str) -> UUID:
+def resolve_human_review(request_id: UUID, *, reviewer_id: str, note: str,
+                         idempotent: bool = False) -> UUID:
     if not reviewer_id.strip() or not note.strip():
         raise ValueError("reviewer and resolution note are required")
     with SessionLocal.begin() as session:
         review = session.scalar(select(HumanReviewRequest).where(
             HumanReviewRequest.id == request_id).with_for_update())
+        if (idempotent and review is not None and review.status == "RESOLVED"
+                and review.resolved_by == reviewer_id.strip()
+                and review.resolution_note == note.strip()):
+            return review.task_id
         if review is None or review.status != "PENDING":
             raise ValueError("human review request is not pending")
         task = session.scalar(select(ResearchTask).where(

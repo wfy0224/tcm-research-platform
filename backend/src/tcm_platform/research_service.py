@@ -19,6 +19,7 @@ from tcm_platform.models import (
     AgentRun,
     Claim,
     ClaimEvidence,
+    EventLog,
     Evidence,
     EvidenceRequest,
     EvidenceRetrievalEvent,
@@ -210,10 +211,35 @@ def _lock_research_control(session: Session, task_id: UUID) -> tuple[TaskJob, Re
     return job, task
 
 
-def request_research_pause(task_id: UUID, *, actor_id: str = "local-researcher") -> str:
+def _control_request_hash(session: Session, task_id: UUID, action: str,
+                          actor_id: str, idempotency_key: str | None) -> tuple[str | None, bool]:
+    if idempotency_key is None:
+        return None, False
+    value = hashlib.sha256(
+        f"research-control:{actor_id}:{task_id}:{action}:{idempotency_key}".encode()
+    ).hexdigest()
+    session.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
+                    {"key": value})
+    replayed = session.scalar(select(EventLog.id).where(
+        EventLog.aggregate_id == str(task_id),
+        EventLog.payload["request_hash"].astext == value).limit(1)) is not None
+    return value, replayed
+
+
+def request_research_pause(task_id: UUID, *, actor_id: str = "local-researcher",
+                           idempotency_key: str | None = None) -> str:
     with SessionLocal.begin() as session:
+        request_hash, replayed = _control_request_hash(
+            session, task_id, "pause", actor_id, idempotency_key)
+        if replayed:
+            return "REPLAYED"
         job, task = _lock_research_control(session, task_id)
         if task.control_state in {"PAUSED", "PAUSE_REQUESTED"}:
+            if request_hash is not None:
+                append_event(session, event_type="research_task.pause_requested",
+                             actor_id=actor_id, aggregate_id=task_id,
+                             payload={"control_state": task.control_state,
+                                      "request_hash": request_hash})
             return task.control_state
         if task.control_state != "ACTIVE":
             raise ValueError("research task cannot be paused")
@@ -226,12 +252,18 @@ def request_research_pause(task_id: UUID, *, actor_id: str = "local-researcher")
         else:
             raise ValueError("research job cannot be paused")
         append_event(session, event_type="research_task.pause_requested", actor_id=actor_id,
-                     aggregate_id=task_id, payload={"control_state": task.control_state})
+                     aggregate_id=task_id, payload={"control_state": task.control_state,
+                                                    "request_hash": request_hash})
         return task.control_state
 
 
-def resume_research_task(task_id: UUID, *, actor_id: str = "local-researcher") -> str:
+def resume_research_task(task_id: UUID, *, actor_id: str = "local-researcher",
+                         idempotency_key: str | None = None) -> str:
     with SessionLocal.begin() as session:
+        request_hash, replayed = _control_request_hash(
+            session, task_id, "resume", actor_id, idempotency_key)
+        if replayed:
+            return "REPLAYED"
         job, task = _lock_research_control(session, task_id)
         if task.control_state == "PAUSE_REQUESTED" and job.status == JobStatus.RUNNING.value:
             task.control_state = "ACTIVE"
@@ -240,14 +272,34 @@ def resume_research_task(task_id: UUID, *, actor_id: str = "local-researcher") -
             job.status = JobStatus.PENDING.value
             job.available_at = utc_now()
             job.updated_at = utc_now()
+        elif task.control_state == "ACTIVE" and job.status in {
+            JobStatus.PENDING.value, JobStatus.RUNNING.value,
+        }:
+            if request_hash is not None:
+                append_event(session, event_type="research_task.resume_requested",
+                             actor_id=actor_id, aggregate_id=task_id,
+                             payload={"phase": task.status, "request_hash": request_hash})
+            return task.status
         else:
             raise ValueError("research task is not paused")
         append_event(session, event_type="research_task.resumed", actor_id=actor_id,
-                     aggregate_id=task_id, payload={"phase": task.status})
+                     aggregate_id=task_id, payload={"phase": task.status,
+                                                    "request_hash": request_hash})
         return task.status
 
 
 def cancel_research_task(task_id: UUID, *, actor_id: str = "local-researcher") -> str:
+    with SessionLocal.begin() as session:
+        task = session.scalar(select(ResearchTask).where(
+            ResearchTask.id == task_id).with_for_update())
+        if task is not None and task.status == "CREATED":
+            task.status = "CANCELLED"
+            task.control_state = "CANCELLED"
+            append_event(session, event_type="research_task.cancelled", actor_id=actor_id,
+                         aggregate_id=task_id, payload={"phase": "CREATED"})
+            return task.control_state
+        if task is not None and task.status == "CANCELLED":
+            return "CANCELLED"
     with SessionLocal.begin() as session:
         job, task = _lock_research_control(session, task_id)
         if task.control_state == "CANCEL_REQUESTED":

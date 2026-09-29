@@ -159,7 +159,7 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 Judge 只接收已完成审计的 Active Claim、最近 AuditResult、开放 Dispute/EvidenceGap 与冻结知识版本内已审核的精确 EvidenceRevision。输出只能为每条 Claim 选择允许的分类和理由 ID，不能生成新 Claim、改写断言或自由检索。`ResearchSynthesis` 保存 Judge 输入快照，ReportGenerator 仅复制审计文本、争议正反证据与原文定位生成 `StructuredReport`；数据库禁止更新或删除这两类记录。用 `show-structured-report <task_id>` 查看报告 JSON。
 
-研究任务完成后，可用 `queue-report-export <task_id> --format markdown` 或 `--format docx` 排队独立导出，再用 `run-report-export-next --export-id <export_id>` 处理。`show-report-export <export_id>` 显示格式、渲染版本、Job 状态和 Artifact 哈希；`save-report-export <export_id> <output_path>` 将已完成文件保存到本地，不覆盖已有文件。相同报告、格式与渲染版本重复排队返回同一导出；失败可再次排队重试，不改变已完成研究任务。两种文件均列出五类结论、原文证据、争议、限制与研究过程，并提供内部引用跳转及可复制的来源修订和定位文字。当前网页尚无报告页面；研究详情与下载 API 属于后续工作台任务。
+研究任务完成后，可用 `queue-report-export <task_id> --format markdown` 或 `--format docx` 排队独立导出，再用 `run-report-export-next --export-id <export_id>` 处理。`show-report-export <export_id>` 显示格式、渲染版本、Job 状态和 Artifact 哈希；`save-report-export <export_id> <output_path>` 将已完成文件保存到本地，不覆盖已有文件。相同报告、格式与渲染版本重复排队返回同一导出；失败可再次排队重试，不改变已完成研究任务。两种文件均列出五类结论、原文证据、争议、限制与研究过程，并提供内部引用跳转及可复制的来源修订和定位文字。当前网页尚无报告页面；`/api/v1/research/tasks/{task_id}` 提供服务端计算的 `allowed_actions`，`/details` 及 `/claims`、`/audits`、`/debate`、`/disputes`、`/human-reviews` 提供已落库的研究过程，`/report` 与 `/exports/{format}` 提供最终报告和导出。写命令需本地会话、CSRF 与 `Idempotency-Key`。`/events` 是 SSE 通知，首次连接和重连均先发送无事件 ID 的 `snapshot` 指针，客户端先 GET 任务状态与需要的详情，再按 `Last-Event-ID` 消费补发事件；事件数据仅含公开任务编号。`?follow=false` 可取有限历史批次后关闭连接。网页报告工作台由 VIB-63 接入。
 
 验收追踪：AC-1B-03/04 的 Claim 定向质疑、受限再检索、Rebuttal、追加修订与重新审计对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、`audit_service.py`、`research_worker.py`、迁移 0012～0014，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
 
