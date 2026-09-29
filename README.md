@@ -30,7 +30,9 @@ npm run dev
 
 桌面主进程在启动 API 时生成至少 32 字符的一次性随机密钥，通过 `TCM_BOOTSTRAP_SECRET` 注入进程；前端从主进程取得密钥后，向 `POST /api/v1/local-session/bootstrap` 提交 `{"bootstrap_secret":"..."}`。请求必须携带精确匹配 `TCM_LOCAL_ALLOWED_ORIGINS` 的 `Origin`。成功响应设置 HttpOnly、SameSite=Strict 的会话 Cookie，仅在这次响应体返回 CSRF token。密钥只可兑换一次，默认 5 分钟过期；没有主进程注入密钥时 bootstrap 返回 503。正式 HTTPS 回环部署需设置 `TCM_SECURE_SESSION_COOKIE=true`。桌面主进程接线属于后续 Desktop Supervisor 任务。
 
-业务命令统一校验会话能力、精确 Origin 和 `X-CSRF-Token`；创建类命令要求 `Idempotency-Key`，有版本竞争的更新要求 `If-Match`，长任务返回 202、公开 `job_id` 和 `Location`。错误响应包含 `code`、`category`、`retryable`、`request_id`、`audit_ref` 和 `detail`。当前只开放会话管理与任务查询；来源和研究命令将在对应 API 任务接入这些合约。会话详情 `GET /api/v1/local-session` 返回 ETag；撤销会话 `DELETE /api/v1/local-session` 要求 `If-Match` 与 CSRF token。
+业务命令统一校验会话能力、精确 Origin 和 `X-CSRF-Token`；来源导入和知识发布要求 `Idempotency-Key`，长任务返回公开 `job_id`。错误响应包含 `code`、`category`、`retryable`、`request_id`、`audit_ref` 和 `detail`。会话详情 `GET /api/v1/local-session` 返回 ETag；撤销会话 `DELETE /api/v1/local-session` 要求 `If-Match` 与 CSRF token。知识对象通过追加新草稿、修订和替换关系校订；HTTP 不提供覆盖已发布行的 PATCH。
+
+`/api/v1/knowledge` 已提供来源导入与列表、来源修订分段、Evidence 草稿及 batch/detail、Concept/Relation/Herb/Formula 草稿与详情、人工审核、质量问题与质量报告、知识快照、发布 Job、版本比较及受控切换。来源导入请求使用严格 JSON：`metadata`、`file_format`（`txt`/`pdf`/`docx`）、`content_base64`，可选已有 `source_id`；同一 `Idempotency-Key` 重试返回同一来源修订和解析 Job。草稿 Evidence 引用段落公开编号及来源修订号，例如 `SEG-...@1`；审核对象引用 `EV-...@1` 或知识对象公开编号。导入解析后运行 `parse-next` 和 `segment-next`；发布请求冻结模型/端点配置并返回 Job，运行 `publish-next` 才会建立索引并通过门禁激活。发布失败保留旧活动 KV/Index，修复模型或索引问题后可用新 `Idempotency-Key` 重提同一版本；`GET /api/v1/jobs/{JOB-...}` 和版本详情可查询结果。真实发布会调用配置的向量模型，执行前需确认来源外发授权、模型配置及调用费用。
 
 测试：`cd backend; uv run pytest`。首次安装依赖需要访问包仓库。
 
@@ -42,7 +44,7 @@ npm run dev
 
 ## 来源导入 E2
 
-当前通过命令行操作；文件导入 API 与知识工作区界面将在本地会话和权限边界完成后开放。以下命令在 `backend` 目录运行：
+来源导入也可通过上述 API 操作；以下命令在 `backend` 目录运行：
 
 ```powershell
 uv run python -m tcm_platform.cli import-source "D:\资料\伤寒论.txt" --title "伤寒论" --source-type CLASSIC --edition "某整理本" --copyright-status AUTHORIZED
@@ -169,4 +171,3 @@ Worker 在首轮审计后和辩论轮次结束时，按断言类型、规范化�
 - 审计事件在业务事务内追加；链头行加锁，避免并发序号冲突。
 - 任务租约采用 PostgreSQL 行锁；外部调用不持有数据库事务。
 - 当前健康页是只读界面。数据库就绪时显示 `DEGRADED`，直至常驻 Worker 与正式研究工作流完成；不会把基础设施就绪误报为平台 `READY`。
-

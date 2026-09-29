@@ -14,7 +14,11 @@ from sqlalchemy.orm import Session
 from tcm_platform.enums import ResourceClass
 from tcm_platform.jobs import enqueue_job
 from tcm_platform.models import (
+    Concept,
     Evidence,
+    Formula,
+    Herb,
+    KnowledgeRelation,
     KnowledgeVersion,
     LocalSession,
     ResearchTask,
@@ -26,6 +30,10 @@ IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,200}$")
 PUBLIC_RESOURCES = {
     "source": (SourceDocument, "SRC-", "knowledge.read"),
     "evidence": (Evidence, "EV-", "knowledge.read"),
+    "concept": (Concept, "CON-", "knowledge.read"),
+    "relation": (KnowledgeRelation, "REL-", "knowledge.read"),
+    "herb": (Herb, "HERB-", "knowledge.read"),
+    "formula": (Formula, "FORM-", "knowledge.read"),
     "knowledge_version": (KnowledgeVersion, "KV-", "knowledge.read"),
     "research_task": (ResearchTask, "RT-", "research.read"),
     "job": (TaskJob, "JOB-", "jobs.read"),

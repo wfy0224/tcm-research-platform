@@ -50,6 +50,7 @@ from tcm_platform.knowledge_service import (
     trace_evidence,
     trace_knowledge,
 )
+from tcm_platform.knowledge_worker import process_next_knowledge_publish
 from tcm_platform.model_credentials import store_model_key
 from tcm_platform.models import (
     AgentRun,
@@ -121,6 +122,7 @@ def main() -> None:
 
     commands.add_parser("parse-next", help="process one queued source.parse job")
     commands.add_parser("segment-next", help="process one queued source.segment job")
+    commands.add_parser("publish-next", help="process one queued knowledge.publish job")
     show = commands.add_parser("show-import", help="show import and pipeline status")
     show.add_argument("import_job_id", type=UUID)
     segments = commands.add_parser("show-segments", help="list segment locators for a source revision")
@@ -334,6 +336,9 @@ def main() -> None:
     elif args.command == "segment-next":
         result = process_next_segment()
         print(json.dumps(asdict(result) if result else None, default=str, ensure_ascii=False))
+    elif args.command == "publish-next":
+        result = process_next_knowledge_publish()
+        print(json.dumps({"job_id": str(result)} if result else None))
     elif args.command == "create-evidence":
         revision_id = create_evidence(
             args.segment_revision_ids, strength=args.strength, evidence_id=args.evidence_id
@@ -682,4 +687,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

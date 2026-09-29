@@ -20,6 +20,7 @@ from tcm_platform.cloud_models import cloud_clients_from_environment
 from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal
 from tcm_platform.enums import HealthState
+from tcm_platform.knowledge_api import router as knowledge_router
 from tcm_platform.local_auth import (
     COOKIE_NAME,
     bootstrap_local_session,
@@ -135,6 +136,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="TCM Research Platform", version="0.1.0", lifespan=lifespan)
 app.include_router(research_router)
+app.include_router(knowledge_router)
 
 
 def _request_id(request: Request) -> str:
