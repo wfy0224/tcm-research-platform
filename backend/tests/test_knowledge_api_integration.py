@@ -69,9 +69,14 @@ def test_knowledge_api_import_review_and_publish_job(tmp_path, monkeypatch):
         assert patient_case.status_code == 400
         assert client.post("/api/v1/knowledge/sources/import", json=payload,
                            headers={"Origin": origin}).status_code == 403
+        import_headers = {**headers, "Idempotency-Key": secrets.token_hex(12)}
         imported = client.post("/api/v1/knowledge/sources/import", json=payload,
-                               headers={**headers, "Idempotency-Key": secrets.token_hex(12)})
+                               headers=import_headers)
         assert imported.status_code == 202, imported.text
+        conflicting_import = client.post("/api/v1/knowledge/sources/import", json={
+            **payload, "content_base64": base64.b64encode(b"different text").decode()},
+            headers=import_headers)
+        assert conflicting_import.status_code == 409
         source_id = imported.json()["source_id"]
         assert imported.json()["job_id"].startswith("JOB-")
         assert imported.headers["location"].endswith(imported.json()["job_id"])
@@ -145,6 +150,11 @@ def test_knowledge_api_import_review_and_publish_job(tmp_path, monkeypatch):
         assert published.status_code == 202
         assert client.post(f"/api/v1/knowledge/versions/{version_id}/publish",
                            headers=publish_headers, json=publish_payload).json() == published.json()
+        conflicting_publish = client.post(
+            f"/api/v1/knowledge/versions/{version_id}/publish",
+            headers={**headers, "Idempotency-Key": secrets.token_hex(12)},
+            json={**publish_payload, "embedding_model": "other/model"})
+        assert conflicting_publish.status_code == 409
         assert process_next_knowledge_publish() is not None
         job = client.get(published.headers["location"])
         assert job.status_code == 200
