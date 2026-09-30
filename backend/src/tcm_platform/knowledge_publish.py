@@ -501,7 +501,9 @@ def activate_knowledge_version(
     version_id: UUID, build_id: UUID, *, actor_id: str = "local-curator",
     restore_snapshot_id: UUID | None = None,
 ) -> UUID | None:
-    """Switch both active pointers only after content and both index gates pass."""
+    """Switch both pointers only after content and the configured index gates pass."""
+    from tcm_platform.publication_config import is_local_configuration, validate_local_configuration
+
     with SessionLocal.begin() as session:
         runtime = session.scalar(
             select(KnowledgeRuntimeState).where(KnowledgeRuntimeState.id == 1).with_for_update()
@@ -516,12 +518,16 @@ def activate_knowledge_version(
             raise ValueError("index build does not belong to knowledge version")
         if version.status not in {"INDEXING", "VALIDATING", "READY"}:
             raise ValueError("knowledge version has not reached index validation")
+        local_index = is_local_configuration(build.configuration)
+        if local_index:
+            validate_local_configuration(build.configuration)
         if (
             build.status != "READY" or build.fts_status != "READY"
-            or build.vector_status != "READY" or build.validated_at is None
+            or build.vector_status != ("NOT_APPLICABLE" if local_index else "READY")
+            or build.validated_at is None
             or build.manifest_hash != version.manifest_hash
         ):
-            raise ValueError("FTS and vector index builds must both be validated")
+            raise ValueError("configured FTS/vector index builds must be validated")
         items = _version_items(session, version_id)
         if _manifest(items) != version.manifest_hash:
             raise ValueError("knowledge version snapshot manifest differs")
@@ -557,7 +563,9 @@ def activate_knowledge_version(
         )))
         if (indexed_ids != set(items["evidence_revision"])
                 or len(chunks) != len(indexed_ids)
-                or embedded_chunk_ids != chunk_ids):
+                or (local_index and session.scalar(select(func.count()).select_from(
+                    EmbeddingRecord).where(EmbeddingRecord.index_build_id == build_id)) != 0)
+                or (not local_index and embedded_chunk_ids != chunk_ids)):
             raise ValueError("target FTS/vector index is incomplete")
         previous_version_id = runtime.active_knowledge_version_id
         previous_build_id = runtime.active_index_build_id

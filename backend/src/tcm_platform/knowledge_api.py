@@ -24,6 +24,7 @@ from tcm_platform.api_contract import (
 from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal
 from tcm_platform.enums import ResourceClass
+from tcm_platform.knowledge_extraction import EXTRACTOR_VERSION, extract_source_candidates
 from tcm_platform.knowledge_publish import (
     ISSUE_TARGETS,
     REVIEW_TARGETS,
@@ -60,6 +61,7 @@ from tcm_platform.models import (
     HerbTerm,
     ImportJob,
     IndexBuild,
+    KnowledgeExtraction,
     KnowledgeRelation,
     KnowledgeRuntimeState,
     KnowledgeVersion,
@@ -71,6 +73,11 @@ from tcm_platform.models import (
     TaskJob,
     TextSegment,
     TextSegmentRevision,
+)
+from tcm_platform.publication_config import (
+    is_local_configuration,
+    publication_configuration,
+    validate_local_configuration,
 )
 from tcm_platform.source_import import SourceMetadata, import_file
 
@@ -172,10 +179,11 @@ class SupersedeRequest(StrictModel):
 
 
 class PublishRequest(StrictModel):
-    embedding_model: str = Field(min_length=1, max_length=200)
-    rerank_model: str = Field(min_length=1, max_length=200)
-    embedding_endpoint: str = Field(min_length=1, max_length=500)
-    rerank_endpoint: str = Field(min_length=1, max_length=500)
+    strategy: Literal["local-fts-exact-v1", "hybrid-rrf-v1"] | None = None
+    embedding_model: str | None = Field(default=None, min_length=1, max_length=200)
+    rerank_model: str | None = Field(default=None, min_length=1, max_length=200)
+    embedding_endpoint: str | None = Field(default=None, min_length=1, max_length=500)
+    rerank_endpoint: str | None = Field(default=None, min_length=1, max_length=500)
 
 
 class ActivateRequest(StrictModel):
@@ -347,6 +355,32 @@ def list_sources(actor: Annotated[Actor, Depends(_read_actor)],
                  "data_level": row.data_level} for row in sources]
 
 
+@router.get("/published-sources")
+def published_sources(actor: Annotated[Actor, Depends(_read_actor)]):
+    with SessionLocal() as session:
+        runtime = session.get(KnowledgeRuntimeState, 1)
+        if runtime is None or runtime.active_knowledge_version_id is None:
+            return []
+        rows = session.scalars(select(SourceDocument).join(
+            Evidence, Evidence.source_id == SourceDocument.id).join(
+            EvidenceRevision, EvidenceRevision.evidence_id == Evidence.id).join(
+            KnowledgeVersionItem,
+            KnowledgeVersionItem.evidence_revision_id == EvidenceRevision.id).where(
+                KnowledgeVersionItem.knowledge_version_id == runtime.active_knowledge_version_id,
+                EvidenceRevision.status == "REVIEWED").distinct().order_by(SourceDocument.title))
+        return [{"source_id": row.public_id, "title": row.title, "status": row.status,
+                 "data_level": row.data_level, "outbound_authorized": row.outbound_authorized}
+                for row in rows]
+
+
+@router.get("/publication-config")
+def publication_config(actor: Annotated[Actor, Depends(_read_actor)]):
+    try:
+        return {**publication_configuration(), "extractor_version": EXTRACTOR_VERSION}
+    except ValueError as exc:
+        raise _invalid(exc) from exc
+
+
 @router.get("/sources/{source_public_id}")
 def source_detail(source_public_id: str, actor: Annotated[Actor, Depends(_read_actor)]):
     with SessionLocal() as session:
@@ -390,6 +424,105 @@ def source_segments(source_public_id: str, revision_no: int,
                  "page_no": row.page_no, "chapter_no": row.chapter_no,
                  "paragraph_no": row.paragraph_no}
                 for row in rows]
+
+
+def _candidate_view(session, batch: KnowledgeExtraction) -> dict:
+    """Project a frozen extraction manifest; all external references are public IDs."""
+    manifest = batch.manifest
+    source_revision = session.get(SourceRevision, batch.source_revision_id)
+    source = session.get(SourceDocument, source_revision.source_id)
+    evidence_ids = dict.fromkeys(row["evidence_revision_id"] for row in (
+        *manifest["segments"], *manifest.get("formulas", [])) if row["evidence_revision_id"])
+    evidence = [_evidence_view(session, session.get(EvidenceRevision, UUID(value)))
+                for value in evidence_ids]
+    segments = []
+    concept_ids, relation_ids = {}, {}
+    for item in manifest["segments"]:
+        segment_ref = _public_ref(session, "text_segment_revision", UUID(item["segment_revision_id"]))
+        segments.append({
+            "segment_ref": segment_ref, "text_checksum": item["text_checksum"],
+            "structural_locator": item["structural_locator"],
+            "evidence_ref": (_public_ref(session, "evidence_revision", UUID(item["evidence_revision_id"]))
+                             if item["evidence_revision_id"] else None),
+            "mentions": [{"mention_id": _opaque("EM", UUID(mention["mention_id"])),
+                          "concept_id": session.get(Concept, UUID(mention["concept_id"])).public_id,
+                          **{key: mention[key] for key in (
+                              "surface_text", "entity_type", "start_offset", "end_offset", "ambiguous")}}
+                         for mention in item["mentions"]],
+            "relations": [{"relation_id": session.get(
+                KnowledgeRelation, UUID(relation["relation_id"])).public_id,
+                **{key: relation[key] for key in (
+                    "subject_start", "object_start", "start_offset", "end_offset",
+                    "assertion_text", "relation_type")}} for relation in item["relations"]],
+        })
+        concept_ids.update(dict.fromkeys(mention["concept_id"] for mention in item["mentions"]))
+        relation_ids.update(dict.fromkeys(relation["relation_id"] for relation in item["relations"]))
+    concepts, relations, formulas = [], [], []
+    for value in concept_ids:
+        row = session.get(Concept, UUID(value))
+        refs = session.scalars(select(ConceptEvidence.evidence_revision_id).where(
+            ConceptEvidence.concept_id == row.id))
+        concepts.append({"concept_id": row.public_id, "canonical_name": row.canonical_name,
+                         "concept_type": row.concept_type, "status": row.status,
+                         "evidence_refs": [_public_ref(session, "evidence_revision", ref) for ref in refs]})
+    for value in relation_ids:
+        row = session.get(KnowledgeRelation, UUID(value))
+        refs = session.scalars(select(RelationEvidence.evidence_revision_id).where(
+            RelationEvidence.relation_id == row.id))
+        relations.append({"relation_id": row.public_id, "status": row.status,
+                          "subject_id": session.get(Concept, row.subject_concept_id).public_id,
+                          "object_id": session.get(Concept, row.object_concept_id).public_id,
+                          "relation_type": row.relation_type, "assertion_text": row.assertion_text,
+                          "evidence_refs": [_public_ref(session, "evidence_revision", ref) for ref in refs]})
+    for item in manifest.get("formulas", []):
+        row = session.get(FormulaRevision, UUID(item["formula_revision_id"]))
+        formulas.append({"formula_id": session.get(Formula, row.formula_id).public_id,
+                         "revision_no": row.revision_no, "original_name": row.original_name,
+                         "status": row.status, "method": item["method"],
+                         "ingredients": [{key: value for key, value in ingredient.items()
+                                          if key != "herb_id"} for ingredient in item["ingredients"]],
+                         "evidence_refs": [_public_ref(session, "evidence_revision",
+                                                       UUID(item["evidence_revision_id"]))],
+                         "field_sources": [{"segment_ref": _public_ref(
+                             session, "text_segment_revision", UUID(span["segment_revision_id"])),
+                             **{key: span[key] for key in (
+                                 "field_key", "start_offset", "end_offset", "basis")}}
+                             for span in item["field_sources"]]})
+    return {"extraction_id": _opaque("EX", batch.id), "source_id": source.public_id,
+            "revision_no": source_revision.revision_no, "extractor_version": batch.extractor_version,
+            "status": manifest["status"],
+            **{key: manifest[key] for key in (
+                "segment_count", "mention_count", "relation_count", "concept_count", "formula_count")},
+            "segments": segments, "evidence": evidence,
+            "concepts": concepts, "relations": relations, "formulas": formulas}
+
+
+@router.post("/sources/{source_public_id}/revisions/{revision_no}/extract")
+def extract_candidates(source_public_id: str, revision_no: int,
+                       actor: Annotated[Actor, Depends(_write_actor)]):
+    with SessionLocal() as session:
+        revision_id = _revision(session, "source_revision",
+                                f"{source_public_id}@{revision_no}", actor).id
+    try:
+        result = extract_source_candidates(revision_id, actor_id=actor.actor_id)
+    except ValueError as exc:
+        raise _invalid(exc, conflict=True) from exc
+    with SessionLocal() as session:
+        return _candidate_view(session, session.get(KnowledgeExtraction, UUID(result["extraction_id"])))
+
+
+@router.get("/sources/{source_public_id}/revisions/{revision_no}/candidates")
+def source_candidates(source_public_id: str, revision_no: int,
+                      actor: Annotated[Actor, Depends(_read_actor)]):
+    with SessionLocal() as session:
+        revision = _revision(session, "source_revision", f"{source_public_id}@{revision_no}", actor)
+        batch = session.scalar(select(KnowledgeExtraction).where(
+            KnowledgeExtraction.source_revision_id == revision.id,
+            KnowledgeExtraction.extractor_version == EXTRACTOR_VERSION))
+        if batch is None:
+            raise ApiError("RESOURCE_NOT_FOUND", status=404, category="reference",
+                           detail="source revision has no current extraction batch")
+        return _candidate_view(session, batch)
 
 
 @router.post("/drafts/evidence", status_code=201)
@@ -743,14 +876,28 @@ def version_detail(version_public_id: str, actor: Annotated[Actor, Depends(_read
 def publish_version(version_public_id: str, payload: PublishRequest, request: Request,
                     actor: Annotated[Actor, Depends(_write_actor)]):
     key = required_idempotency_key(request.headers.get("Idempotency-Key"))
+    configuration = payload.model_dump()
+    if all(value is None for value in configuration.values()):
+        try:
+            configuration = publication_configuration()["configuration"]
+        except ValueError as exc:
+            raise _invalid(exc) from exc
+    else:
+        configuration["strategy"] = configuration["strategy"] or "hybrid-rrf-v1"
+    if is_local_configuration(configuration):
+        try:
+            validate_local_configuration(configuration)
+        except ValueError as exc:
+            raise _invalid(exc) from exc
+    elif any(configuration[key] is None for key in (
+        "embedding_model", "rerank_model", "embedding_endpoint", "rerank_endpoint",
+    )):
+        raise ApiError("INVALID_KNOWLEDGE_COMMAND", status=400, category="validation",
+                       detail="hybrid publication requires all configured model routes")
     with SessionLocal.begin() as session:
         version_id = resolve_public_id(session, "knowledge_version", version_public_id, actor)
         version = session.scalar(select(KnowledgeVersion).where(
             KnowledgeVersion.id == version_id).with_for_update())
-        configuration = {"strategy": "hybrid-rrf-v1", "embedding_model": payload.embedding_model,
-                         "rerank_model": payload.rerank_model,
-                         "embedding_endpoint": payload.embedding_endpoint,
-                         "rerank_endpoint": payload.rerank_endpoint}
         jobs = [row for row in session.scalars(select(TaskJob).where(
             TaskJob.job_type == "knowledge.publish").order_by(
                 TaskJob.created_at.desc(), TaskJob.id.desc()))

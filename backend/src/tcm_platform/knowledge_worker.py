@@ -9,6 +9,7 @@ from tcm_platform.db import SessionLocal
 from tcm_platform.jobs import acquire_job, complete_job, fail_job
 from tcm_platform.knowledge_publish import activate_knowledge_version, create_index_build
 from tcm_platform.models import IndexBuild, KnowledgeRuntimeState, KnowledgeVersion
+from tcm_platform.publication_config import is_local_configuration, validate_local_configuration
 from tcm_platform.retrieval import build_retrieval_index
 
 
@@ -24,8 +25,12 @@ def process_next_knowledge_publish(*, worker_id: str = "local-publisher") -> UUI
         configuration = job.payload["configuration"]
 
     try:
-        embedder, reranker = cloud_clients_from_environment()
-        if (configuration["embedding_model"] != embedder.model_version
+        embedder = None
+        if is_local_configuration(configuration):
+            validate_local_configuration(configuration)
+        else:
+            embedder, reranker = cloud_clients_from_environment()
+        if embedder is not None and (configuration["embedding_model"] != embedder.model_version
                 or configuration["rerank_model"] != reranker.model_version
                 or configuration["embedding_endpoint"] != embedder.endpoint
                 or configuration["rerank_endpoint"] != reranker.endpoint):

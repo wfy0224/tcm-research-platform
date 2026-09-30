@@ -30,6 +30,7 @@ from tcm_platform.models import (
     utc_now,
 )
 from tcm_platform.outbound_policy import authorize_outbound
+from tcm_platform.publication_config import is_local_configuration, validate_local_configuration
 from tcm_platform.retrieval_diversity import diversify
 from tcm_platform.retrieval_quality import record_unpublished_matches
 from tcm_platform.retrieval_query import (
@@ -105,10 +106,10 @@ def _validated_vectors(vectors: list[list[float]], count: int) -> int:
 
 
 def build_retrieval_index(
-    build_id: UUID, *, embedder: Embedder, actor_id: str = "local-indexer"
+    build_id: UUID, *, embedder: Embedder | None = None, actor_id: str = "local-indexer"
 ) -> int:
     """Call the model outside DB transactions, then atomically persist and validate indexes."""
-    if not embedder.model_version.strip():
+    if embedder is not None and not embedder.model_version.strip():
         raise ValueError("embedder model version is required")
     with SessionLocal() as session:
         build = session.get(IndexBuild, build_id)
@@ -118,7 +119,12 @@ def build_retrieval_index(
         if version is None or version.status != "INDEXING":
             raise ValueError("knowledge version is not indexing")
         configured_model = build.configuration.get("embedding_model")
-        if configured_model != embedder.model_version:
+        local_index = is_local_configuration(build.configuration)
+        if local_index:
+            validate_local_configuration(build.configuration)
+            if embedder is not None:
+                raise ValueError("local index does not accept an embedder")
+        elif embedder is None or configured_model != embedder.model_version:
             raise ValueError("embedder does not match the frozen index configuration")
         if (getattr(embedder, "is_remote", False)
                 and build.configuration.get("embedding_endpoint") != embedder.endpoint):
@@ -154,10 +160,12 @@ def build_retrieval_index(
             raise ValueError("evidence chunk exceeds index limit; shorten it explicitly")
 
     vectors: list[list[float]] = []
-    batch_size = min(32, embedder.max_batch_size)
+    batch_size = min(32, embedder.max_batch_size) if embedder is not None else len(records)
     if batch_size < 1:
         raise ValueError("embedder batch size must be positive")
     for offset in range(0, len(records), batch_size):
+        if local_index:
+            break
         texts = [record[2] for record in records[offset:offset + batch_size]]
         scope = (authorize_outbound("embed", embedder.model_version, outbound_sources,
                                     frozen_mode=outbound_mode,
@@ -165,7 +173,7 @@ def build_retrieval_index(
                  if getattr(embedder, "is_remote", False) else nullcontext())
         with scope:
             vectors.extend(embedder.embed(texts))
-    dimensions = _validated_vectors(vectors, len(records))
+    dimensions = _validated_vectors(vectors, len(records)) if not local_index else None
 
     with SessionLocal.begin() as session:
         build = session.scalar(select(IndexBuild).where(IndexBuild.id == build_id).with_for_update())
@@ -187,7 +195,7 @@ def build_retrieval_index(
             chunks.append(chunk)
         session.add_all(chunks)
         session.flush()
-        session.add_all([
+        session.add_all([] if local_index else [
             EmbeddingRecord(
                 id=new_id(), index_build_id=build_id, chunk_id=chunk.id,
                 model_version=embedder.model_version, dimensions=dimensions,
@@ -206,13 +214,11 @@ def build_retrieval_index(
             "SELECT DISTINCT vector_dims(embedding) FROM knowledge.embedding_record "
             "WHERE index_build_id = :build_id"
         ), {"build_id": build_id}).scalars().all()
-        if (
-            chunk_count != len(records) or vector_count != len(records)
-            or actual_dims != [dimensions]
-        ):
+        if (chunk_count != len(records) or (local_index and (vector_count or actual_dims))
+                or (not local_index and (vector_count != len(records) or actual_dims != [dimensions]))):
             raise RuntimeError("stored FTS/vector index rows failed validation")
         build.fts_status = "READY"
-        build.vector_status = "READY"
+        build.vector_status = "NOT_APPLICABLE" if local_index else "READY"
         build.status = "READY"
         build.validated_at = utc_now()
         version.status = "VALIDATING"
@@ -220,7 +226,9 @@ def build_retrieval_index(
             session, event_type="index_build.validated", actor_id=actor_id,
             aggregate_id=build_id,
             payload={"count": len(records), "dimensions": dimensions,
-                     "embedding_model": embedder.model_version},
+                     "embedding_model": embedder.model_version if embedder is not None else None,
+                     "strategy": build.configuration.get("strategy"),
+                     "vector_status": build.vector_status},
         )
     return len(records)
 
@@ -266,10 +274,19 @@ def search_published(
         if (
             version is None or build is None
             or version.status != "READY" or build.status != "READY"
-            or build.fts_status != "READY" or build.vector_status != "READY"
+            or build.fts_status != "READY"
+            or build.vector_status != ("NOT_APPLICABLE" if is_local_configuration(
+                build.configuration) else "READY")
             or build.knowledge_version_id != version.id
         ):
             raise ValueError("active knowledge/index pair is inconsistent")
+        if is_local_configuration(build.configuration):
+            validate_local_configuration(build.configuration)
+            # Local index selection is independent of permission for cloud generation.
+            # There are no vectors to query or candidate scores to rerank in this route.
+            embedder, reranker = None, None
+            execution.mode = "LOCAL"
+            execution.channels = ["exact", "fts", "structured", "relation"]
         if embedder is not None and build.configuration.get("embedding_model") != embedder.model_version:
             raise ValueError("query embedder differs from active index model")
         if (getattr(embedder, "is_remote", False)
