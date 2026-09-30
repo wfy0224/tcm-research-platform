@@ -24,6 +24,10 @@ npm run dev
 
 打开 `http://127.0.0.1:5173`，可检索活动知识版本并查看每条证据的原文、上下文与引用定位。API 健康状态见 `http://127.0.0.1:8000/api/v1/system/health`。默认连接串仅用于本地开发；正式环境通过 `TCM_DATABASE_URL` 和 `TCM_DATA_ROOT` 配置。
 
+研究工作区位于同一页面。桌面程序提供一次性启动密钥后，先建立本地会话，再填写研究问题与可选来源范围；选择已创建任务可查看 Summary、Claims、Debate、Evidence、Disputes、Report 六个视图。开始研究需填写已配置的 `provider/model` 路由并确认本次问题外发授权。暂停、恢复、取消、人工审核和报告导出按钮由任务返回的 `allowed_actions` 控制。Claims 显示过程草稿与审计，只有 Report 显示完成后的最终报告；Markdown/DOCX 生成完成后才出现下载入口。浏览器刷新后 CSRF 凭据从当前标签页的 `sessionStorage` 恢复；新标签页需要桌面程序重新建立会话。桌面主进程的密钥交接仍属 VIB-70。前端浏览器交互可在已安装 Edge 的 Windows 环境用 `cd frontend; npm run check:research-browser` 验证；此检查使用隔离的模拟 API，不会调用云模型。
+
+真实隔离浏览器验收入口为 `npm run check:research-e2e`（Node 22+、Windows Edge、既有 Linux 测试容器）。它连接实际 API、研究 Worker 与报告导出 Worker，固定使用 `tcm_vib60_test` 和假模型，验证暂停/恢复、完整辩论、人工审核、Markdown/DOCX 浏览器下载、真实 SSE 与刷新恢复；0 次真实云调用。测试环境启动命令和验收证据见 [VIB-63 验收记录](docs/VIB63_RESEARCH_WORKSPACE_ACCEPTANCE.md)。
+
 ### 本地 API 会话与命令合约
 
 当前预览页保留只读的健康检查与已发布知识检索；检索的 HTTP 响应使用来源、证据和段落公开编号，内部修订 UUID 只用于服务和 CLI。任务查询 `GET /api/v1/jobs/{JOB-...}` 需要本地会话，且只接受公开编号。
@@ -159,7 +163,7 @@ uv run python -m tcm_platform.cli run-first-round <task_id>
 
 Judge 只接收已完成审计的 Active Claim、最近 AuditResult、开放 Dispute/EvidenceGap 与冻结知识版本内已审核的精确 EvidenceRevision。输出只能为每条 Claim 选择允许的分类和理由 ID，不能生成新 Claim、改写断言或自由检索。`ResearchSynthesis` 保存 Judge 输入快照，ReportGenerator 仅复制审计文本、争议正反证据与原文定位生成 `StructuredReport`；数据库禁止更新或删除这两类记录。用 `show-structured-report <task_id>` 查看报告 JSON。
 
-研究任务完成后，可用 `queue-report-export <task_id> --format markdown` 或 `--format docx` 排队独立导出，再用 `run-report-export-next --export-id <export_id>` 处理。`show-report-export <export_id>` 显示格式、渲染版本、Job 状态和 Artifact 哈希；`save-report-export <export_id> <output_path>` 将已完成文件保存到本地，不覆盖已有文件。相同报告、格式与渲染版本重复排队返回同一导出；失败可再次排队重试，不改变已完成研究任务。两种文件均列出五类结论、原文证据、争议、限制与研究过程，并提供内部引用跳转及可复制的来源修订和定位文字。当前网页尚无报告页面；`/api/v1/research/tasks/{task_id}` 提供服务端计算的 `allowed_actions`，`/details` 及 `/claims`、`/audits`、`/debate`、`/disputes`、`/human-reviews` 提供已落库的研究过程，`/report` 与 `/exports/{format}` 提供最终报告和导出。写命令需本地会话、CSRF 与 `Idempotency-Key`。`/events` 是 SSE 通知，首次连接和重连均先发送无事件 ID 的 `snapshot` 指针，客户端先 GET 任务状态与需要的详情，再按 `Last-Event-ID` 消费补发事件；事件数据仅含公开任务编号。`?follow=false` 可取有限历史批次后关闭连接。网页报告工作台由 VIB-63 接入。
+研究任务完成后，可用 `queue-report-export <task_id> --format markdown` 或 `--format docx` 排队独立导出，再用 `run-report-export-next --export-id <export_id>` 处理。`show-report-export <export_id>` 显示格式、渲染版本、Job 状态和 Artifact 哈希；`save-report-export <export_id> <output_path>` 将已完成文件保存到本地，不覆盖已有文件。相同报告、格式与渲染版本重复排队返回同一导出；失败可再次排队重试，不改变已完成研究任务。两种文件均列出五类结论、原文证据、争议、限制与研究过程，并提供内部引用跳转及可复制的来源修订和定位文字。网页研究工作区已显示最终报告与导出入口；`/api/v1/research/tasks/{task_id}` 提供服务端计算的 `allowed_actions`，`/details` 及 `/claims`、`/audits`、`/debate`、`/disputes`、`/human-reviews` 提供已落库的研究过程，`/report` 与 `/exports/{format}` 提供最终报告和导出。写命令需本地会话、CSRF 与 `Idempotency-Key`。`/events` 是 SSE 通知，首次连接和重连均先发送无事件 ID 的 `snapshot` 指针，客户端先 GET 任务状态与需要的详情，再按 `Last-Event-ID` 消费补发事件；事件数据仅含公开任务编号。`?follow=false` 可取有限历史批次后关闭连接。网页报告工作台由 VIB-63 接入。
 
 验收追踪：AC-1B-03/04 的 Claim 定向质疑、受限再检索、Rebuttal、追加修订与重新审计对应 `backend/src/tcm_platform/debate_service.py`、`research_service.py`、`audit_service.py`、`research_worker.py`、迁移 0012～0014，以及 `backend/tests/test_research_integration.py` 中的研究链集成测试。
 

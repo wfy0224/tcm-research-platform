@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
+import ResearchWorkspace from "./ResearchWorkspace";
 
 type Health = {
   state: "READY" | "DEGRADED" | "MAINTENANCE" | "NOT_READY";
@@ -112,6 +113,8 @@ function App() {
           同意将本次检索词发送给已配置的云端向量与重排模型。请勿输入私人或敏感信息。</label>
         {searchError && <p className="error" role="alert">{searchError}</p>}
       </section>
+
+      <ResearchWorkspace />
 
       {searched && !searchError && (
         <section className="results" aria-live="polite">

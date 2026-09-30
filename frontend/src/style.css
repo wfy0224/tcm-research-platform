@@ -1,7 +1,7 @@
 :root { font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; color: #202823; background: #f5f6f2; }
 * { box-sizing: border-box; }
 body { margin: 0; }
-button, input { font: inherit; }
+button, input, textarea { font: inherit; }
 button { cursor: pointer; }
 .shell { max-width: 1040px; margin: 0 auto; padding: 64px 24px 96px; }
 .intro { margin-bottom: 36px; }
@@ -57,3 +57,52 @@ dd { margin: 0; font-weight: 600; }
 pre { padding: 14px; background: #f5f6f2; border-radius: 8px; overflow-x: auto; font-size: 12px; }
 .idText { color: #607168; font-size: 12px; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .shell { padding: 36px 16px 64px; } .panel { padding: 20px; } .searchForm { flex-direction: column; } .resultCard { padding: 18px; } .resultFoot { align-items: flex-start; } .modelNote { display: none; } }
+.researchWorkspace { margin: 46px 0; }
+.workspaceHead { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 18px; }
+.workspaceHead h2 { margin-top: 6px; }
+.workspaceGrid { display: grid; grid-template-columns: minmax(240px, 280px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.researchSidebar { padding: 20px; }
+.researchSidebar h3, .taskOverview h3, .tabPanel h3 { margin: 0 0 16px; }
+.researchSidebar h3:not(:first-child) { margin-top: 32px; }
+.researchForm, .inlineForm, .reviewForm { display: grid; gap: 10px; }
+.researchForm > label, .inlineForm > label, .reviewForm > label, .startForm > label:first-child { font-weight: 700; font-size: 13px; }
+.researchForm textarea, .reviewForm textarea, .researchForm input:not([type=checkbox]), .inlineForm input, .startForm input:not([type=checkbox]) { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid #cfd9d0; border-radius: 8px; }
+.researchForm fieldset { border: 1px solid #e1e6df; border-radius: 10px; padding: 12px; margin: 4px 0; min-width: 0; }
+.researchForm legend { font-weight: 700; font-size: 13px; }
+.sourceChoices { max-height: 180px; overflow: auto; display: grid; gap: 8px; }
+.sourceChoices label { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; }
+.sourceChoices small { margin-left: auto; color: #728078; }
+.researchForm button, .inlineForm button, .reviewForm button, .actionRow button, .exportRow button { border: 0; border-radius: 8px; padding: 10px 13px; background: #27563d; color: white; font-weight: 700; }
+.researchWorkspace button:disabled { opacity: .5; cursor: not-allowed; }
+.taskList { display: grid; gap: 7px; max-height: 360px; overflow: auto; }
+.taskList button { text-align: left; background: #f6f8f5; border: 1px solid #e1e6df; border-radius: 8px; padding: 10px; }
+.taskList button.selected, .viewSwitch button.selected { border-color: #27563d; background: #eaf2eb; }
+.taskList strong { display: block; font-size: 13px; line-height: 1.5; }
+.taskList span { display: block; font-size: 11px; color: #728078; margin-top: 5px; overflow-wrap: anywhere; }
+.researchMain { min-width: 0; }
+.taskOverview { padding: 22px; }
+.taskOverview .panelHead { align-items: start; }
+.taskOverview h3 { margin-top: 5px; line-height: 1.5; }
+.workspaceAlert { background: #fff5e4; color: #77561e; border: 1px solid #e7d4ad; border-radius: 9px; padding: 12px 14px; }
+.startForm { display: grid; gap: 8px; margin: 18px 0; }
+.actionRow, .researchTabs, .viewSwitch, .reportCounts, .exportRow, .refList { display: flex; flex-wrap: wrap; gap: 8px; }
+.actionRow { margin-top: 18px; }
+.reviewForm { border-top: 1px solid #e1e6df; padding-top: 20px; margin-top: 20px; }
+.reviewForm h4 { margin: 0; }
+.researchTabs { margin: 18px 0 0; }
+.researchTabs button, .viewSwitch button { border: 1px solid #cfd9d0; background: white; border-radius: 8px 8px 0 0; padding: 9px 11px; color: #31503c; font-weight: 700; }
+.researchTabs button[aria-current=page] { color: white; border-color: #27563d; background: #27563d; }
+.tabPanel { border-top-left-radius: 0; }
+.researchItem { border-top: 1px solid #e9ede7; padding: 16px 0; overflow-wrap: anywhere; }
+.researchItem h4 { margin: 0 0 8px; color: #31503c; }
+.researchItem p { line-height: 1.7; white-space: pre-wrap; }
+.researchItem blockquote { background: #f2f7f1; border-left: 3px solid #3b7650; padding: 12px; }
+.researchItem blockquote small { display: block; color: #728078; }
+.researchEmpty { margin: 12px 0 0; }
+.refChip { font-size: 11px; color: #31503c; background: #eaf2eb; padding: 5px 7px; border-radius: 5px; overflow-wrap: anywhere; }
+.timelineStep { border-left: 3px solid #8daf97; padding: 4px 0 12px 14px; margin: 10px 0; }
+.timelineStep p { margin: 7px 0; }
+.timelineStep small { color: #728078; }
+.reportCounts span { background: #eaf2eb; padding: 8px; border-radius: 7px; }
+.exportRow > div { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+@media (max-width: 800px) { .workspaceGrid { grid-template-columns: 1fr; } .researchSidebar { order: 1; } .researchMain { order: 2; } }

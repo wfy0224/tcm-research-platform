@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc -b && vite build"
+    "build": "tsc -b && vite build",
+    "check:research-browser": "npm run build && node scripts/check_research_browser.mjs",
+    "check:research-e2e": "npm run build && node scripts/check_research_e2e.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -19,4 +21,3 @@
     "vite": "^6.0.0"
   }
 }
-

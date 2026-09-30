@@ -282,7 +282,12 @@ def test_research_api_creates_idempotent_task_and_serves_final_report(tmp_path, 
         queued = client.post(f"/api/v1/research/tasks/{public_id}/exports/markdown",
                              headers=command_headers)
         assert queued.status_code == 202
-        assert process_next_report_export() is not None
+        with SessionLocal() as session:
+            export_id = session.scalar(select(ReportExport.id).join(
+                TaskJob, TaskJob.id == ReportExport.job_id
+            ).where(TaskJob.public_id == queued.json()["job_id"]))
+        assert export_id is not None
+        assert process_next_report_export(export_id=export_id) is not None
         export = client.get(f"/api/v1/research/tasks/{public_id}/exports/markdown")
         assert export.status_code == 200 and export.json()["status"] == "COMPLETED"
         download = client.get(export.json()["download_url"])
