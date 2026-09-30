@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "database": "tcm_vib48_cloud_acceptance_test",
+  "index_status": "READY",
+  "audit_chain_verified": true,
+  "source_id": "SRC-01a0f29f-7821-7fb0-ae70-079890eecf11",
+  "expected_and_actual_top_evidence": "EV-01a0f29f-793d-7790-9c55-32f1bec8947f",
+  "invocations": [
+    {"purpose": "embed", "model": "siliconflow/BAAI/bge-m3", "status": "COMPLETED", "transport_retry_count": 0, "latency_ms": 2694},
+    {"purpose": "embed", "model": "siliconflow/BAAI/bge-m3", "status": "COMPLETED", "transport_retry_count": 0, "latency_ms": 2394},
+    {"purpose": "rerank", "model": "siliconflow/BAAI/bge-reranker-v2-m3", "status": "COMPLETED", "transport_retry_count": 0, "latency_ms": 1702}
+  ]
+}

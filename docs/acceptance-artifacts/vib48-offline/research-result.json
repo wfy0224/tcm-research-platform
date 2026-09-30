@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "database": "tcm_vib60_test",
+  "task_id": "RT-01a0f29f-a934-7a3b-9255-0e5827d72338",
+  "flow": "create → pause/resume → debate → human review → resumed Worker → Markdown/DOCX browser downloads → reload",
+  "sse_events": ["research_task.claims_normalized", "research_task.created", "research_task.critic_prepared", "research_task.debate_round_completed", "research_task.evidence_retrieved", "research_task.first_round_prepared", "research_task.human_review_resolved", "research_task.judge_prepared", "research_task.pause_requested", "research_task.planned", "research_task.rebuttal_prepared", "research_task.report_saved", "research_task.resumed", "research_task.started", "research_task.stop_evaluated", "research_task.synthesized", "research_task.waiting_human", "snapshot"],
+  "real_calls": 0,
+  "backend": "production HTTP/API/database/Workers",
+  "models": "deterministic doubles"
+}

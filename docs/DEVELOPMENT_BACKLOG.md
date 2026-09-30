@@ -1,6 +1,6 @@
 # 开发任务与验收清单
 
-**2026-09-30 最新顺序**：VIB-45 本地完成（Linear 旧详细验收待授权同步）；VIB-46 方剂候选工程已补齐，真实 C02 与专家核对待补，仍 In Progress。VIB-48 结构/关系、本地降级/UI、多样性、质量分流及有限繁简/异体/自身历史别名查询扩展工程已实现，最新完整后端 **241 passed、0 failed、0 skipped**，Ruff/diff通过；无结构变更，未重复迁移往返，无前端变更，未重跑build/浏览器。本地及Linear仍 In Progress，真实依赖与VIB-68相关性评测保留。用户纠正接续顺序：先逐项补完VIB-46/48可执行的真实后端/本地环境验收，明确C02/专家/Windows环境及云调用的具体阻塞后再进入VIB-47；未执行验收不因流程精简而跳过。VIB-63/49/60/61 Done；VIB-62仍受VIB-46/48阻断，VIB-58 Windows密钥实机待安全环境。最新提交见根交接；以下早期进度为历史记录。
+**2026-09-30 最新顺序**：本轮已实际补完VIB-48真实HTTP/本地检索/断网/浏览器与严格失败验收、既有BGE路由3次真实云调用及研究后端E2E，并修复健康检查错误；相邻回归5 passed、0 skipped，Ruff/Node/diff通过。Windows原生凭据实机通过，Python适配器受应用错误禁令仍未验。VIB-46/48仍In Progress，仅真实C02/专家及VIB-68医学质量依赖保留；先准备/核对C02准确语料与专家验收材料，不重新跑已经通过的环境检查。VIB-63/49/60/61 Done，VIB-62仍受VIB-46/48阻断。工程基线e36c9d7，具体下一条操作见根交接；以下早期进度为历史记录。
 
 最新同步：VIB-59 本地会话与 API 通用合约已提交 `7ed5368` 并通过隔离验证；`0019_local_session_api` 往返迁移、`alembic check`、后端 51 passed、0 skipped、Ruff、前端构建均通过。Linear 最终状态见 VIB-59 小节。桌面壳接线待 VIB-70，来源与研究命令路由待 VIB-60/61，网页报告工作台待 VIB-63。此前 E9 基线提交为 `86e3a5d`。
 
@@ -140,6 +140,8 @@
 
 ### VIB-48 V1 结构与关系检索、查询规范化及断网降级
 
+**2026-09-30 遗留环境验收补齐（工程提交 `e36c9d7`）**：真实Uvicorn/HTTP/PostgreSQL/生产导入与发布Worker、本地简体查询和精确原文、Edge详情/实际断网降级/刷新/375px通过；Docker internal隔离测试API，生产CloudEmbedder实际传输失败及审计/重试、本地结果一致、研究/benchmark严格失败不产生伪结果通过，网络已恢复。新独立库既有BGE向量/重排 **3次真实调用COMPLETED、0重试**，目标证据首位、索引READY、审计链通过。既有真实研究浏览器E2E（固定模型替身）完整通过创建/暂停恢复/人工审核续跑/报告/Markdown与DOCX下载/SSE/刷新。实测发现API健康检查仍认0023而误报最新0026需迁移，修复并回归 **5 passed、0 skipped**（1.67秒），Ruff/Node语法/diff通过；未重复无关全量/build。详见 [真实环境验收](VIB48_LIVE_ENVIRONMENT_ACCEPTANCE.md) 及JSON/截图。简短验收已同步Linear评论 `29fd1bc2-675e-4bb7-98fb-a3403552e88e`。**仍In Progress**：真实C02/专家依赖未补；单条模型冒烟不替代VIB-68医学质量评测。已运行的HTTP/断网/供应商验收不再笼统列待补。
+
 **2026-09-30 查询候选扩展阶段（工程提交 `e7b0af0`）**：`retrieval_query.py` 的 `explicit-orthography/v1` 用有限明确字符组支持表内繁简、混合字形及羣/群、峯/峰；歧义简化字和未列字形保持原样，不推断医学等价。Exact使用NFKC字形键，FTS仅在字符/二元词内OR字形、词间AND，不重写冻结索引或扩展整句组合；Structured/Relation匹配自身词形/方剂字段，历史别名只沿用自身已裁定锚点，不传播比较身份词形。内部结果、研究审计及benchmark保留原query/规则/实际排名。冻结KV/Index/Scope、精确历史Evidence、未裁定/未知、同名多类型/时代、模型门禁、本地/显式降级与研究/benchmark严格失败覆盖。首专项4过5失0skip（四处既有行为测试预期及较/較映射遗漏），修正后同库6条集成通过、2条规则单测通过、方剂扩展用例通过；最终全新独立库完整后端 **241 passed、0 failed、0 skipped**（366.14秒，新增8条测试），Ruff/diff通过。没有迁移、依赖或前端改动，未重复迁移往返/build/浏览器，0次真实云调用。质量分流仍按原NFKC字面规则，字形扩展不自动触发问题。详情 [查询扩展验收](VIB48_QUERY_EXPANSION_ACCEPTANCE.md)。**本阶段工程完成，VIB-48仍 In Progress**：VIB-46真实C02/专家依赖未完成，真实模型/生产断网/Windows凭据实机与VIB-68医学相关性验收仍保留。后续按增量流程验证变化涉及的范围。
 
 **2026-09-30 未发布内容质量分流接续（工程提交 `74beabe`）**：新增本地 `unpublished-exact/v1`，只扫描冻结 KV/Index 中已索引的精确 SourceRevision 与来源 Scope 交集；Evidence/关系断言/最外层可引用片段匹配查询全文，概念自身词形、药物词形及方剂原名/药味匹配查询内完整词形。生成可定位 WARNING QualityIssue，保留原 query、首次版本/任务、精确引用/哈希；不把候选加入结果或模型输入，不自动审核，也不声称已校准医学高相关阈值。已发布身份、拒绝目标排除；按规则/目标跨查询/版本/解决/豁免去重，目标锁保证并发幂等，整批问题与审计同事务，失败直接传播；每次新增至多100个目标，已有问题在截取前排除，不阻塞后续候选。旧版发布/新版草稿、同来源新修订和其他来源、人工门禁、本地/降级/严格失败、原子回滚、API/研究池及外层片段去重覆盖。首完整库227过1失0skip，失败为新审计测试 UUID 与字符串字段比较；修正后专项 **18 passed、0 skipped**，再补2条原始片段用例，最终另一全新独立库完整后端 **233 passed、0 failed、0 skipped**（327.57秒），两库迁移往返/旧数据保留/模型检查、完整Ruff/diff通过。无新迁移/依赖，0次真实云调用；本轮未改前端、未重跑build/浏览器。简短验收同步Linear评论 `5b90b9d7-ce2b-4a21-84a3-b44aa736c3c3`。详情 [质量分流验收](VIB48_QUALITY_TRIAGE_ACCEPTANCE.md)。**仍 In Progress**：查询候选扩展完整验收、VIB-46真实C02/专家依赖未完成；相关性阈值/真实Golden Set待VIB-68。
@@ -277,6 +279,8 @@
 **验收追踪**：提交 `86e3a5d`。迁移 `0018_report_export` 记录 ReportExport 与独立 Job、Artifact、格式、渲染版本和导出时冻结的研究过程快照；同一报告/格式/版本幂等，失败和达到最大次数后可重排，研究任务保持 `COMPLETED`。Markdown/DOCX 共享事实大纲，展示五类结论、审计、争议/限制、完整研究过程和原文证据；内部锚点跳转、可复制来源修订/片段定位。CLI 可排队、处理、查看和保存文件。集成用例覆盖链接、原文、重试、数据库登记失败回滚、无断言报告；两座隔离库升级 0018，第二库 0017→0018→0017→0018；`alembic check` 无差异，完整后端 **48 passed、0 skipped**，Ruff 与 diff 检查通过。Word 将样本 DOCX 实际渲染为 4 页并逐页检查无截断和重叠。AC-1B-08 的后端报告导出可追踪；网页报告展示和下载 API 待 VIB-61/63，真实模型质量待 VIB-68。
 
 ### VIB-58 V1 模型网关治理、冻结策略与统一外发控制
+
+**2026-09-30 Windows安全实机补验**：`check_windows_credentials.ps1`不启动故障Python，直接调用原生CredReadW/CredWriteW/CredFree与删除清理；随机一次性target的UTF-16LE读写、GENERIC/LOCAL_MACHINE和缺失1168检查通过，测试target已删除，现有provider凭据未读取/覆盖。既有向量/重排3次真实调用成功与审计落库另通过。证据 [环境验收](VIB48_LIVE_ENVIRONMENT_ACCEPTANCE.md)，简短结论同步Linear评论 `cb62d1ab-d7b8-4053-bfb8-1b4c43e3ce0b`。**仍In Progress**：Windows Python ctypes/CLI适配器全链未运行，原生API通过不冒充适配器通过；现有Windows应用错误禁令继续适用。
 
 - Linear：[VIB-58](https://linear.app/vibecoding-demo/issue/VIB-58/v1-模型网关治理冻结策略与统一外发控制)；状态：In Progress；优先级：High。
 - 父任务：无；依赖：VIB-43。

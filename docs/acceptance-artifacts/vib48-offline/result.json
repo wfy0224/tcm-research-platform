@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "checks": [
+    "external_tcp_route_blocked",
+    "http_import_idempotency_parse_segment_review_publish_worker",
+    "offline_local_simplified_query_original_quote_public_revision_no_model_call",
+    "production_cloud_transport_failed_and_audited_local_fallback_identical",
+    "actual_linux_missing_credential_local_fallback",
+    "research_and_benchmark_strict_failure_without_pool_or_metrics",
+    "audit_chain_verified"
+  ],
+  "database": "tcm_vib48_offline_a797a044_test",
+  "failed_transport_invocations": 3,
+  "real_cloud_completions": 0,
+  "index_vectors": "deterministic_double",
+  "browser_passed": true,
+  "browser_checks": [
+    "real_backend_local_query",
+    "published_original_quote_and_revision_detail",
+    "actual_transport_fault_fallback_notice_and_evidence",
+    "reload_without_internet",
+    "375px_layout"
+  ],
+  "api_requests": [
+    "GET /api/v1/local-session",
+    "GET /api/v1/system/health",
+    "GET /api/v1/retrieval/query?query=++%E5%A4%AA%E9%98%B3++&limit=10&allow_remote_query=false",
+    "GET /api/v1/retrieval/query?query=++%E5%A4%AA%E9%98%B3++&limit=10&allow_remote_query=true",
+    "GET /api/v1/local-session",
+    "GET /api/v1/system/health",
+    "GET /api/v1/retrieval/query?query=++%E5%A4%AA%E9%98%B3++&limit=10&allow_remote_query=false"
+  ],
+  "network": "Docker internal; API has no external attachment"
+}
