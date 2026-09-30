@@ -26,6 +26,7 @@ from tcm_platform.models import (
     utc_now,
 )
 from tcm_platform.outbound_policy import authorize_outbound
+from tcm_platform.retrieval_structured import structured_candidates
 
 HAN = re.compile(r"[\u3400-\u9fff]+|[a-zA-Z0-9]+")
 MAX_CHUNKS = 20_000
@@ -208,7 +209,8 @@ def search_published(
     query_outbound_authorized: bool = False,
     task_id: UUID | None = None,
 ) -> list[dict]:
-    """Fuse exact, FTS and vector ranks for the active or explicitly frozen version."""
+    """Fuse lexical, vector and object proofs for the active or frozen version."""
+    original_query = query
     query = unicodedata.normalize("NFKC", query).strip()
     if not query or len(query) > 2_000:
         raise ValueError("query must be 1-2000 characters")
@@ -253,6 +255,10 @@ def search_published(
                             build.configuration.get("outbound_source_ids", [])]
         if source_ids is not None and not set(source_ids).issubset(set(outbound_sources)):
             raise PermissionError("source scope exceeds frozen outbound source set")
+        scoped_sources = list(outbound_sources if source_ids is None else source_ids)
+
+    if not scoped_sources:
+        return []
 
     if getattr(embedder, "is_remote", False) and not query_outbound_authorized:
         raise PermissionError("query text requires explicit remote-model authorization")
@@ -266,7 +272,7 @@ def search_published(
     _validated_vectors(query_vector, 1)
     candidate_limit = min(300, max(30, limit * 5))
     # Parameterized SQL keeps query text and vector values out of SQL syntax.
-    filters = "AND ev.source_id = ANY(:source_ids)" if source_ids else ""
+    filters = "AND ev.source_id = ANY(:source_ids)"
     allowed = (
         "JOIN knowledge.evidence_revision e ON e.id = c.evidence_revision_id "
         "JOIN knowledge.evidence ev ON ev.id = e.evidence_id "
@@ -278,9 +284,8 @@ def search_published(
     params = {
         "build_id": build_id, "version_id": version_id, "limit": candidate_limit,
         "query": query, "terms": terms, "vector": vector_literal,
+        "source_ids": scoped_sources,
     }
-    if source_ids:
-        params["source_ids"] = list(source_ids)
     channels = {
         "exact": (
             "SELECT c.evidence_revision_id FROM knowledge.retrieval_chunk c " + allowed
@@ -300,12 +305,20 @@ def search_published(
             "ORDER BY er.embedding <=> CAST(:vector AS vector) LIMIT :limit"
         ),
     }
-    weights = {"exact": 2.0, "fts": 1.5, "vector": 1.0}
+    weights = {"exact": 2.0, "fts": 1.5, "vector": 1.0,
+               "structured": 1.5, "relation": 1.0}
     scores: dict[UUID, float] = defaultdict(float)
     matched: dict[UUID, list[str]] = defaultdict(list)
     with SessionLocal() as session:
-        for channel, sql in channels.items():
-            ranked = session.execute(text(sql), params).scalars().all()
+        rankings_by_channel = {
+            channel: list(session.scalars(text(sql), params))
+            for channel, sql in channels.items()
+        }
+        rankings_by_channel.update(structured_candidates(
+            session, query=query, version_id=version_id, build_id=build_id,
+            source_ids=scoped_sources, limit=candidate_limit,
+        ))
+        for channel, ranked in rankings_by_channel.items():
             for rank, evidence_revision_id in enumerate(ranked, 1):
                 scores[evidence_revision_id] += weights[channel] / (60 + rank)
                 matched[evidence_revision_id].append(channel)
@@ -335,6 +348,7 @@ def search_published(
     return [
         {**traces[revision_id], "retrieval_score": scores[revision_id],
          "matched_channels": matched[revision_id],
+         "query_text": original_query, "normalized_query": query,
          "rerank_score": rerank_scores.get(revision_id)}
         for revision_id in ordered[:limit]
     ]

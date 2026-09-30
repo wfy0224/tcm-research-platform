@@ -119,6 +119,7 @@ def run_benchmark(
         results = search_published(
             query_text, embedder=embedder, reranker=reranker,
             limit=k, source_ids=source_ids or None,
+            knowledge_version_id=version_id, index_build_id=build_id,
             query_outbound_authorized=query_outbound_authorized,
         )
         ids = [UUID(result["evidence_revision_id"]) for result in results]

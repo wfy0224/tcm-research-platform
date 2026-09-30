@@ -144,7 +144,7 @@ uv run python -m tcm_platform.cli activate-knowledge <knowledge_version_id> <ind
 uv run python -m tcm_platform.cli search-published "太阳病脉浮" --limit 10 --allow-query-outbound
 ```
 
-检索融合原文匹配、PostgreSQL 全文检索和 pgvector 相似度，再用云端模型重排；结果只来自当前活动知识版本中经人工审核的 EvidenceRevision，包含来源、原文、上下文、定位和精确段落修订。浏览器工作台通过 `GET /api/v1/retrieval/search?query=...` 展示结果与证据详情。索引构建时一次性校验全文行、向量行及维度；失败时不会切换活动版本。
+检索融合原文匹配、PostgreSQL 全文检索、pgvector 相似度，以及已发布概念/方剂的结构候选和已发布关系的引用候选，再用配置的模型重排。结构候选仅匹配当前快照中已审核对象自己的词形、方剂原名/药味；不推断繁简或跨对象历史同义词。裁定概念仅返回自身提及锚点，方剂版本1按对应字段引用定位；历史引用不替换成新版证据。所有通道只返回冻结知识版本/索引与来源范围内已审核、已索引的 EvidenceRevision，包含原文和精确引用；显式空来源列表返回空结果。研究任务和 benchmark 固定版本，服务结果保留原 query 与 NFKC 规范查询。浏览器工作台通过 `GET /api/v1/retrieval/search?query=...` 展示结果与证据详情。索引构建时一次性校验全文行、向量行及维度；失败时不会切换活动版本。VIB-48 的无密钥/断网降级、UI 提示、多样性和未发布高相关内容转 QualityIssue 尚待补齐。
 
 可用人工标注的 Golden Set 对活动索引评测，标签为 `GOLD`、`COUNTER`、`OPTIONAL` 和 `HARD_NEGATIVE`：
 
