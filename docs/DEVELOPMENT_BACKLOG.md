@@ -1,6 +1,6 @@
 # 开发任务与验收清单
 
-**2026-09-30 最新顺序**：VIB-63 研究工作区已通过真实隔离浏览器/API/Worker E2E，本地 Done，Linear 待同步（此前写入被拒绝，未重试）。VIB-60/61 已同步 Linear Done；VIB-62 尚受 VIB-46/48 阻断，下一项承接 VIB-45 初始语料清单与 OCR 决策以解除知识主线依赖。VIB-58 的 Windows 密钥实机验证仍待安全环境，VIB-49 的 Linear 同步仍待明确授权。以下早期进度段落为历史记录。
+**2026-09-30 最新顺序**：VIB-45 首批文本范围、负责人及 OCR 延期已确认，本地完成（Linear 旧验收待授权同步）；VIB-46 方剂候选工程已补齐，完整后端167 passed、0 skipped，真实 C02 与专家核对待补，仍 In Progress。下一轮先核对 C02；未冻结则推进 VIB-48 本地结构/关系检索准备，不将 VIB-46 标 Done。VIB-63/49/60/61 本地与 Linear 均 Done；VIB-62 仍受 VIB-46/48 阻断，VIB-58 Windows 密钥实机待安全环境。VIB-45/46 工程增量已提交为 `86c6299`；以下早期进度段落为历史记录。
 
 最新同步：VIB-59 本地会话与 API 通用合约已提交 `7ed5368` 并通过隔离验证；`0019_local_session_api` 往返迁移、`alembic check`、后端 51 passed、0 skipped、Ruff、前端构建均通过。Linear 最终状态见 VIB-59 小节。桌面壳接线待 VIB-70，来源与研究命令路由待 VIB-60/61，网页报告工作台待 VIB-63。此前 E9 基线提交为 `86e3a5d`。
 
@@ -48,10 +48,10 @@
 | [VIB-43](https://linear.app/vibecoding-demo/issue/VIB-43/e7-研究任务运行时agent-合约与首轮独立研究) | E7 研究任务运行时、Agent 合约与首轮独立研究 | Done | — | M0 已交付工程基线 E0–E7 |
 | [VIB-44](https://linear.app/vibecoding-demo/issue/VIB-44/e8-claim-证据审计与质疑纠错闭环) | E8 Claim 证据审计与质疑纠错闭环 | Done | — | M2 理论研究闭环 E8–E9 |
 | [VIB-45](https://linear.app/vibecoding-demo/issue/VIB-45/v1-初始语料清单来源授权与-ocr-实施决策) | V1 初始语料清单、来源授权与 OCR 实施决策 | Todo | — | M1 知识底座验收补齐 |
-| [VIB-46](https://linear.app/vibecoding-demo/issue/VIB-46/v1-知识候选抽取术语规范与方剂字段补齐) | V1 知识候选抽取、术语规范与方剂字段补齐 | Backlog | — | M1 知识底座验收补齐 |
+| [VIB-46](https://linear.app/vibecoding-demo/issue/VIB-46/v1-知识候选抽取术语规范与方剂字段补齐) | V1 知识候选抽取、术语规范与方剂字段补齐 | In Progress | — | M1 知识底座验收补齐 |
 | [VIB-47](https://linear.app/vibecoding-demo/issue/VIB-47/v1-古病案文献与-caserecord-兼容对象) | V1 古病案文献与 CaseRecord 兼容对象 | Backlog | — | M1 知识底座验收补齐 |
 | [VIB-48](https://linear.app/vibecoding-demo/issue/VIB-48/v1-结构与关系检索查询规范化及断网降级) | V1 结构与关系检索、查询规范化及断网降级 | Backlog | — | M1 知识底座验收补齐 |
-| [VIB-49](https://linear.app/vibecoding-demo/issue/VIB-49/v1-校订修订版本比较与历史版本切换补齐) | V1 校订修订、版本比较与历史版本切换补齐 | 本地 Done；Linear In Progress 待授权同步 | — | M1 知识底座验收补齐 |
+| [VIB-49](https://linear.app/vibecoding-demo/issue/VIB-49/v1-校订修订版本比较与历史版本切换补齐) | V1 校订修订、版本比较与历史版本切换补齐 | Done（本地及 Linear） | — | M1 知识底座验收补齐 |
 | [VIB-50](https://linear.app/vibecoding-demo/issue/VIB-50/e81-完成-criticevidencerequest-与受限再检索) | E8.1 完成 Critic、EvidenceRequest 与受限再检索 | Done | VIB-44 | M2 理论研究闭环 E8–E9 |
 | [VIB-51](https://linear.app/vibecoding-demo/issue/VIB-51/e82-rebuttal-与追加式-claim-修订及重新审计) | E8.2 Rebuttal 与追加式 Claim 修订及重新审计 | Done | VIB-44 | M2 理论研究闭环 E8–E9 |
 | [VIB-52](https://linear.app/vibecoding-demo/issue/VIB-52/e83-worker-接入纠错闭环与节点幂等验证) | E8.3 Worker 接入纠错闭环与节点幂等验证 | Done | VIB-44 | M2 理论研究闭环 E8–E9 |
@@ -65,7 +65,7 @@
 | [VIB-60](https://linear.app/vibecoding-demo/issue/VIB-60/v1-来源知识证据与版本质量-api) | V1 来源、知识、证据与版本质量 API | Done | — | M3 API 与完整工作台 |
 | [VIB-61](https://linear.app/vibecoding-demo/issue/VIB-61/v1-研究控制详情查询与-sse-事件-api) | V1 研究控制、详情查询与 SSE 事件 API | Done | — | M3 API 与完整工作台 |
 | [VIB-62](https://linear.app/vibecoding-demo/issue/VIB-62/v1-知识工作区与统一-evidence-drawer) | V1 知识工作区与统一 Evidence Drawer | Backlog | — | M3 API 与完整工作台 |
-| [VIB-63](https://linear.app/vibecoding-demo/issue/VIB-63/v1-理论研究工作区与完整辩论时间线) | V1 理论研究工作区与完整辩论时间线 | Done（本地，Linear 待同步） | — | M3 API 与完整工作台 |
+| [VIB-63](https://linear.app/vibecoding-demo/issue/VIB-63/v1-理论研究工作区与完整辩论时间线) | V1 理论研究工作区与完整辩论时间线 | Done（本地及 Linear） | — | M3 API 与完整工作台 |
 | [VIB-64](https://linear.app/vibecoding-demo/issue/VIB-64/v1-任务中心审计备份和系统设置工作区) | V1 任务中心、审计备份和系统设置工作区 | Backlog | — | M3 API 与完整工作台 |
 | [VIB-65](https://linear.app/vibecoding-demo/issue/VIB-65/e10-恢复安全性能备份与桌面交付) | E10 恢复、安全、性能、备份与桌面交付 | Backlog | — | M4 运行可靠性与交付 E10 |
 | [VIB-66](https://linear.app/vibecoding-demo/issue/VIB-66/e101-加密备份临时恢复验证与发布迁移快照) | E10.1 加密备份、临时恢复验证与发布迁移快照 | Backlog | VIB-65 | M4 运行可靠性与交付 E10 |
@@ -98,7 +98,7 @@
 
 ### VIB-45 V1 初始语料清单、来源授权与 OCR 实施决策
 
-- Linear：[VIB-45](https://linear.app/vibecoding-demo/issue/VIB-45/v1-初始语料清单来源授权与-ocr-实施决策)；状态：Todo；优先级：High。
+- Linear：[VIB-45](https://linear.app/vibecoding-demo/issue/VIB-45/v1-初始语料清单来源授权与-ocr-实施决策)；本地完成，Linear 待同步；优先级：High。
 - 父任务：无；依赖：VIB-38。
 - 设计依据：LLD 附录 C；需求 3.2、AC-1A-01。
 
@@ -106,15 +106,27 @@
 
 **完成标准**：明确首批语料及数据负责人；含扫描件时实现 OCR Job、页码定位、置信度与人工复核；不含扫描件时记录延期依据并验证 OCR_REQUIRED 不误发布。
 
+**2026-09-30 验收**：用户确认纯文本首批、OCR 延后，数据负责人角色为“测试人员”。`initial_corpus.json` 固定《傷寒論》修订 2607901 的 29 条非方剂文本、LF 哈希、来源/权利通知、公开级别、未知刊年/流派及逻辑页边界，默认无云出站授权。解析器 v2 将含任一无文字页的 PDF 整体阻塞为 OCR_REQUIRED，防止文字封面掩盖扫描正文；零页 PDF 拒绝。实际29条导入/逐条引用溯源与未审核草稿排除、无文字及混合 PDF 无分段/证据且不进入知识快照、原文件保留、活动指针不变，独立库专项 **20 passed、0 skipped**，Ruff（忽略绑定挂载权限误报 EXE002）及 diff 检查通过。本轮工程增量已归入提交 `86c6299`。完整证据见 `docs/VIB45_INITIAL_CORPUS_ACCEPTANCE.md`；不代表专家校订或 OCR 质量验收。
+
 ### VIB-46 V1 知识候选抽取、术语规范与方剂字段补齐
 
-- Linear：[VIB-46](https://linear.app/vibecoding-demo/issue/VIB-46/v1-知识候选抽取术语规范与方剂字段补齐)；状态：Backlog；优先级：High。
+- Linear：[VIB-46](https://linear.app/vibecoding-demo/issue/VIB-46/v1-知识候选抽取术语规范与方剂字段补齐)；本地实施中，Linear 已同步 In Progress（2026-09-30）；优先级：High。
 - 父任务：无；依赖：VIB-45、VIB-40。
 - 设计依据：需求 3.2、AC-1A-02/04；LLD 4–5。
 
 **范围与已有基础**：复用 E4 已有实体、概念、关系、药物、方剂和 Evidence 草稿模型，补自动候选抽取及术语/时代/流派歧义处理。
 
 **完成标准**：抽取结果先进入待审草稿；每个实体/关系/方剂字段可回原文；剂量原文与规范值、炮制、剂型、煎服和禁忌可校订；模糊信息保持未知；审核后才进入知识快照。
+
+**语料接续约束**：VIB-45 已冻结的29条仅能支撑非方剂原文候选与定位验证。先实现候选草稿、未知字段保留和审核门禁；真实完整方剂验收需“测试人员”选定同章方剂固定摘录、保存权利依据并安排专项校订，不能以现有预览自动 APPROVE 代替专家确认。依赖 VIB-40 本轮 Linear 回读为 Done。
+
+**2026-09-30 实施增量（工程提交 `86c6299`）**：`knowledge_extraction.py` 和 CLI `extract-knowledge`/`trace-extraction` 使用本地 `local-exact-terms/v2`，从最外层可引用片段生成精确原词位置、概念和明确命名关系草稿；保存来源修订冻结的时代/流派，未知不补造，仅同批次同类型原词归并。`0024_knowledge_extraction` 以来源修订+规则版本唯一和行锁实现并发幂等，批次/草稿/审计原子提交，批次数据库不可变。方剂 CLI 暴露完整药味 JSON、剂型、炮制、煎服和禁忌输入，校订追加新 DRAFT。真实29条候选位置与未审核快照排除、元数据冻结、故障回滚和并发重放、合成方剂字段/追加修订及先审 Evidence 门禁通过；新独立库专项 **16 passed、0 skipped**、完整后端 **80 passed、0 skipped**，空库升级/0024往返、`alembic check`、Ruff 和 diff 检查通过。详情 `docs/VIB46_KNOWLEDGE_CANDIDATES_ACCEPTANCE.md`。**未完成**：方剂字段现只溯源整段 Evidence，逐字段字符引用/规范化依据及审核校验、术语歧义校订和真实完整方剂候选/专家校订仍待补；VIB-46 不标 Done。未修改预览/业务库，无真实云调用，Linear 本轮仅回读。
+
+**2026-09-30 逐字段接续（工程提交 `86c6299`）**：新增 `0025_formula_provenance` 和 `FormulaFieldSource`，用字段/药味序号保存精确 Evidence/片段修订、Unicode 区间、字段值/原文/哈希及规范解释依据。有效但不完整草稿可保存；无效引用创建整体回滚，APPROVE 必须每个非 null 字段有依据，快照和激活复验。旧已审核版本0保留，旧待审需追加新修订；审核/快照后内容、药味、证据关联和引用冻结，禁止版本标记降级。CLI `--field-sources` 和 trace 已接入。最终新独立库完整后端 **113 passed、0 skipped**（33条新增方剂专项），旧数据保留/0025往返/模型检查/Ruff/diff通过。两轮失败分别110过2失、112过1失，均为既有导出测试未识别多行 Markdown/Word 换行；修正测试后通过，生产渲染器保持原实现，失败数据保留。方剂逐字段工程增量完成，**术语歧义校订、真实完整方剂候选和专家校订仍未完成，VIB-46 不标 Done**。下一步同一原词的多类型/时代/流派独立候选与显式人工裁定；不按字符串相似度归并。未改预览/业务库或 API、未跑前端/真实云模型。
+
+**2026-09-30 术语裁定接续（工程提交 `86c6299`）**：`local-exact-terms/v3` 支持同原词多类型独立候选与歧义审核门禁，保留冻结时代/流派、原词和精确位置，不从歧义端点生成命名关系。新增 `0026_term_resolution`、`knowledge_terms.py` 和 CLI `adjudicate-term`，显式人工规范/历史同义词/独立含义/仍未知裁定生成新 DRAFT，复制选定原提及而不重绑旧行；需校订者、解释和精确引用，历史同义词另需已审核对照及其精确证据。审核/快照/激活复验，UNRESOLVED 禁止批准；裁定和概念内容/词形/证据/提及冻结，校订复用已发布对象替换谱系和历史切回。新独立库完整后端 **136 passed、0 skipped**（新增22条术语集成+1条扫描），0026→0023→0026往返、旧概念/方剂保留、模型检查/Ruff/diff通过。工程增量完成，**真实完整方剂候选、实际术语专家核对和专项校订仍未完成，VIB-46 不标 Done**。下一步保守完整方剂候选和逐字段草稿，C02 未冻结时只做合成工程验证；不从 C01 补造药味真值。未改预览/业务库/API，无真实云调用。
+
+**2026-09-30 完整方剂候选接续（工程提交 `86c6299`）**：`local-exact-terms/v4` 新增 `knowledge_formula_extraction.py`，识别同父节点/同类型连续片段中明确“方名方”标题、完整原药味/剂量、括号炮制及计数吻合的“右/上×味”煎服段。共享/模糊剂量、条件/否定标题、替代/缺失药味及未解析列表整方跳过；剂量不换算，单位原样，药物绑定/规范量/比例/角色等保持 null，不推定方剂时代/流派。复用 `create_formula(_session=...)` 与逐字段来源门禁，方剂/Evidence/提及/批次/审计同事务；跨段原文连接有依据，旧 v2/v3 批次保留，新批次返回 formulas 与 formula_count。新增24条规则和7条集成用例，最终新库完整后端 **167 passed、0 skipped**（87.69秒），0026→0023→0026往返、旧字段/状态保留及模型检查通过。首轮97过1失修正条件标题；首个完整库163过1失为旧报告测试默认历史角色弃答的夹具依赖，明确该测试只生成它要验证的两个角色后通过，生产研究代码保持。C02 仍未冻结，全部为合成工程验收，真实29条不生成方剂；VIB-46 保持 In Progress，真实语料和专家验收仍待补。
 
 ### VIB-47 V1 古病案文献与 CaseRecord 兼容对象
 
@@ -138,7 +150,7 @@
 
 ### VIB-49 V1 校订修订、版本比较与历史版本切换补齐
 
-- Linear：[VIB-49](https://linear.app/vibecoding-demo/issue/VIB-49/v1-校订修订版本比较与历史版本切换补齐)；本地验收：Done；Linear：In Progress，自动审批拒绝进展评论后待明确授权同步；优先级：High。
+- Linear：[VIB-49](https://linear.app/vibecoding-demo/issue/VIB-49/v1-校订修订版本比较与历史版本切换补齐)；本地验收及 Linear：Done（2026-09-30 用户授权后同步）；优先级：High。
 - 父任务：无；依赖：VIB-41。
 - 设计依据：AC-1A-06/08；LLD 14.3。
 
@@ -156,7 +168,7 @@
 
 **2026-09-29 0022 验证结果**：提交 `ad41f6a`。自动审批恢复后，隔离迁移库完成 0021→0022→0021→0022，`alembic check` 无差异；专项用例验证含旧引用版本激活、索引只返回新 Evidence，以及旧研究任务仍从冻结 KV/Index 得到旧 Evidence。完整后端 **61 passed、0 skipped**，Ruff 和 diff 检查通过。预览库先保存 464405 字节备份并核对容器内外 SHA256 `17deac2f577a54c1141cfbf2173735590e4735c6c44c9d437aa5fa53b235bd88`，然后迁移至 0022；重启 API 后 5173 代理健康 `schema=current`。LLD 14.4 的 Release Snapshot 是发布/迁移快速恢复点，Portable Backup 属后续 VIB-66；当前只有备份文件和 `BackupRecord` 骨架，尚无可核验发布快照工件与 KV/Index 关联，VIB-49 保持 In Progress。
 
-**2026-09-29 本地验收**：提交 `0c3a714`，迁移 `0023_release_snapshot` 自动将已有活动版本切换前后的 KV/Index 与清单哈希写入不可变 CAS 工件，并将 Release Snapshot ID 写入激活审计。CLI `restore-release-snapshot` 对工件哈希、活动指针和旧版本双索引重新验关后原子切回；工件缺失或目标索引受损时保留原 Active。全新隔离库完整后端 **61 passed、0 skipped**，迁移库 0022→0023→0022→0023、`alembic check`、Ruff、diff 检查通过。预览库先备份 467297 字节、SHA256 `426ca71c0ece4326060fecda54d5e36a0d4ac1e7ed4462307c1da639b0da2078`（容器内外一致），再升级 0023；5173 健康接口 `schema=current`。VIB-49 的本机快速回退验收完成；该快照依赖原数据库和索引，完整加密 Portable Backup/灾难恢复归 VIB-66。Linear 同步被自动审批拒绝，保留本地验收，待明确授权。
+**2026-09-29 本地验收**：提交 `0c3a714`，迁移 `0023_release_snapshot` 自动将已有活动版本切换前后的 KV/Index 与清单哈希写入不可变 CAS 工件，并将 Release Snapshot ID 写入激活审计。CLI `restore-release-snapshot` 对工件哈希、活动指针和旧版本双索引重新验关后原子切回；工件缺失或目标索引受损时保留原 Active。全新隔离库完整后端 **61 passed、0 skipped**，迁移库 0022→0023→0022→0023、`alembic check`、Ruff、diff 检查通过。预览库先备份 467297 字节、SHA256 `426ca71c0ece4326060fecda54d5e36a0d4ac1e7ed4462307c1da639b0da2078`（容器内外一致），再升级 0023；5173 健康接口 `schema=current`。VIB-49 的本机快速回退验收完成；该快照依赖原数据库和索引，完整加密 Portable Backup/灾难恢复归 VIB-66。当时 Linear 同步被自动审批拒绝；2026-09-30 用户明确授权后已同步 Done 和简短验收结论。
 
 ### VIB-50 E8.1 完成 Critic、EvidenceRequest 与受限再检索
 
@@ -322,7 +334,7 @@
 
 ### VIB-63 V1 理论研究工作区与完整辩论时间线
 
-- Linear：[VIB-63](https://linear.app/vibecoding-demo/issue/VIB-63/v1-理论研究工作区与完整辩论时间线)；状态：Done（2026-09-30 本地验收，Linear 待同步；此前写入被拒绝）；优先级：High。
+- Linear：[VIB-63](https://linear.app/vibecoding-demo/issue/VIB-63/v1-理论研究工作区与完整辩论时间线)；状态：Done（2026-09-30 本地验收并同步 Linear）；优先级：High。
 - 父任务：无；依赖：VIB-61、VIB-57。
 - 设计依据：LLD 13.5/13.6；AC-1B-07/08。
 
@@ -330,7 +342,7 @@
 
 **完成标准**：首轮待审草稿与最终报告明确区分；质疑→反驳→修订→审计可追踪；控制按钮服从 allowed_actions；WAITING_HUMAN/失败有持续提示；创建研究→人工处理→报告导出 E2E 通过。
 
-2026-09-30 验收：研究工作区提供本地会话、来源范围、任务列表、六 Tab、Round/Claim 时间线、allowed_actions 控制、人工审核及报告下载。`npm run check:research-browser` 的模拟 API 回归通过；`check_research_e2e.mjs` 在独立 `tcm_vib60_test` 中通过浏览器→真实 Uvicorn/API→假模型研究 Worker→人工审核→恢复→Markdown/DOCX 导出 Worker→实际浏览器下载、真实 SSE、页面刷新恢复及 375px 窄屏检查。最终任务 `RT-01a0f14b-384b-710e-bed9-b549d8a7a50f`，任务/导出完成、审核已解决，0 次真实模型调用。两条相关后端集成用例 **2 passed、0 skipped**，构建、Ruff、diff 检查通过。修正集成用例按本次 Job 定位 export，避免既有待执行队列干扰。详见 [验收与复现记录](VIB63_RESEARCH_WORKSPACE_ACCEPTANCE.md)。本地 Done；Linear 读取仍为 Backlog，此前写入被拒绝，本轮未重试。
+2026-09-30 验收：研究工作区提供本地会话、来源范围、任务列表、六 Tab、Round/Claim 时间线、allowed_actions 控制、人工审核及报告下载。`npm run check:research-browser` 的模拟 API 回归通过；`check_research_e2e.mjs` 在独立 `tcm_vib60_test` 中通过浏览器→真实 Uvicorn/API→假模型研究 Worker→人工审核→恢复→Markdown/DOCX 导出 Worker→实际浏览器下载、真实 SSE、页面刷新恢复及 375px 窄屏检查。最终任务 `RT-01a0f14b-384b-710e-bed9-b549d8a7a50f`，任务/导出完成、审核已解决，0 次真实模型调用。两条相关后端集成用例 **2 passed、0 skipped**，构建、Ruff、diff 检查通过。修正集成用例按本次 Job 定位 export，避免既有待执行队列干扰。详见 [验收与复现记录](VIB63_RESEARCH_WORKSPACE_ACCEPTANCE.md)。2026-09-30 用户明确授权后同步 Linear Done，并读取确认；详细内部证据的外发被自动审批拒绝，已同步不含内部环境和提交明细的验收结论，完整证据保留本地。
 
 ### VIB-64 V1 任务中心、审计备份和系统设置工作区
 
