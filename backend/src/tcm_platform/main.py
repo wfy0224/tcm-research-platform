@@ -42,7 +42,7 @@ from tcm_platform.models import (
 from tcm_platform.research_api import router as research_router
 from tcm_platform.retrieval import RetrievalExecution, search_published
 
-SCHEMA_REVISION = "0023_release_snapshot"
+SCHEMA_REVISION = "0026_term_resolution"
 
 
 class BootstrapRequest(BaseModel):

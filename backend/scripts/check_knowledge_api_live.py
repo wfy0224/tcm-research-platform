@@ -30,11 +30,13 @@ from tcm_platform.segment_service import process_next_segment
 from tcm_platform.source_import import process_next_import
 from tcm_platform.storage import ContentAddressedStore
 
-DATABASE_NAME = "tcm_vib60_live_test"
+DATABASE_NAME = os.environ.get("TCM_LIVE_DATABASE", "tcm_vib60_live_test")
 ORIGIN = "http://127.0.0.1:5173"
 
 
 def _check_environment() -> tuple[str, str]:
+    if DATABASE_NAME not in {"tcm_vib60_live_test", "tcm_vib48_cloud_acceptance_test"}:
+        raise RuntimeError("unsupported disposable live acceptance database")
     if make_url(settings.database_url).database != DATABASE_NAME:
         raise RuntimeError(f"refusing to run outside the disposable {DATABASE_NAME} database")
     if os.environ.get("TCM_OUTBOUND_MODE") != "CLOUD_ALLOWED":
