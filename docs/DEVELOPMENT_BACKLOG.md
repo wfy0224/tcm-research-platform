@@ -1,6 +1,6 @@
 # 开发任务与验收清单
 
-**2026-09-30 最新顺序**：VIB-45 首批文本范围、负责人及 OCR 延期已确认，本地完成（Linear 旧验收待授权同步）；VIB-46 方剂候选工程已补齐，完整后端167 passed、0 skipped，真实 C02 与专家核对待补，仍 In Progress。下一轮先核对 C02；未冻结则推进 VIB-48 本地结构/关系检索准备，不将 VIB-46 标 Done。VIB-63/49/60/61 本地与 Linear 均 Done；VIB-62 仍受 VIB-46/48 阻断，VIB-58 Windows 密钥实机待安全环境。VIB-45/46 工程增量已提交为 `86c6299`；以下早期进度段落为历史记录。
+**2026-09-30 最新顺序**：VIB-45 首批文本范围、负责人及 OCR 延期已确认，本地完成（Linear 旧验收待授权同步）；VIB-46 方剂候选工程已补齐，真实 C02 与专家核对待补，仍 In Progress。VIB-48 结构/关系检索本地准备已实现，完整后端177 passed、0 skipped；本地及 Linear In Progress。下一轮先核对 C02；未冻结则补 VIB-48 无密钥/断网本地降级与界面提示。VIB-63/49/60/61 本地与 Linear 均 Done；VIB-62 仍受 VIB-46/48 阻断，VIB-58 Windows 密钥实机待安全环境。VIB-48 工程已提交 `c9bc6f6`，接续文档另行提交；以下早期进度段落为历史记录。
 
 最新同步：VIB-59 本地会话与 API 通用合约已提交 `7ed5368` 并通过隔离验证；`0019_local_session_api` 往返迁移、`alembic check`、后端 51 passed、0 skipped、Ruff、前端构建均通过。Linear 最终状态见 VIB-59 小节。桌面壳接线待 VIB-70，来源与研究命令路由待 VIB-60/61，网页报告工作台待 VIB-63。此前 E9 基线提交为 `86e3a5d`。
 
@@ -50,7 +50,7 @@
 | [VIB-45](https://linear.app/vibecoding-demo/issue/VIB-45/v1-初始语料清单来源授权与-ocr-实施决策) | V1 初始语料清单、来源授权与 OCR 实施决策 | Todo | — | M1 知识底座验收补齐 |
 | [VIB-46](https://linear.app/vibecoding-demo/issue/VIB-46/v1-知识候选抽取术语规范与方剂字段补齐) | V1 知识候选抽取、术语规范与方剂字段补齐 | In Progress | — | M1 知识底座验收补齐 |
 | [VIB-47](https://linear.app/vibecoding-demo/issue/VIB-47/v1-古病案文献与-caserecord-兼容对象) | V1 古病案文献与 CaseRecord 兼容对象 | Backlog | — | M1 知识底座验收补齐 |
-| [VIB-48](https://linear.app/vibecoding-demo/issue/VIB-48/v1-结构与关系检索查询规范化及断网降级) | V1 结构与关系检索、查询规范化及断网降级 | Backlog | — | M1 知识底座验收补齐 |
+| [VIB-48](https://linear.app/vibecoding-demo/issue/VIB-48/v1-结构与关系检索查询规范化及断网降级) | V1 结构与关系检索、查询规范化及断网降级 | In Progress | — | M1 知识底座验收补齐 |
 | [VIB-49](https://linear.app/vibecoding-demo/issue/VIB-49/v1-校订修订版本比较与历史版本切换补齐) | V1 校订修订、版本比较与历史版本切换补齐 | Done（本地及 Linear） | — | M1 知识底座验收补齐 |
 | [VIB-50](https://linear.app/vibecoding-demo/issue/VIB-50/e81-完成-criticevidencerequest-与受限再检索) | E8.1 完成 Critic、EvidenceRequest 与受限再检索 | Done | VIB-44 | M2 理论研究闭环 E8–E9 |
 | [VIB-51](https://linear.app/vibecoding-demo/issue/VIB-51/e82-rebuttal-与追加式-claim-修订及重新审计) | E8.2 Rebuttal 与追加式 Claim 修订及重新审计 | Done | VIB-44 | M2 理论研究闭环 E8–E9 |
@@ -140,13 +140,15 @@
 
 ### VIB-48 V1 结构与关系检索、查询规范化及断网降级
 
-- Linear：[VIB-48](https://linear.app/vibecoding-demo/issue/VIB-48/v1-结构与关系检索查询规范化及断网降级)；状态：Backlog；优先级：High。
+- Linear：[VIB-48](https://linear.app/vibecoding-demo/issue/VIB-48/v1-结构与关系检索查询规范化及断网降级)；状态：In Progress（2026-09-30 本地及 Linear 同步）；优先级：High。
 - 父任务：无；依赖：VIB-42、VIB-46。
 - 设计依据：LLD 9、16.3；AC-1A-07。
 
 **范围与已有基础**：E6 已实现 Exact/FTS/Vector、云端重排。补 Structured/Relation、多样性、繁简/异体/历史别名候选及本地降级。
 
 **完成标准**：所有通道解析为 Published EvidenceRevision；Scope 不扩大；未发布高相关片段转 QualityIssue；保留原 query；无密钥/断网时本地 Exact/FTS/结构查询和证据浏览仍可用，UI 明示降级。
+
+**2026-09-30 结构/关系工程准备（提交 `c9bc6f6`，起点 `e852c48`）**：新增 `retrieval_structured.py`，将冻结KV/Index/Scope内已审核概念、关系、关系端点及方剂修订解析到该版本已审核/已索引的精确 EvidenceRevision；接入RRF和研究池通道记录。概念仅用自身词形和相同历史元数据，裁定仅用自身提及锚点；方剂按原名/药味及字段引用，不用可变当前名称，不替换历史Evidence。显式空Scope返回空结果且无模型调用；服务结果保留原query/NFKC查询，benchmark固定版本。新独立库完整后端 **177 passed、0 skipped**（115.25秒），新增10条集成；空库迁移往返、模型检查、完整Ruff和diff检查通过。首轮175过1失为新方剂夹具缺服用说明，补齐夹具后通过，生产方剂规则未改。详情 `docs/VIB48_STRUCTURED_RETRIEVAL_ACCEPTANCE.md`，Linear评论 `533b394a-dbc2-4924-83ad-70340e6bb71f`。**未完成**：无密钥/断网本地降级和UI提示、多样性、未发布高相关内容QualityIssue及查询扩展完整验收；VIB-48保持In Progress，VIB-46真实C02/专家核对仍待补。无真实云调用，未改预览/业务库/API，未跑前端/浏览器。
 
 ### VIB-49 V1 校订修订、版本比较与历史版本切换补齐
 
