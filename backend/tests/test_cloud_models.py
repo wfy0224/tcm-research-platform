@@ -4,6 +4,7 @@ from urllib.error import HTTPError, URLError
 import pytest
 
 from tcm_platform import cloud_models
+from tcm_platform.model_errors import ModelResponseError, ModelUnavailableError
 
 
 def test_aliyun_cloud_clients_use_one_workspace_key(monkeypatch):
@@ -211,3 +212,55 @@ def test_transport_retry_and_circuit_are_bounded(monkeypatch):
             cloud_models._post_json(endpoint, "unit-test-key", payload)
     with pytest.raises(RuntimeError, match="circuit is open"):
         cloud_models._post_json(endpoint, "unit-test-key", payload)
+
+
+@pytest.mark.parametrize("body", [b"not JSON", b"[]", b"\xff"])
+def test_invalid_transport_response_is_a_recoverable_model_error(monkeypatch, body):
+    monkeypatch.setattr(cloud_models, "current_permit", lambda: SimpleNamespace(
+        model_version="siliconflow/BAAI/bge-m3"))
+    monkeypatch.setattr(cloud_models, "_admit_request", lambda host: None)
+    monkeypatch.setattr(cloud_models, "_record_start", lambda endpoint, digest: "fake-call")
+    finished = []
+    monkeypatch.setattr(cloud_models, "_record_finish",
+                        lambda *args, **kwargs: finished.append(kwargs))
+    class Response:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return False
+        def read(self, limit):
+            return body
+    class Opener:
+        def open(self, request, timeout):
+            return Response()
+    monkeypatch.setattr(cloud_models, "build_opener", lambda handler: Opener())
+    with pytest.raises(ModelResponseError):
+        cloud_models._post_json("https://api.siliconflow.cn/v1/embeddings", "fake-key",
+                                {"model": "BAAI/bge-m3", "input": ["synthetic"]})
+    assert finished[0]["error_class"] == "ModelResponseError"
+
+
+def test_transport_timeout_is_recoverable_but_audit_failure_is_not(monkeypatch):
+    monkeypatch.setattr(cloud_models, "current_permit", lambda: SimpleNamespace(
+        model_version="siliconflow/BAAI/bge-m3"))
+    monkeypatch.setattr(cloud_models, "_admit_request", lambda host: None)
+    monkeypatch.setattr(cloud_models, "_record_start", lambda endpoint, digest: "fake-call")
+    finished = []
+    monkeypatch.setattr(cloud_models, "_record_finish",
+                        lambda *args, **kwargs: finished.append(kwargs))
+    class Opener:
+        def open(self, request, timeout):
+            raise TimeoutError("private transport details")
+    monkeypatch.setattr(cloud_models, "build_opener", lambda handler: Opener())
+    def call():
+        cloud_models._post_json("https://api.siliconflow.cn/v1/embeddings", "fake-key",
+                                {"model": "BAAI/bge-m3", "input": ["synthetic"]})
+    with pytest.raises(ModelUnavailableError):
+        call()
+    assert finished[0]["error_class"] == "ModelUnavailableError"
+    def audit_failure(*args):
+        raise RuntimeError("audit storage failure")
+    monkeypatch.setattr(cloud_models, "_record_start", audit_failure)
+    with pytest.raises(RuntimeError, match="audit storage failure") as error:
+        call()
+    assert not isinstance(error.value, ModelUnavailableError)

@@ -10,7 +10,7 @@ import { extname, join, resolve } from "node:path";
 const dist = resolve(import.meta.dirname, "..", "dist");
 const edge = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const profile = await mkdtemp(join(tmpdir(), "tcm-research-browser-"));
-const state = { session: false, task: null, exported: false, review: "PENDING", requests: [] };
+const state = { session: false, task: null, exported: false, review: "PENDING", requests: [], retrieval: [] };
 const taskId = "RT-browser-test";
 const jobId = "JOB-browser-test";
 const sourceId = "SRC-browser-test";
@@ -54,6 +54,23 @@ const server = createServer(async (req, res) => {
       assert.ok(req.headers["idempotency-key"]);
     }
     if (path === "/api/v1/system/health") return json(res, 200, { state: "READY", database: "ok", schema: "ok", blob_store: "ok", preview_corpus: "none" });
+    if (path === "/api/v1/retrieval/query") {
+      const params = new URL(req.url, "http://127.0.0.1").searchParams;
+      const query = params.get("query");
+      const remote = params.get("allow_remote_query") === "true";
+      state.retrieval.push({ query, remote });
+      if (query === "无发布版本") return json(res, 503, { detail: "no published knowledge version is active" });
+      const partial = query === "重排故障";
+      return json(res, 200, {
+        query_text: query, normalized_query: query.trim(), mode: remote ? "DEGRADED" : "LOCAL",
+        reasons: [remote ? (partial ? "rerank_unavailable" : "model_not_configured") : "remote_query_not_authorized"],
+        channels: ["exact", "fts", "structured", "relation", ...(partial ? ["vector"] : [])],
+        results: query === "空结果" ? [] : [{ evidence_id: "EV-local", evidence_revision_no: 1,
+          source_title: "本地检索测试来源", source_revision_no: 1, quote_text: "合成原文，供界面验收。",
+          context_before: "本地前文", context_after: "本地后文", citation_locator: { start: 0, end: 15 },
+          segment_ids: ["SEG-local"], matched_channels: ["structured", "relation"], rerank_score: null }],
+      });
+    }
     if (path === "/api/v1/local-session" && req.method === "GET") return json(res, state.session ? 200 : 401, state.session ? { session_id: "LS-browser", csrf_token: null } : { detail: "No session" });
     if (path === "/api/v1/local-session/bootstrap") {
       assert.equal(body.bootstrap_secret, "browser-secret"); state.session = true;
@@ -115,6 +132,28 @@ try {
   const click = (label) => cdp.eval(`(() => { const button = [...document.querySelectorAll('button')].find(el => el.textContent.trim() === ${JSON.stringify(label)}); if (!button || button.disabled) throw new Error('Button unavailable: ${label}'); button.click(); return true; })()`);
   const fill = (selector, value) => cdp.eval(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) throw new Error('Missing: ${selector}'); const setter = Object.getOwnPropertyDescriptor(el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value').set; setter.call(el, ${JSON.stringify(value)}); el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   await until(async () => (await text()).includes("连接本地研究会话"), "bootstrap form");
+  await fill("#knowledge-query", "  本地关键词  "); await click("检索证据");
+  await until(async () => (await text()).includes("本地检索测试来源"), "local search without consent");
+  assert.deepEqual(state.retrieval.at(-1), { query: "  本地关键词  ", remote: false });
+  assert.match(await text(), /本次查询未授权云端外发/);
+  assert.match(await text(), /结构检索、关系检索/);
+  await click("查看证据详情");
+  assert.match(await text(), /本地前文/); assert.match(await text(), /SEG-local/);
+  await cdp.eval("document.querySelector('[aria-label=\"关闭证据详情\"]').click()");
+  await cdp.eval("document.querySelector('.searchPanel input[type=checkbox]').click()");
+  await click("检索证据");
+  await until(async () => (await text()).includes("未配置模型密钥"), "missing credential fallback");
+  assert.equal(state.retrieval.at(-1).remote, true);
+  await fill("#knowledge-query", "重排故障"); await click("检索证据");
+  await until(async () => (await text()).includes("云端重排失败"), "partial rerank fallback");
+  assert.match(await text(), /语义检索/);
+  assert.doesNotMatch(await text(), /未配置模型密钥/);
+  await fill("#knowledge-query", "空结果"); await click("检索证据");
+  await until(async () => (await text()).includes("0 条已发布证据"), "empty fallback status");
+  assert.match(await text(), /未配置模型密钥/);
+  await fill("#knowledge-query", "无发布版本"); await click("检索证据");
+  await until(async () => (await text()).includes("no published knowledge version"), "publication error");
+  assert.equal(await cdp.eval("document.querySelector('.retrievalStatus') === null"), true);
   await fill("#bootstrap-secret", "browser-secret"); await click("连接");
   await until(async () => (await text()).includes("创建研究任务"), "research form");
   await fill("#research-question", "太阳病的脉象是什么？");
@@ -149,7 +188,7 @@ try {
   await cdp.send("Emulation.setDeviceMetricsOverride", { width: 375, height: 812, deviceScaleFactor: 1, mobile: true });
   await sleep(200);
   assert.equal(await cdp.eval("document.documentElement.scrollWidth <= window.innerWidth + 1"), true, "mobile page must not overflow horizontally");
-  console.log("Browser flow passed: create → review → six tabs / debate views → report export and download; mobile width checked.");
+  console.log("Browser flow passed: local retrieval / evidence detail / missing-key and rerank fallback / empty and error status; research create → review → export; mobile width checked.");
 } finally {
   cdp?.close();
   if (browser) {

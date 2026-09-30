@@ -17,6 +17,12 @@ from tcm_platform.audit import append_event
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
 from tcm_platform.model_credentials import read_model_key
+from tcm_platform.model_errors import (
+    ModelCredentialMissing,
+    ModelCredentialUnavailable,
+    ModelResponseError,
+    ModelUnavailableError,
+)
 from tcm_platform.models import ModelInvocation
 from tcm_platform.outbound_policy import POLICY_VERSION, current_permit, require_outbound
 
@@ -37,12 +43,12 @@ def _admit_request(host: str) -> None:
     now = time.monotonic()
     with _gate_lock:
         if _open_until.get(host, 0) > now:
-            raise RuntimeError("cloud model circuit is open")
+            raise ModelUnavailableError("cloud model circuit is open")
         recent = _requests.setdefault(host, deque())
         while recent and recent[0] <= now - 60:
             recent.popleft()
         if len(recent) >= MAX_REQUESTS_PER_MINUTE:
-            raise RuntimeError("cloud model rate limit reached")
+            raise ModelUnavailableError("cloud model rate limit reached")
         recent.append(now)
 
 
@@ -130,7 +136,7 @@ def _record_finish(invocation_id, *, output_hash: str | None,
 
 def _post_json(url: str, api_key: str, payload: dict) -> dict:
     if not api_key:
-        raise ValueError("cloud model API key is not configured")
+        raise ModelCredentialMissing("cloud model API key is not configured")
     encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     if len(encoded) > MAX_REQUEST_BYTES:
         raise ValueError("cloud model request exceeds size limit")
@@ -155,7 +161,7 @@ def _post_json(url: str, api_key: str, payload: dict) -> dict:
             return None
 
     if not _in_flight.acquire(blocking=False):
-        raise RuntimeError("cloud model concurrency limit reached")
+        raise ModelUnavailableError("cloud model concurrency limit reached")
     started = time.perf_counter()
     retry_count = 0
     data: bytes | None = None
@@ -178,19 +184,25 @@ def _post_json(url: str, api_key: str, payload: dict) -> dict:
                     continue
                 if transient:
                     _transport_result(host, False)
-                raise RuntimeError(f"cloud model API returned HTTP {exc.code}") from exc
+                raise ModelUnavailableError(f"cloud model API returned HTTP {exc.code}") from exc
             except URLError as exc:
                 if attempt < 2:
                     retry_count += 1
                     time.sleep(0.25 * (2 ** attempt))
                     continue
                 _transport_result(host, False)
-                raise RuntimeError("cloud model API is unreachable") from exc
+                raise ModelUnavailableError("cloud model API is unreachable") from exc
+            except (TimeoutError, ConnectionError) as exc:
+                _transport_result(host, False)
+                raise ModelUnavailableError("cloud model API connection failed") from exc
         if len(data) > MAX_RESPONSE_BYTES:
-            raise ValueError("cloud model response exceeds size limit")
-        result = json.loads(data)
+            raise ModelResponseError("cloud model response exceeds size limit")
+        try:
+            result = json.loads(data)
+        except (ValueError, UnicodeError) as exc:
+            raise ModelResponseError("cloud model response is not valid JSON") from exc
         if not isinstance(result, dict):
-            raise TypeError("cloud model response must be a JSON object")
+            raise ModelResponseError("cloud model response must be a JSON object")
         return result
     except Exception as exc:
         error_class = type(exc).__name__
@@ -226,13 +238,16 @@ class CloudEmbedder:
             self.endpoint, self.api_key,
             {"model": self.model, "input": list(texts), "encoding_format": "float"},
         )
-        rows = result.get("data")
-        if not isinstance(rows, list) or len(rows) != len(texts):
-            raise ValueError("embedding API returned the wrong number of rows")
-        ordered = sorted(rows, key=lambda row: row["index"])
-        if [row["index"] for row in ordered] != list(range(len(texts))):
-            raise ValueError("embedding API returned duplicate or missing indices")
-        return [[float(value) for value in row["embedding"]] for row in ordered]
+        try:
+            rows = result.get("data")
+            if not isinstance(rows, list) or len(rows) != len(texts):
+                raise ValueError("embedding API returned the wrong number of rows")
+            ordered = sorted(rows, key=lambda row: row["index"])
+            if [row["index"] for row in ordered] != list(range(len(texts))):
+                raise ValueError("embedding API returned duplicate or missing indices")
+            return [[float(value) for value in row["embedding"]] for row in ordered]
+        except (ValueError, TypeError, KeyError) as exc:
+            raise ModelResponseError("embedding API returned invalid data") from exc
 
 
 class CloudReranker:
@@ -263,13 +278,16 @@ class CloudReranker:
                 "return_documents": False,
             }
         result = _post_json(self.endpoint, self.api_key, payload)
-        rows = result.get("output", result).get("results")
-        if not isinstance(rows, list) or len(rows) != len(documents):
-            raise ValueError("rerank API returned the wrong number of results")
-        scores = [(int(row["index"]), float(row["relevance_score"])) for row in rows]
-        if sorted(index for index, _ in scores) != list(range(len(documents))):
-            raise ValueError("rerank API returned duplicate or missing document indices")
-        return scores
+        try:
+            rows = result.get("output", result).get("results")
+            if not isinstance(rows, list) or len(rows) != len(documents):
+                raise ValueError("rerank API returned the wrong number of results")
+            scores = [(int(row["index"]), float(row["relevance_score"])) for row in rows]
+            if sorted(index for index, _ in scores) != list(range(len(documents))):
+                raise ValueError("rerank API returned duplicate or missing document indices")
+            return scores
+        except (ValueError, TypeError, KeyError, AttributeError) as exc:
+            raise ModelResponseError("rerank API returned invalid data") from exc
 
 
 class CloudResearchModel:
@@ -337,7 +355,7 @@ def _credential(provider: str) -> str:
         key = read_model_key(provider)
     except (OSError, RuntimeError) as exc:
         if os.getenv("TCM_ALLOW_ENV_API_KEYS") != "1":
-            raise RuntimeError("OS keychain is unavailable for model credentials") from exc
+            raise ModelCredentialUnavailable("OS keychain is unavailable for model credentials") from exc
         key = None
     if key:
         return key
@@ -347,7 +365,7 @@ def _credential(provider: str) -> str:
         key = os.getenv(key_name, "")
         if key:
             return key
-    raise ValueError(f"{provider} model credential is not configured in OS keychain")
+    raise ModelCredentialMissing(f"{provider} model credential is not configured in OS keychain")
 
 
 def research_model_from_environment() -> CloudResearchModel:

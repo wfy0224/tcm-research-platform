@@ -1,6 +1,7 @@
+import unicodedata
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
@@ -28,6 +29,7 @@ from tcm_platform.local_auth import (
     require_csrf,
     revoke_local_session,
 )
+from tcm_platform.model_errors import ModelCredentialMissing, ModelCredentialUnavailable
 from tcm_platform.models import (
     Evidence,
     EvidenceRevision,
@@ -38,7 +40,7 @@ from tcm_platform.models import (
     TextSegmentRevision,
 )
 from tcm_platform.research_api import router as research_router
-from tcm_platform.retrieval import search_published
+from tcm_platform.retrieval import RetrievalExecution, search_published
 
 SCHEMA_REVISION = "0023_release_snapshot"
 
@@ -90,6 +92,15 @@ class RetrievalEvidenceResponse(BaseModel):
     matched_channels: list[str]
     retrieval_score: float
     rerank_score: float | None
+
+
+class RetrievalSearchResponse(BaseModel):
+    query_text: str
+    normalized_query: str
+    mode: Literal["LOCAL", "HYBRID", "DEGRADED"]
+    reasons: list[str]
+    channels: list[str]
+    results: list[RetrievalEvidenceResponse]
 
 
 def _public_retrieval_result(trace: dict) -> RetrievalEvidenceResponse:
@@ -271,17 +282,37 @@ def health() -> HealthResponse:
                           preview_corpus=settings.preview_corpus)
 
 
-@app.get("/api/v1/retrieval/search", response_model=list[RetrievalEvidenceResponse])
-def search_retrieval(
+@app.get("/api/v1/retrieval/query", response_model=RetrievalSearchResponse)
+def query_retrieval(
     query: str = Query(min_length=1, max_length=2_000),
     limit: int = Query(default=10, ge=1, le=100),
     allow_remote_query: bool = Query(default=False),
-) -> list[RetrievalEvidenceResponse]:
+    mode: Literal["auto", "local"] = Query(default="auto"),
+) -> RetrievalSearchResponse:
     try:
-        embedder, reranker = cloud_clients_from_environment()
+        execution = RetrievalExecution()
+        embedder, reranker = None, None
+        if mode == "local":
+            execution.reasons.append("local_requested")
+        elif not allow_remote_query:
+            execution.reasons.append("remote_query_not_authorized")
+        else:
+            try:
+                embedder, reranker = cloud_clients_from_environment()
+            except ModelCredentialMissing:
+                execution.degrade("model_not_configured")
+            except ModelCredentialUnavailable:
+                execution.degrade("credential_unavailable")
+            except ValueError:
+                execution.degrade("model_configuration_error")
         traces = search_published(query, embedder=embedder, reranker=reranker, limit=limit,
-                                  query_outbound_authorized=allow_remote_query)
-        return [_public_retrieval_result(trace) for trace in traces]
+                                  query_outbound_authorized=allow_remote_query,
+                                  allow_model_fallback=True, execution=execution)
+        return RetrievalSearchResponse(
+            query_text=query, normalized_query=unicodedata.normalize("NFKC", query).strip(),
+            mode=execution.mode, reasons=execution.reasons, channels=execution.channels,
+            results=[_public_retrieval_result(trace) for trace in traces],
+        )
     except ValueError as exc:
         status = 503 if ("not configured" in str(exc)
                          or "no published knowledge version" in str(exc)) else 400
@@ -291,4 +322,15 @@ def search_retrieval(
     except RuntimeError as exc:
         status = 429 if "rate limit" in str(exc) else 503
         raise HTTPException(status_code=status, detail=str(exc)) from exc
+
+
+@app.get("/api/v1/retrieval/search", response_model=list[RetrievalEvidenceResponse])
+def search_retrieval(
+    query: str = Query(min_length=1, max_length=2_000),
+    limit: int = Query(default=10, ge=1, le=100),
+    allow_remote_query: bool = Query(default=False),
+    mode: Literal["auto", "local"] = Query(default="auto"),
+) -> list[RetrievalEvidenceResponse]:
+    """Keep the legacy array contract; new clients use /query for execution status."""
+    return query_retrieval(query, limit, allow_remote_query, mode).results
 

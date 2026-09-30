@@ -24,6 +24,10 @@ npm run dev
 
 打开 `http://127.0.0.1:5173`，可检索活动知识版本并查看每条证据的原文、上下文与引用定位。API 健康状态见 `http://127.0.0.1:8000/api/v1/system/health`。默认连接串仅用于本地开发；正式环境通过 `TCM_DATABASE_URL` 和 `TCM_DATA_ROOT` 配置。
 
+知识检索默认在本地执行 Exact/FTS/Structured/Relation，不需要模型密钥或查询外发授权。勾选本次查询外发同意后才创建云客户端；缺密钥、凭据存储不可用、外发策略禁止或模型故障时显示原因与已完成通道。向量调用失败回退本地融合排序，重排失败保留已完成向量通道并按融合得分排序。证据详情来自本地精确修订，不依赖模型。降级仍要求完整已发布的 KV/Index，不能查询草稿或扩大冻结来源范围。
+
+`GET /api/v1/retrieval/query?query=...` 返回 `query_text`（保留原输入）、`normalized_query`、`mode`（`LOCAL`/`HYBRID`/`DEGRADED`）、安全原因码 `reasons`、已执行通道 `channels` 和公开编号的 `results`；无结果时也保留状态。可用 `mode=local` 强制本地，或 `allow_remote_query=true` 授权尝试已配置云模型。旧 `/api/v1/retrieval/search` 保留数组响应并支持同一本地/降级路径。研究服务与 benchmark 的既有模型路径默认仍严格失败，只有显式 `allow_model_fallback=True` 才允许模型故障降级。
+
 研究工作区位于同一页面。桌面程序提供一次性启动密钥后，先建立本地会话，再填写研究问题与可选来源范围；选择已创建任务可查看 Summary、Claims、Debate、Evidence、Disputes、Report 六个视图。开始研究需填写已配置的 `provider/model` 路由并确认本次问题外发授权。暂停、恢复、取消、人工审核和报告导出按钮由任务返回的 `allowed_actions` 控制。Claims 显示过程草稿与审计，只有 Report 显示完成后的最终报告；Markdown/DOCX 生成完成后才出现下载入口。浏览器刷新后 CSRF 凭据从当前标签页的 `sessionStorage` 恢复；新标签页需要桌面程序重新建立会话。桌面主进程的密钥交接仍属 VIB-70。前端浏览器交互可在已安装 Edge 的 Windows 环境用 `cd frontend; npm run check:research-browser` 验证；此检查使用隔离的模拟 API，不会调用云模型。
 
 真实隔离浏览器验收入口为 `npm run check:research-e2e`（Node 22+、Windows Edge、既有 Linux 测试容器）。它连接实际 API、研究 Worker 与报告导出 Worker，固定使用 `tcm_vib60_test` 和假模型，验证暂停/恢复、完整辩论、人工审核、Markdown/DOCX 浏览器下载、真实 SSE 与刷新恢复；0 次真实云调用。测试环境启动命令和验收证据见 [VIB-63 验收记录](docs/VIB63_RESEARCH_WORKSPACE_ACCEPTANCE.md)。

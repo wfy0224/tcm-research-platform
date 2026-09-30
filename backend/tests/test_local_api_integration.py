@@ -31,22 +31,27 @@ def _client() -> TestClient:
     return TestClient(app, base_url="http://127.0.0.1:8000")
 
 
-def test_retrieval_query_requires_explicit_remote_consent(monkeypatch):
-    monkeypatch.setattr(main_module, "cloud_clients_from_environment", lambda: (object(), object()))
+def test_retrieval_query_uses_local_path_without_remote_consent(monkeypatch):
+    clients_created = []
+    def clients():
+        clients_created.append(True)
+        return object(), object()
+    monkeypatch.setattr(main_module, "cloud_clients_from_environment", clients)
 
     def fake_search(query, *, query_outbound_authorized, **kwargs):
-        if not query_outbound_authorized:
-            raise PermissionError("query text requires explicit remote-model authorization")
+        assert (kwargs["embedder"] is not None) == query_outbound_authorized
         return []
 
     monkeypatch.setattr(main_module, "search_published", fake_search)
     with _client() as client:
-        denied = client.get("/api/v1/retrieval/search", params={"query": "太阳病"})
-        assert denied.status_code == 403
+        local = client.get("/api/v1/retrieval/search", params={"query": "太阳病"})
+        assert local.status_code == 200 and local.json() == []
+        assert not clients_created
         allowed = client.get("/api/v1/retrieval/search", params={
             "query": "太阳病", "allow_remote_query": "true",
         })
         assert allowed.status_code == 200 and allowed.json() == []
+        assert clients_created == [True]
 
 
 def test_one_use_bootstrap_cookie_csrf_origin_and_revocation(monkeypatch):

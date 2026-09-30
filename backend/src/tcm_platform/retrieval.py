@@ -6,6 +6,7 @@ import unicodedata
 from collections import defaultdict
 from collections.abc import Sequence
 from contextlib import nullcontext
+from dataclasses import dataclass, field
 from typing import Protocol
 from uuid import UUID
 
@@ -15,6 +16,7 @@ from tcm_platform.audit import append_event
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
 from tcm_platform.knowledge_service import trace_evidence
+from tcm_platform.model_errors import ModelResponseError, ModelUnavailableError
 from tcm_platform.models import (
     EmbeddingRecord,
     EvidenceRevision,
@@ -31,6 +33,22 @@ from tcm_platform.retrieval_structured import structured_candidates
 HAN = re.compile(r"[\u3400-\u9fff]+|[a-zA-Z0-9]+")
 MAX_CHUNKS = 20_000
 MAX_CHUNK_CHARS = 4_000
+
+
+@dataclass
+class RetrievalExecution:
+    """Request-local status, including empty results; never contains provider errors."""
+
+    mode: str = "LOCAL"
+    reasons: list[str] = field(default_factory=list)
+    channels: list[str] = field(default_factory=lambda: ["exact", "fts", "structured", "relation"])
+    knowledge_version_id: UUID | None = None
+    index_build_id: UUID | None = None
+
+    def degrade(self, reason: str) -> None:
+        self.mode = "DEGRADED"
+        if reason not in self.reasons:
+            self.reasons.append(reason)
 
 
 class Embedder(Protocol):
@@ -200,7 +218,7 @@ def build_retrieval_index(
 def search_published(
     query: str,
     *,
-    embedder: Embedder,
+    embedder: Embedder | None = None,
     reranker: Reranker | None = None,
     limit: int = 10,
     source_ids: Sequence[UUID] | None = None,
@@ -208,8 +226,13 @@ def search_published(
     index_build_id: UUID | None = None,
     query_outbound_authorized: bool = False,
     task_id: UUID | None = None,
+    allow_model_fallback: bool = False,
+    execution: RetrievalExecution | None = None,
 ) -> list[dict]:
-    """Fuse lexical, vector and object proofs for the active or frozen version."""
+    """Fuse frozen proofs. No embedder selects local retrieval; fallback is explicit."""
+    execution = execution if execution is not None else RetrievalExecution()
+    if embedder is None and reranker is not None:
+        raise ValueError("local retrieval cannot use a reranker")
     original_query = query
     query = unicodedata.normalize("NFKC", query).strip()
     if not query or len(query) > 2_000:
@@ -233,22 +256,24 @@ def search_published(
         if (
             version is None or build is None
             or version.status != "READY" or build.status != "READY"
+            or build.fts_status != "READY" or build.vector_status != "READY"
             or build.knowledge_version_id != version.id
         ):
             raise ValueError("active knowledge/index pair is inconsistent")
-        if build.configuration.get("embedding_model") != embedder.model_version:
+        if embedder is not None and build.configuration.get("embedding_model") != embedder.model_version:
             raise ValueError("query embedder differs from active index model")
         if (getattr(embedder, "is_remote", False)
                 and build.configuration.get("embedding_endpoint") != embedder.endpoint):
             raise ValueError("query embedder endpoint differs from active index route")
         expected_reranker = build.configuration.get("rerank_model")
-        if ((expected_reranker is None) != (reranker is None)
+        if embedder is not None and ((expected_reranker is None) != (reranker is None)
                 or (reranker is not None and reranker.model_version != expected_reranker)):
             raise ValueError("query reranker differs from active index model")
         if (reranker is not None and getattr(reranker, "is_remote", False)
                 and build.configuration.get("rerank_endpoint") != reranker.endpoint):
             raise ValueError("query reranker endpoint differs from active index route")
         build_id, version_id = build.id, version.id
+        execution.knowledge_version_id, execution.index_build_id = version_id, build_id
         outbound_mode = build.configuration.get("outbound_mode", "LOCAL_ONLY")
         outbound_policy_version = build.configuration.get("outbound_policy_version")
         outbound_sources = [UUID(value) for value in
@@ -260,16 +285,37 @@ def search_published(
     if not scoped_sources:
         return []
 
-    if getattr(embedder, "is_remote", False) and not query_outbound_authorized:
-        raise PermissionError("query text requires explicit remote-model authorization")
-    embed_scope = (authorize_outbound("embed", embedder.model_version, outbound_sources,
-                                      frozen_mode=outbound_mode,
-                                      frozen_policy_version=outbound_policy_version,
-                                      task_id=task_id)
-                   if getattr(embedder, "is_remote", False) else nullcontext())
-    with embed_scope:
-        query_vector = embedder.embed([query])
-    _validated_vectors(query_vector, 1)
+    query_vector = None
+    if embedder is not None:
+        try:
+            if getattr(embedder, "is_remote", False) and not query_outbound_authorized:
+                raise PermissionError("query text requires explicit remote-model authorization")
+            embed_scope = (authorize_outbound("embed", embedder.model_version, outbound_sources,
+                                              frozen_mode=outbound_mode,
+                                              frozen_policy_version=outbound_policy_version,
+                                              task_id=task_id)
+                           if getattr(embedder, "is_remote", False) else nullcontext())
+            with embed_scope:
+                candidate_vector = embedder.embed([query])
+            try:
+                _validated_vectors(candidate_vector, 1)
+            except (ValueError, TypeError, OverflowError) as exc:
+                raise ModelResponseError("query embedding is invalid") from exc
+            query_vector = candidate_vector
+            execution.channels.append("vector")
+            execution.mode = "HYBRID"
+        except PermissionError:
+            if not allow_model_fallback:
+                raise
+            execution.degrade("outbound_policy_blocked" if query_outbound_authorized
+                              else "remote_query_not_authorized")
+            reranker = None
+        except (ModelUnavailableError, ModelResponseError, TimeoutError, ConnectionError):
+            if not allow_model_fallback:
+                raise
+            execution.degrade("embedding_unavailable")
+            # Full local fallback avoids a second failing model request.
+            reranker = None
     candidate_limit = min(300, max(30, limit * 5))
     # Parameterized SQL keeps query text and vector values out of SQL syntax.
     filters = "AND ev.source_id = ANY(:source_ids)"
@@ -280,10 +326,9 @@ def search_published(
         "AND vi.knowledge_version_id = :version_id "
         "WHERE c.index_build_id = :build_id AND e.status = 'REVIEWED' " + filters
     )
-    vector_literal = "[" + ",".join(str(float(value)) for value in query_vector[0]) + "]"
     params = {
         "build_id": build_id, "version_id": version_id, "limit": candidate_limit,
-        "query": query, "terms": terms, "vector": vector_literal,
+        "query": query, "terms": terms,
         "source_ids": scoped_sources,
     }
     channels = {
@@ -298,13 +343,15 @@ def search_published(
             "ORDER BY ts_rank_cd(c.search_vector, plainto_tsquery('simple', :terms)) DESC "
             "LIMIT :limit"
         ),
-        "vector": (
+    }
+    if query_vector is not None:
+        params["vector"] = "[" + ",".join(str(float(value)) for value in query_vector[0]) + "]"
+        channels["vector"] = (
             "SELECT c.evidence_revision_id FROM knowledge.retrieval_chunk c "
             "JOIN knowledge.embedding_record er ON er.chunk_id = c.id " + allowed
             + " AND er.dimensions = vector_dims(CAST(:vector AS vector)) "
             "ORDER BY er.embedding <=> CAST(:vector AS vector) LIMIT :limit"
-        ),
-    }
+        )
     weights = {"exact": 2.0, "fts": 1.5, "vector": 1.0,
                "structured": 1.5, "relation": 1.0}
     scores: dict[UUID, float] = defaultdict(float)
@@ -326,25 +373,35 @@ def search_published(
     traces = {revision_id: trace_evidence(revision_id) for revision_id in ordered}
     rerank_scores: dict[UUID, float] = {}
     if reranker and ordered:
-        if getattr(reranker, "is_remote", False) and not query_outbound_authorized:
-            raise PermissionError("reranking query requires remote-model authorization")
-        rerank_scope = (authorize_outbound("rerank", reranker.model_version, outbound_sources,
+        try:
+            if getattr(reranker, "is_remote", False) and not query_outbound_authorized:
+                raise PermissionError("reranking query requires remote-model authorization")
+            rerank_scope = (authorize_outbound("rerank", reranker.model_version, outbound_sources,
                                            frozen_mode=outbound_mode,
                                            frozen_policy_version=outbound_policy_version,
                                            task_id=task_id)
-                        if getattr(reranker, "is_remote", False) else nullcontext())
-        with rerank_scope:
-            rankings = reranker.rerank(query, [traces[item]["quote_text"] for item in ordered])
-        if len({index for index, _ in rankings}) != len(rankings) or any(
-            index < 0 or index >= len(ordered) or not math.isfinite(score)
-            for index, score in rankings
-        ):
-            raise ValueError("reranker returned invalid document indices or scores")
-        rerank_scores = {ordered[index]: score for index, score in rankings}
-        ordered = sorted(
-            ordered, key=lambda item: (-rerank_scores.get(item, float("-inf")),
+                            if getattr(reranker, "is_remote", False) else nullcontext())
+            with rerank_scope:
+                rankings = reranker.rerank(query, [traces[item]["quote_text"] for item in ordered])
+            if len({index for index, _ in rankings}) != len(rankings) or any(
+                type(index) is not int or index < 0 or index >= len(ordered)
+                or not math.isfinite(score) for index, score in rankings
+            ):
+                raise ModelResponseError("reranker returned invalid document indices or scores")
+            rerank_scores = {ordered[index]: score for index, score in rankings}
+            execution.channels.append("rerank")
+            ordered = sorted(
+                ordered, key=lambda item: (-rerank_scores.get(item, float("-inf")),
                                        -scores[item], str(item))
-        )
+            )
+        except PermissionError:
+            if not allow_model_fallback:
+                raise
+            execution.degrade("outbound_policy_blocked")
+        except (ModelUnavailableError, ModelResponseError, TimeoutError, ConnectionError):
+            if not allow_model_fallback:
+                raise
+            execution.degrade("rerank_unavailable")
     return [
         {**traces[revision_id], "retrieval_score": scores[revision_id],
          "matched_channels": matched[revision_id],

@@ -27,6 +27,27 @@ type Evidence = {
 
 const channelNames: Record<string, string> = {
   exact: "原文匹配", fts: "全文检索", vector: "语义检索",
+  structured: "结构检索", relation: "关系检索", rerank: "云端重排",
+};
+
+type SearchResponse = {
+  query_text: string;
+  normalized_query: string;
+  mode: "LOCAL" | "HYBRID" | "DEGRADED";
+  reasons: string[];
+  channels: string[];
+  results: Evidence[];
+};
+
+const reasonNames: Record<string, string> = {
+  local_requested: "已选择本地检索。",
+  remote_query_not_authorized: "本次查询未授权云端外发，使用本地检索。",
+  model_not_configured: "未配置模型密钥，已降级为本地检索。",
+  credential_unavailable: "无法读取模型密钥，已降级为本地检索。",
+  model_configuration_error: "云模型配置不可用，已降级为本地检索。",
+  outbound_policy_blocked: "外发策略禁止本次云调用，使用已完成的检索通道。",
+  embedding_unavailable: "云端语义检索失败，已降级为本地检索。",
+  rerank_unavailable: "云端重排失败，按已完成通道的融合得分排序。",
 };
 
 function App() {
@@ -39,6 +60,7 @@ function App() {
   const [searching, setSearching] = useState(false);
   const [allowRemoteQuery, setAllowRemoteQuery] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchStatus, setSearchStatus] = useState<SearchResponse | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -62,18 +84,21 @@ function App() {
 
   async function search(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const value = query.trim();
-    if (!value || searching) return;
+    const value = query;
+    if (!value.trim() || searching) return;
     setSearching(true);
     setSearchError(null);
     setSelected(null);
+    setSearchStatus(null);
     try {
       const params = new URLSearchParams({ query: value, limit: "10",
         allow_remote_query: String(allowRemoteQuery) });
-      const response = await fetch(`/api/v1/retrieval/search?${params}`);
+      const response = await fetch(`/api/v1/retrieval/query?${params}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail ?? `HTTP ${response.status}`);
-      setResults(data as Evidence[]);
+      const result = data as SearchResponse;
+      setResults(result.results);
+      setSearchStatus(result);
       setSearched(true);
     } catch (cause) {
       setResults([]);
@@ -89,7 +114,7 @@ function App() {
       <header className="intro">
         <span className="eyebrow">中医知识研究 · 第一阶段</span>
         <h1>从原文追溯每一条证据</h1>
-        <p>检索已审核、已发布的知识证据。结果融合原文、全文和语义匹配，并显示来源与精确引用位置。</p>
+        <p>检索已审核、已发布的知识证据。支持本地原文、全文、结构与关系查询，并显示来源与精确引用位置；授权后可使用云端语义检索与重排。</p>
         {health?.preview_corpus === "shanghanlun_taiyang_upper" && <p className="demoNotice" role="note">
           真实模型检索预览：当前收录公版《傷寒論》太阳病上篇 29 条原文；来源转写与自动审核尚未经本项目专家复核。无关问题也可能返回候选，请核对原文。
         </p>}
@@ -98,13 +123,13 @@ function App() {
       <section className="panel searchPanel" aria-labelledby="search-title">
         <div className="panelHead">
           <div><span className="sectionLabel">知识检索</span><h2 id="search-title">寻找相关原文</h2></div>
-          <span className="modelNote">云端向量 · 云端重排</span>
+          <span className="modelNote">默认本地检索 · 云端可选</span>
         </div>
         <form className="searchForm" onSubmit={(event) => void search(event)}>
           <label className="srOnly" htmlFor="knowledge-query">检索问题或关键词</label>
           <input id="knowledge-query" value={query} onChange={(event) => setQuery(event.target.value)}
             placeholder="例如：太阳病的脉象" maxLength={2000} />
-          <button type="submit" disabled={searching || !query.trim() || !allowRemoteQuery}>
+          <button type="submit" disabled={searching || !query.trim()}>
             {searching ? "检索中…" : "检索证据"}
           </button>
         </form>
@@ -112,6 +137,11 @@ function App() {
           onChange={(event) => setAllowRemoteQuery(event.target.checked)} />
           同意将本次检索词发送给已配置的云端向量与重排模型。请勿输入私人或敏感信息。</label>
         {searchError && <p className="error" role="alert">{searchError}</p>}
+        {searchStatus && <div className="demoNotice retrievalStatus" role="status">
+          <strong>{searchStatus.mode === "LOCAL" ? "本地检索" : searchStatus.mode === "DEGRADED" ? "检索已降级" : "混合检索"}</strong>
+          <p>{searchStatus.reasons.map((reason) => reasonNames[reason] ?? "部分检索通道不可用。").join(" ")}</p>
+          <p>本次通道：{searchStatus.channels.map((name) => channelNames[name] ?? name).join("、")}。证据详情可在本地查看。</p>
+        </div>}
       </section>
 
       <ResearchWorkspace />
