@@ -1,0 +1,27 @@
+.researchWorkspace .startForm select {
+  width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #cfd9d0;
+  border-radius: 8px; background: #fbfcfa; color: #202823; font: inherit;
+}
+.researchWorkspace .refChip {
+  border: 1px solid #a7c1ae; text-align: left; font: inherit; font-size: 12px;
+  color: #27563d; background: #eaf2eb; padding: 7px 10px;
+}
+.researchWorkspace .refChip small { display: block; font-size: 10px; margin-top: 3px; }
+.researchWorkspace .refChip:hover:not(:disabled) { background: #dcebdd; }
+.researchWorkspace button:focus-visible, .researchWorkspace select:focus-visible {
+  outline: 3px solid #88ac97; outline-offset: 2px;
+}
+.researchWorkspace .workspaceAlert { line-height: 1.7; overflow-wrap: anywhere; }
+.researchWorkspace .taskOverview .panelHead > div { min-width: 0; }
+.researchWorkspace .sectionLabel { overflow-wrap: anywhere; }
+.researchWorkspace .hint { display: flex; gap: 8px; align-items: flex-start; line-height: 1.7; }
+.researchWorkspace .hint input { flex: 0 0 auto; margin-top: 5px; }
+.researchWorkspace .sourceChoices label { flex-wrap: wrap; }
+.researchWorkspace .taskList { max-height: 500px; }
+@media (max-width: 640px) {
+  .researchWorkspace .workspaceHead { align-items: start; }
+  .researchWorkspace .taskOverview .panelHead { flex-wrap: wrap; }
+  .researchWorkspace .researchTabs { gap: 5px; }
+  .researchWorkspace .researchTabs button { padding: 9px 8px; font-size: 12px; }
+  .researchWorkspace .panelHead .viewSwitch { flex-wrap: wrap; }
+}
