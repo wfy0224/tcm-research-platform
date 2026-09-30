@@ -45,7 +45,11 @@ from tcm_platform.research_runtime import (
     execute_first_round,
     execute_planner,
 )
-from tcm_platform.research_service import prepare_first_round, retrieve_for_task
+from tcm_platform.research_service import (
+    frozen_retrieval_clients,
+    prepare_first_round,
+    retrieve_for_task,
+)
 from tcm_platform.retrieval import Embedder, Reranker
 from tcm_platform.stop_service import evaluate_stop
 
@@ -103,7 +107,7 @@ def _keep_lease(job_id: UUID, worker_id: str, generation: int,
 
 def run_next_research_job(
     *, worker_id: str, model: StructuredGenerator | None = None,
-    embedder: Embedder, reranker: Reranker | None = None, limit: int = 10,
+    embedder: Embedder | None = None, reranker: Reranker | None = None, limit: int = 10,
     task_id: UUID | None = None,
 ) -> UUID | None:
     """Run one persisted task; retries resume from committed domain state."""
@@ -209,6 +213,9 @@ def run_next_research_job(
             if (task is None or task.execution_context is None
                     or model.model_version != task.execution_context["generation_model"]):
                 raise ValueError("research Worker model differs from frozen task route")
+            embedder, reranker = frozen_retrieval_clients(
+                task.execution_context, embedder=embedder, reranker=reranker,
+            )
         while True:
             with SessionLocal() as session:
                 task = session.get(ResearchTask, task_id)
