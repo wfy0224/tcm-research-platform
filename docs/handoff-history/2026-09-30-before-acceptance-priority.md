@@ -8,7 +8,6 @@
 - 替代首页归档 docs/handoff-history/2026-09-30-before-query-expansion.md；启动不读历史。
 - V1 知识底座与理论研究。VIB-63/49/60/61 Done；VIB-46/48 In Progress；VIB-45 本地完成、旧详细验收外发待授权；VIB-58 Windows 密钥实机待安全环境。
 - 本轮 Linear 简短验收已同步评论 `76be83b4-99d8-4a8a-b8c0-c32860d87d68`，状态仍 In Progress；详细工程证据留本地，早先外发审批限制不扩大。
-- 用户追问遗留验收为何未继续：上一轮直接转VIB-47的顺序已纠正。先补完VIB-46/48可执行验收，不能把全部真实环境验收笼统标成外部阻塞。此次只调整接续记录，未新增运行验收；此前工程/测试结果不变，旧首页归档docs/handoff-history/2026-09-30-before-acceptance-priority.md。
 
 ## 2 本阶段成果与实际验证
 
@@ -31,15 +30,14 @@
 
 ## 4 下一条具体操作
 
-- 优先收尾VIB-46/48遗留验收，不直接开始VIB-47。按两份专项验收的未完成项建立逐项清单：已通过/现在可运行/真实阻塞；每个阻塞写具体缺失输入和解除操作，不用“真实环境待补”笼统带过。
-- 第一条操作：读取backend/scripts/check_knowledge_api_live.py及既有真实后端隔离验收入口，核对当前容器可用性、独立测试库/模型配置与会话中已有授权；先实施不需付费或Windows故障运行时的真实后端API/本地检索及断网降级验收。网络隔离只作用于专用验收进程/容器，不断开用户主机或改业务/预览库。
-- C02真实方剂逐字段与术语验收：核对是否已有准确摘录/来源/权利/哈希与专家安排；缺什么列什么，准备可审查验收材料，不能用合成测试替代专家结论。真实云调用若需要新的费用/外发授权，先完成隔离方案和全部无需该授权的准备，再请求具体授权。
-- Windows凭据实机受既有应用错误禁令约束，不重试同运行时；VIB-68专家Golden Set/相关性评测按对应Issue承担。只有遗留可执行验收已闭环、其余阻塞明确后，才承接VIB-47古病案兼容对象。
+- 本阶段回归/工程提交/Linear简短同步完成，不重复已验收的VIB-48工程专项。若C02已由负责人冻结，直接承接VIB-46真实完整方剂/逐字段/专家验收；否则推进不依赖它的VIB-47古病案兼容对象工程阶段。
+- VIB-47：只读 backlog 该节及直接依赖，回读 Linear 状态；需要领域细节再读设计中的 LLD 18.1/需求2.5。先查 models.py、source_import.py、knowledge_service.py、knowledge_api.py 的精确来源/段落/Evidence入口，再实现 CaseRecord 双表示映射、同古病案幂等导入和追加修订影响查询；不开放现代诊疗界面/推理。
+- 真实古病案来源未冻结时先用明确标注的合成病案验工程引用/并发/修订门禁，不补造真实患者或医学真值。
 
 ## 5 增量开发与安全验证
 
 - 用户本轮要求剔除冗余耗时：启动仅当前交接/Git增量/对应Issue；不重新盘点全项目或读历史归档。实现后先验证新行为，跨核心链路阶段收尾仅一次完整后端回归；失败只复验相关范围，新的修正确有必要时再完整验证。
-- 无schema/model/migration变更不重复已通过的迁移往返/旧数据探针；无前端变更不重复已通过的build/模拟浏览器。尚未执行的真实后端E2E/环境验收不属于冗余，仍须按缺口完成。通过后直接记录/同步/提交，不重复相同检查。
+- 无 schema/model/migration 变更不重复迁移往返/旧数据探针；无前端变更不重复 build/浏览器。通过后直接记录/同步/提交，不再重复相同检查。测试运行时完成独立文档工作，避免空等。
 - Windows原生Python/uv/Alembic曾触发应用程序错误弹窗，禁止换入口或提权重试；只用既有Linux容器tcm-vib54-py与独立DB容器tcm-handoff-test，Docker需正常管道权限。
 - Docker验证设置PYTHONPATH=/workspace/backend/src、PYTHONDONTWRITEBYTECODE=1、工作目录/workspace/backend、TCM_OUTBOUND_MODE=LOCAL_ONLY。从容器环境解析数据库URL后只把database切到命名的tcm_*_test，不打印凭据；pytest -q -p no:cacheprovider tests；Ruff --no-cache --ignore EXE002。
 - 本轮没有改验证脚本；现有verify_knowledge_extraction.py默认含旧数据/迁移往返，仅变更涉及这些范围时再用。新库只upgrade head是测试前提，不是重复迁移验收。
