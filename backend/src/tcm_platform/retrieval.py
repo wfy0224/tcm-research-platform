@@ -31,6 +31,7 @@ from tcm_platform.models import (
 )
 from tcm_platform.outbound_policy import authorize_outbound
 from tcm_platform.retrieval_diversity import diversify
+from tcm_platform.retrieval_quality import record_unpublished_matches
 from tcm_platform.retrieval_structured import structured_candidates
 
 HAN = re.compile(r"[\u3400-\u9fff]+|[a-zA-Z0-9]+")
@@ -435,6 +436,10 @@ def search_published(
                  if reranked else scores)
     ordered, explanations = diversify(
         ordered, scores=relevance, provenance=provenance, limit=limit,
+    )
+    record_unpublished_matches(
+        query=query, original_query=original_query, version_id=version_id,
+        build_id=build_id, source_ids=scoped_sources, task_id=task_id,
     )
     return [
         {**traces[revision_id], "retrieval_score": scores[revision_id],

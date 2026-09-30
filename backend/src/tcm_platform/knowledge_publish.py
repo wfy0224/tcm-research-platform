@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from contextlib import nullcontext
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -86,6 +87,8 @@ def open_quality_issue(
     severity: str,
     description: str,
     actor_id: str = "local-curator",
+    _session: Session | None = None,
+    deduplicate: bool = False,
 ) -> UUID:
     if severity not in ISSUE_SEVERITIES:
         raise ValueError("invalid quality issue severity")
@@ -93,9 +96,20 @@ def open_quality_issue(
         raise ValueError("quality issue requires type and description")
     if kind not in ISSUE_TARGETS:
         raise ValueError("unsupported quality issue target kind")
-    with SessionLocal.begin() as session:
-        if session.get(ISSUE_TARGETS[kind], object_id) is None:
+    with nullcontext(_session) if _session is not None else SessionLocal.begin() as session:
+        target = select(ISSUE_TARGETS[kind]).where(ISSUE_TARGETS[kind].id == object_id)
+        if deduplicate:
+            target = target.with_for_update()
+        if session.scalar(target) is None:
             raise ValueError("quality issue target does not exist")
+        if deduplicate:
+            # Serialize on the target; closed issues remain a human decision.
+            existing = session.scalar(select(QualityIssue.id).where(
+                QualityIssue.target_kind == kind, QualityIssue.target_id == object_id,
+                QualityIssue.issue_type == issue_type.strip(),
+            ).order_by(QualityIssue.created_at, QualityIssue.id).limit(1))
+            if existing is not None:
+                return existing
         issue_id = new_id()
         session.add(QualityIssue(
             id=issue_id, issue_type=issue_type.strip(), severity=severity,
