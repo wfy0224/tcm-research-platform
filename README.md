@@ -148,7 +148,9 @@ uv run python -m tcm_platform.cli activate-knowledge <knowledge_version_id> <ind
 uv run python -m tcm_platform.cli search-published "太阳病脉浮" --limit 10 --allow-query-outbound
 ```
 
-检索融合原文匹配、PostgreSQL 全文检索、pgvector 相似度，以及已发布概念/方剂的结构候选和已发布关系的引用候选，再用配置的模型重排。结构候选仅匹配当前快照中已审核对象自己的词形、方剂原名/药味；不推断繁简或跨对象历史同义词。裁定概念仅返回自身提及锚点，方剂版本1按对应字段引用定位；历史引用不替换成新版证据。所有通道只返回冻结知识版本/索引与来源范围内已审核、已索引的 EvidenceRevision，包含原文和精确引用；显式空来源列表返回空结果。研究任务和 benchmark 固定版本，服务结果保留原 query 与 NFKC 规范查询。浏览器工作台通过 `GET /api/v1/retrieval/search?query=...` 展示结果与证据详情。索引构建时一次性校验全文行、向量行及维度；失败时不会切换活动版本。无密钥时支持本地 Exact/FTS/Structured/Relation，授权调用模型失败时显式降级；`/retrieval/query` 和工作台显示模式、原因与完成通道。成功查询会在冻结索引对应的精确来源修订内执行本地未发布内容精确匹配扫描，生成可定位的 WARNING QualityIssue 供人工核对；候选和问题描述不进入证据结果或模型输入。按规则/目标跨查询去重，已解决或豁免的问题保留人工决定；数据库或审计写入失败时检索失败。此匹配规则不代表已校准的医学相关性阈值，详见 docs/VIB48_QUALITY_TRIAGE_ACCEPTANCE.md。VIB-48 的查询候选扩展完整验收仍待补。
+检索融合原文匹配、PostgreSQL 全文检索、pgvector 相似度，以及已发布概念/方剂的结构候选和已发布关系的引用候选，再用配置的模型重排。`explicit-orthography/v1` 用有限的明确字形表扩展 Exact/FTS 与结构候选，支持表内繁简、混合字形和羣/群、峯/峰；未列词形和歧义简化字保持原样。结构候选仅匹配当前快照中已审核对象自己的词形、方剂原名/药味，不跨对象传播历史同义词。裁定概念仅返回自身提及锚点，方剂版本1按对应字段引用定位；历史引用不替换成新版证据。所有通道只返回冻结知识版本/索引与来源范围内已审核、已索引的 EvidenceRevision，包含原文和精确引用；显式空来源列表返回空结果。研究任务和 benchmark 固定版本，内部服务/CLI 结果保留原 query、NFKC 查询和字形匹配策略；研究审计与 benchmark 保存该策略。字形扩展不改写原文或旧索引，不额外向模型发送展开词形。详见 [查询扩展验收](docs/VIB48_QUERY_EXPANSION_ACCEPTANCE.md)。
+
+浏览器工作台通过 `GET /api/v1/retrieval/search?query=...` 展示结果与证据详情。索引构建时一次性校验全文行、向量行及维度；失败时不会切换活动版本。无密钥时支持本地 Exact/FTS/Structured/Relation，授权调用模型失败时显式降级；`/retrieval/query` 和工作台显示原查询、模式、原因与完成通道。成功查询会在冻结索引对应的精确来源修订内执行本地未发布内容字面匹配扫描，生成可定位的 WARNING QualityIssue 供人工核对；该扫描仍使用原查询的 NFKC 字面规则，字形扩展命中不自动触发问题。候选和问题描述不进入证据结果或模型输入。按规则/目标跨查询去重，已解决或豁免的问题保留人工决定；数据库或审计写入失败时检索失败。字形匹配不表示医学等价，此质量匹配规则不代表已校准的医学相关性阈值，详见 [质量分流验收](docs/VIB48_QUALITY_TRIAGE_ACCEPTANCE.md)。
 
 检索在重排候选截取前及最终返回前应用 `source-context/v1`：按相关性 credit 对同来源和精确引用段落重叠做软惩罚，保留首位最相关候选；不同证据身份不合并，单一来源仍可填满结果。API 返回 `diversity` 排序说明，研究审计和 benchmark 保存策略及实际排名；原 RRF/重排分数保留。说明用于解释排序，不表示医学可信度；通道上限外的候选不能靠多样性恢复。详见 [多样性工程验收](docs/VIB48_DIVERSITY_ACCEPTANCE.md)。
 

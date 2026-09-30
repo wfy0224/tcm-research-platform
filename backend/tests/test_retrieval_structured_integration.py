@@ -431,7 +431,7 @@ def test_formula_fields_resolve_only_reviewed_published_revision(tmp_path, monke
     pair = _publish()
     for query in ("合成檢索湯", "桂枝", "芍藥"):
         assert _ids(_search(query, pair, [imported.source_id]), "structured") == {proof}
-    assert not _ids(_search("合成检索汤", pair, [imported.source_id]), "structured")
+    assert _ids(_search("合成检索汤", pair, [imported.source_id]), "structured") == {proof}
     assert not _ids(_search("合成檢索湯", old, [imported.source_id]), "structured")
 
 

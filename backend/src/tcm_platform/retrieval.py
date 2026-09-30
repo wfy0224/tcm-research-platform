@@ -32,6 +32,12 @@ from tcm_platform.models import (
 from tcm_platform.outbound_policy import authorize_outbound
 from tcm_platform.retrieval_diversity import diversify
 from tcm_platform.retrieval_quality import record_unpublished_matches
+from tcm_platform.retrieval_query import (
+    expanded_fts_query,
+    query_metadata,
+    spelling_params,
+    spelling_sql,
+)
 from tcm_platform.retrieval_structured import structured_candidates
 
 HAN = re.compile(r"[\u3400-\u9fff]+|[a-zA-Z0-9]+")
@@ -332,19 +338,20 @@ def search_published(
     )
     params = {
         "build_id": build_id, "version_id": version_id, "limit": candidate_limit,
-        "query": query, "terms": terms,
+        "query": query, "expanded_terms": expanded_fts_query(terms.split()),
+        **spelling_params(query),
         "source_ids": scoped_sources,
     }
     channels = {
         "exact": (
             "SELECT c.evidence_revision_id FROM knowledge.retrieval_chunk c " + allowed
-            + " AND position(lower(:query) in lower(c.chunk_text)) > 0 "
+            + f" AND position(:query_key in {spelling_sql('c.chunk_text')}) > 0 "
             "ORDER BY similarity(c.chunk_text, :query) DESC, c.evidence_revision_id LIMIT :limit"
         ),
         "fts": (
             "SELECT c.evidence_revision_id FROM knowledge.retrieval_chunk c " + allowed
-            + " AND c.search_vector @@ plainto_tsquery('simple', :terms) "
-            "ORDER BY ts_rank_cd(c.search_vector, plainto_tsquery('simple', :terms)) DESC, "
+            + " AND c.search_vector @@ to_tsquery('simple', :expanded_terms) "
+            "ORDER BY ts_rank_cd(c.search_vector, to_tsquery('simple', :expanded_terms)) DESC, "
             "c.evidence_revision_id LIMIT :limit"
         ),
     }
@@ -445,6 +452,7 @@ def search_published(
         {**traces[revision_id], "retrieval_score": scores[revision_id],
          "matched_channels": matched[revision_id],
          "query_text": original_query, "normalized_query": query,
+         "query_expansion": query_metadata(original_query),
          "rerank_score": rerank_scores.get(revision_id),
          "diversity": explanations[revision_id]}
         for revision_id in ordered[:limit]

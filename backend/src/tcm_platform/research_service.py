@@ -37,6 +37,7 @@ from tcm_platform.models import (
     utc_now,
 )
 from tcm_platform.retrieval import Embedder, Reranker, search_published
+from tcm_platform.retrieval_query import query_metadata
 
 RESEARCH_ROLES = ("Classicist", "HistoricalScholar", "Theorist")
 LeaseGuard = Callable[[Session], None]
@@ -408,7 +409,8 @@ def add_task_evidence(
                 recorded.add(revision_id)
         append_event(session, event_type="research_task.evidence_retrieved", actor_id=actor_id,
                      aggregate_id=task_id,
-                     payload={"query": query, "result_count": len(results), "new_count": new_count,
+                     payload={"query": query, "query_expansion": query_metadata(query),
+                              "result_count": len(results), "new_count": new_count,
                               "ranking": [
                                   {"evidence_revision_id": result["evidence_revision_id"],
                                    **result["diversity"]}

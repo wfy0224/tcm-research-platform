@@ -18,6 +18,7 @@ from tcm_platform.models import (
 )
 from tcm_platform.retrieval import Embedder, Reranker, search_published
 from tcm_platform.retrieval_diversity import DIVERSITY_POLICY
+from tcm_platform.retrieval_query import QUERY_POLICY, query_metadata
 
 GRADES = {"GOLD": 3, "COUNTER": 2, "OPTIONAL": 1, "HARD_NEGATIVE": 0}
 
@@ -130,14 +131,17 @@ def run_benchmark(
             and result.get("quote_text") and result.get("citation_locator")
         }
         per_query.append({"query_id": str(query_id),
+                          "query_text": query_text, "query_expansion": query_metadata(query_text),
                           "ranking": [{"evidence_revision_id": result["evidence_revision_id"],
                                        **result["diversity"]} for result in results],
                           **score_ranked(
             ids, judgments, k=k, resolved_ids=resolved,
         )})
-    keys = [key for key in per_query[0] if key not in {"query_id", "ranking"}]
+    keys = [key for key in per_query[0]
+            if key not in {"query_id", "query_text", "query_expansion", "ranking"}]
     aggregate = {key: sum(row[key] for row in per_query) / len(per_query) for key in keys}
-    metrics = {"aggregate": aggregate, "queries": per_query, "ranking_policy": DIVERSITY_POLICY}
+    metrics = {"aggregate": aggregate, "queries": per_query, "ranking_policy": DIVERSITY_POLICY,
+               "query_policy": QUERY_POLICY}
     with SessionLocal.begin() as session:
         runtime = session.get(KnowledgeRuntimeState, 1)
         if (runtime.active_knowledge_version_id != version_id

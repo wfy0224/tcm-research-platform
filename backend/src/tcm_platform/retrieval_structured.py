@@ -5,6 +5,8 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from tcm_platform.retrieval_query import spelling_params, spelling_sql
+
 
 def structured_candidates(
     session: Session, *, query: str, version_id: UUID, build_id: UUID,
@@ -18,7 +20,7 @@ def structured_candidates(
     """
     if not source_ids:
         return {"structured": [], "relation": []}
-    common = """
+    common = f"""
         WITH published AS (
             SELECT DISTINCT e.id
             FROM knowledge.evidence_revision e
@@ -40,7 +42,7 @@ def structured_candidates(
             JOIN published p ON p.id = ce.evidence_revision_id
             LEFT JOIN knowledge.term_resolution tr ON tr.resolved_concept_id = c.id
             WHERE c.status = 'REVIEWED' AND ct.term <> ''
-                AND position(lower(normalize(ct.term, NFKC)) in lower(:query)) > 0
+                AND position({spelling_sql('ct.term')} in :query_key) > 0
                 AND (tr.id IS NULL OR (
                     tr.decision <> 'UNRESOLVED' AND EXISTS (
                         SELECT 1 FROM jsonb_array_elements(tr.provenance->'mentions') anchor
@@ -49,7 +51,7 @@ def structured_candidates(
                 ))
         )
     """
-    structured = """
+    structured = f"""
         SELECT evidence_revision_id FROM scoped_concepts
         UNION
         SELECT fe.evidence_revision_id
@@ -59,7 +61,7 @@ def structured_candidates(
         JOIN knowledge.formula_evidence fe ON fe.formula_revision_id = f.id
         JOIN published p ON p.id = fe.evidence_revision_id
         WHERE f.status = 'REVIEWED' AND (
-            (position(lower(normalize(f.original_name, NFKC)) in lower(:query)) > 0 AND (
+            (position({spelling_sql('f.original_name')} in :query_key) > 0 AND (
                 f.provenance_version = 0 OR EXISTS (
                     SELECT 1 FROM knowledge.formula_field_source fs
                     WHERE fs.formula_revision_id = f.id AND fs.field_key = 'original_name'
@@ -68,7 +70,7 @@ def structured_candidates(
             )) OR EXISTS (
                 SELECT 1 FROM knowledge.formula_ingredient i
                 WHERE i.formula_revision_id = f.id AND i.original_name <> ''
-                    AND position(lower(normalize(i.original_name, NFKC)) in lower(:query)) > 0
+                    AND position({spelling_sql('i.original_name')} in :query_key) > 0
                     AND (f.provenance_version = 0 OR EXISTS (
                         SELECT 1 FROM knowledge.formula_field_source fs
                         WHERE fs.formula_revision_id = f.id
@@ -98,7 +100,7 @@ def structured_candidates(
         )
         ORDER BY re.evidence_revision_id LIMIT :limit
     """
-    params = {"query": query, "version_id": version_id, "build_id": build_id,
+    params = {**spelling_params(query), "version_id": version_id, "build_id": build_id,
               "source_ids": source_ids, "limit": limit}
     return {name: list(session.scalars(text(common + sql), params))
             for name, sql in (("structured", structured), ("relation", relation))}
