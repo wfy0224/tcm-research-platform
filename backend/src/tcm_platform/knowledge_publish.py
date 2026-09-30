@@ -527,7 +527,8 @@ def activate_knowledge_version(
             or build.validated_at is None
             or build.manifest_hash != version.manifest_hash
         ):
-            raise ValueError("configured FTS/vector index builds must be validated")
+            raise ValueError("local FTS index build must be validated" if local_index else
+                             "FTS and vector index builds must both be validated")
         items = _version_items(session, version_id)
         if _manifest(items) != version.manifest_hash:
             raise ValueError("knowledge version snapshot manifest differs")
