@@ -1,6 +1,7 @@
 """Draft knowledge authoring with exact source and evidence provenance."""
 
 import hashlib
+from contextlib import nullcontext
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -10,6 +11,11 @@ from sqlalchemy.orm import Session
 from tcm_platform.audit import append_event
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
+from tcm_platform.knowledge_formula_provenance import (
+    FormulaFieldSourceSpec,
+    add_formula_field_sources,
+    validate_formula_field_sources,
+)
 from tcm_platform.models import (
     Concept,
     ConceptEvidence,
@@ -83,6 +89,7 @@ def create_evidence(
     strength: str,
     actor_id: str = "local-curator",
     evidence_id: UUID | None = None,
+    _session: Session | None = None,
 ) -> UUID:
     """Build a draft quote from one contiguous sibling range, never from free text."""
     if not segment_revision_ids or len(segment_revision_ids) > 100:
@@ -91,7 +98,7 @@ def create_evidence(
         raise ValueError("evidence segment revisions must be unique")
     if strength not in EVIDENCE_STRENGTHS:
         raise ValueError("unknown evidence strength")
-    with SessionLocal.begin() as session:
+    with nullcontext(_session) if _session is not None else SessionLocal.begin() as session:
         segments = list(session.scalars(
             select(TextSegmentRevision)
             .where(TextSegmentRevision.id.in_(segment_revision_ids))
@@ -189,9 +196,10 @@ def create_entity_mention(
     end_offset: int,
     entity_type: str,
     actor_id: str = "local-curator",
+    _session: Session | None = None,
 ) -> UUID:
     entity_type = _required(entity_type, "entity_type", 60)
-    with SessionLocal.begin() as session:
+    with nullcontext(_session) if _session is not None else SessionLocal.begin() as session:
         segment = session.get(TextSegmentRevision, segment_revision_id)
         if segment is None or segment.segment_type not in CITABLE_SEGMENT_TYPES:
             raise ValueError("mention requires a citable segment revision")
@@ -223,13 +231,15 @@ def create_concept(
     mention_ids: tuple[UUID, ...] = (),
     era: str | None = None,
     school: str | None = None,
+    requires_term_resolution: bool = False,
     actor_id: str = "local-curator",
+    _session: Session | None = None,
 ) -> UUID:
     canonical_name = _required(canonical_name, "canonical_name", 300)
     concept_type = _required(concept_type, "concept_type", 60)
     if len(set(terms)) != len(terms):
         raise ValueError("concept terms must be unique")
-    with SessionLocal.begin() as session:
+    with nullcontext(_session) if _session is not None else SessionLocal.begin() as session:
         _evidence(session, evidence_revision_id)
         cited = set(session.scalars(select(EvidenceSegmentRef.segment_revision_id).where(
             EvidenceSegmentRef.evidence_revision_id == evidence_revision_id
@@ -242,6 +252,7 @@ def create_concept(
             id=concept_id, public_id=f"CON-{concept_id}",
             canonical_name=canonical_name, concept_type=concept_type,
             era=era, school=school, status="DRAFT", row_version=1,
+            requires_term_resolution=requires_term_resolution,
         ))
         session.flush()
         session.add(ConceptTerm(
@@ -276,10 +287,11 @@ def create_relation(
     assertion_text: str,
     evidence_revision_id: UUID,
     actor_id: str = "local-curator",
+    _session: Session | None = None,
 ) -> UUID:
     relation_type = _required(relation_type, "relation_type", 80)
     assertion_text = _required(assertion_text, "assertion_text", 4000)
-    with SessionLocal.begin() as session:
+    with nullcontext(_session) if _session is not None else SessionLocal.begin() as session:
         _evidence(session, evidence_revision_id)
         if session.get(Concept, subject_concept_id) is None:
             raise ValueError("subject concept does not exist")
@@ -349,12 +361,14 @@ def create_formula(
     dosage_form: str | None = None,
     preparation: str | None = None,
     cautions: str | None = None,
+    field_sources: tuple[FormulaFieldSourceSpec, ...] = (),
     actor_id: str = "local-curator",
+    _session: Session | None = None,
 ) -> UUID:
     original_name = _required(original_name, "original_name", 300)
     if not ingredients or len(ingredients) > 100:
         raise ValueError("formula requires 1-100 ingredients")
-    with SessionLocal.begin() as session:
+    with nullcontext(_session) if _session is not None else SessionLocal.begin() as session:
         _evidence(session, evidence_revision_id)
         if formula_id is None:
             formula_id = new_id()
@@ -376,7 +390,7 @@ def create_formula(
             id=revision_id, formula_id=formula_id, revision_no=revision_no,
             original_name=original_name, era=era, school=school, indications=indications,
             effects=effects, method=method, dosage_form=dosage_form,
-            preparation=preparation, cautions=cautions, status="DRAFT",
+            preparation=preparation, cautions=cautions, status="DRAFT", provenance_version=1,
         ))
         session.flush()
         for index, ingredient in enumerate(ingredients):
@@ -393,6 +407,7 @@ def create_formula(
         session.add(FormulaEvidence(
             formula_revision_id=revision_id, evidence_revision_id=evidence_revision_id
         ))
+        add_formula_field_sources(session, revision_id, field_sources)
         append_event(
             session, event_type="formula.draft_created", actor_id=actor_id,
             aggregate_id=formula_id,
@@ -447,6 +462,8 @@ def trace_evidence(evidence_revision_id: UUID) -> dict:
 
 def trace_knowledge(kind: str, object_id: UUID) -> dict:
     """Follow a draft knowledge object through EvidenceRevision to source text."""
+    from tcm_platform.knowledge_terms import validate_term_resolution
+
     mapping = {
         "concept": (Concept, ConceptEvidence, ConceptEvidence.concept_id),
         "relation": (KnowledgeRelation, RelationEvidence, RelationEvidence.relation_id),
@@ -471,9 +488,26 @@ def trace_knowledge(kind: str, object_id: UUID) -> dict:
             obj.canonical_name if kind in {"concept", "herb"}
             else obj.original_name if kind == "formula_revision" else obj.assertion_text
         )
+        formula_provenance = (
+            {"provenance_version": obj.provenance_version,
+             "field_sources": validate_formula_field_sources(session, object_id)}
+            if kind == "formula_revision" else {}
+        )
+        term_provenance = ({
+            "concept_type": obj.concept_type, "era": obj.era, "school": obj.school,
+            "requires_term_resolution": obj.requires_term_resolution,
+            "term_resolution": validate_term_resolution(session, object_id),
+            "terms": [{"term": term.term, "term_kind": term.term_kind,
+                       "era": term.era, "school": term.school}
+                      for term in session.scalars(select(ConceptTerm).where(
+                          ConceptTerm.concept_id == object_id
+                      ).order_by(ConceptTerm.term_kind, ConceptTerm.term))],
+        } if kind == "concept" else {})
     return {
         "kind": kind,
         "object_id": str(object_id),
         "name": name,
         "evidence": [trace_evidence(revision_id) for revision_id in evidence_ids],
+        **formula_provenance,
+        **term_provenance,
     }

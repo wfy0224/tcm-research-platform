@@ -10,7 +10,9 @@ from sqlalchemy.orm import Session
 from tcm_platform.audit import append_event
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
+from tcm_platform.knowledge_formula_provenance import validate_formula_field_sources
 from tcm_platform.knowledge_service import trace_evidence, trace_knowledge
+from tcm_platform.knowledge_terms import validate_term_resolution
 from tcm_platform.models import (
     Concept,
     ConceptEvidence,
@@ -181,6 +183,12 @@ def review_object(
                 for revision_id in evidence_ids
             ):
                 raise ValueError("cited evidence must be reviewed first")
+        if decision == "APPROVE" and kind == "formula_revision":
+            if obj.provenance_version == 0:
+                raise ValueError("legacy formula draft requires a new revision with field sources")
+            validate_formula_field_sources(session, object_id, require_complete=True)
+        if decision == "APPROVE" and kind == "concept":
+            validate_term_resolution(session, object_id, require_resolved=True)
         obj.status = "REVIEWED" if decision == "APPROVE" else "REJECTED"
         review_id = new_id()
         session.add(HumanReview(
@@ -334,6 +342,19 @@ def _manifest(items: dict[str, list[UUID]]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
+def _validate_formula_provenance(session: Session, formula_ids: list[UUID]) -> None:
+    """Keep old reviewed revisions usable; recheck every new field-level revision."""
+    for revision in session.scalars(select(FormulaRevision).where(
+        FormulaRevision.id.in_(formula_ids), FormulaRevision.provenance_version != 0,
+    )):
+        validate_formula_field_sources(session, revision.id, require_complete=True)
+
+
+def _validate_terms(session: Session, concept_ids: list[UUID]) -> None:
+    for concept_id in concept_ids:
+        validate_term_resolution(session, concept_id, require_resolved=True)
+
+
 def _historical_references(
     session: Session, items: dict[str, list[UUID]]
 ) -> set[tuple[str, UUID, UUID]]:
@@ -379,6 +400,8 @@ def create_knowledge_version(*, actor_id: str = "local-curator") -> UUID:
         if not items["evidence_revision"]:
             raise ValueError("knowledge version requires reviewed evidence")
         _validate_replacement_references(session, items)
+        _validate_formula_provenance(session, items["formula_revision"])
+        _validate_terms(session, items["concept"])
         references = _historical_references(session, items)
         version_no = (session.scalar(select(func.max(KnowledgeVersion.version_no))) or 0) + 1
         version_id = new_id()
@@ -507,6 +530,8 @@ def activate_knowledge_version(
                 raise ValueError("snapshot contains an object without human approval")
         if not items["evidence_revision"]:
             raise ValueError("snapshot has no evidence")
+        _validate_formula_provenance(session, items["formula_revision"])
+        _validate_terms(session, items["concept"])
         chunks = list(session.execute(select(
             RetrievalChunk.id, RetrievalChunk.evidence_revision_id
         ).where(RetrievalChunk.index_build_id == build_id)))

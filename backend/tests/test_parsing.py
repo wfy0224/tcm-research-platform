@@ -2,32 +2,9 @@ import json
 import zipfile
 
 import pytest
+from pdf_samples import pdf_with_pages, pdf_with_text
 
 from tcm_platform.parsing import OCRRequired, SourceParseError, parse_source_file
-
-
-def _pdf_with_text(text: str) -> bytes:
-    content = f"BT /F1 12 Tf 72 720 Td ({text}) Tj ET".encode("ascii")
-    objects = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        b"<< /Length " + str(len(content)).encode() + b" >>\nstream\n" + content + b"\nendstream",
-    ]
-    result = bytearray(b"%PDF-1.4\n")
-    offsets = [0]
-    for number, body in enumerate(objects, 1):
-        offsets.append(len(result))
-        result.extend(f"{number} 0 obj\n".encode() + body + b"\nendobj\n")
-    xref_offset = len(result)
-    result.extend(f"xref\n0 {len(offsets)}\n0000000000 65535 f \n".encode())
-    for offset in offsets[1:]:
-        result.extend(f"{offset:010d} 00000 n \n".encode())
-    result.extend(
-        f"trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref_offset}\n%%EOF".encode()
-    )
-    return bytes(result)
 
 
 def test_txt_preserves_chinese_and_encoding(tmp_path):
@@ -64,7 +41,7 @@ def test_docx_rejects_unsafe_archive_entries(tmp_path):
 
 def test_pdf_text_layer_and_scan_boundary(tmp_path):
     text_pdf = tmp_path / "text.pdf"
-    text_pdf.write_bytes(_pdf_with_text("Hello PDF"))
+    text_pdf.write_bytes(pdf_with_text("Hello PDF"))
     assert "Hello PDF" in parse_source_file(text_pdf, "pdf").text
 
     from pypdf import PdfWriter
@@ -76,4 +53,36 @@ def test_pdf_text_layer_and_scan_boundary(tmp_path):
         writer.write(output)
     with pytest.raises(OCRRequired):
         parse_source_file(scan_pdf, "pdf")
+
+
+@pytest.mark.parametrize(
+    ("texts", "missing_pages"),
+    [(("Cover", None), [2]), ((None, "Body"), [1]), (("Cover", "   "), [2])],
+)
+def test_mixed_pdf_requires_complete_page_review(tmp_path, texts, missing_pages):
+    path = tmp_path / "mixed.pdf"
+    path.write_bytes(pdf_with_pages(*texts))
+    with pytest.raises(OCRRequired) as error:
+        parse_source_file(path, "pdf")
+    assert error.value.page_numbers == missing_pages
+    assert error.value.code == "OCR_REQUIRED"
+    assert str(missing_pages[0]) in str(error.value)
+
+
+def test_text_pdf_preserves_every_physical_page(tmp_path):
+    path = tmp_path / "text-pages.pdf"
+    path.write_bytes(pdf_with_pages("First", "Second"))
+    parsed = parse_source_file(path, "pdf")
+    assert [(page.page_no, page.text.strip()) for page in parsed.pages] == [
+        (1, "First"), (2, "Second"),
+    ]
+    assert parsed.warnings == []
+
+
+def test_zero_page_pdf_is_not_a_parsed_source(tmp_path):
+    path = tmp_path / "empty.pdf"
+    path.write_bytes(pdf_with_pages())
+    with pytest.raises(SourceParseError) as error:
+        parse_source_file(path, "pdf")
+    assert error.value.code == "EMPTY_TEXT"
 

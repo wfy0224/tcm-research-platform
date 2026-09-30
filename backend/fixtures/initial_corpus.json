@@ -1,0 +1,50 @@
+{
+  "schema_version": "initial-corpus/v1",
+  "issue": "VIB-45",
+  "decision_date": "2026-09-30",
+  "decision_basis": "User confirmed text-only first batch and data owner role in this chat",
+  "data_owner_role": "测试人员",
+  "scope": "TEXT_ONLY",
+  "ocr_decision": "DEFERRED_UNTIL_SCANNED_SOURCES_ARE_SELECTED",
+  "purpose": "ENGINEERING_ACCEPTANCE",
+  "sources": [
+    {
+      "corpus_id": "shanghanlun-taiyang-upper-wikisource-2607901",
+      "file": "shanghanlun_taiyang_upper.txt",
+      "canonicalization": "CRLF_TO_LF_UTF8",
+      "canonical_sha256": "65b83255eeb4f4e300301b1e144e758e0cf38e559d92f227372c9c586a11c4c4",
+      "expected_paragraphs": 29,
+      "source_url": "https://zh.wikisource.org/wiki/傷寒論",
+      "revision_url": "https://zh.wikisource.org/w/index.php?title=傷寒論&oldid=2607901",
+      "upstream_revision_id": 2607901,
+      "section": "卷第二·辨太陽病脈證並治（上）第五；非方剂原文",
+      "extraction": "Existing mechanical excerpt by section boundaries and full-width indentation; no rewriting",
+      "physical_page_mapping": null,
+      "locator_basis": "Pinned source revision + section + excerpt paragraph number + text checksum; parser page 1 is logical",
+      "expert_review_status": "PENDING",
+      "rights_basis": "Upstream work page marks PD-old; preserve contributor attribution and site license notices",
+      "license_notice_url": "https://zh.wikisource.org/wiki/Wikisource:版权信息",
+      "source_metadata": {
+        "source_type": "CLASSIC",
+        "title": "傷寒論（宋本）·辨太陽病脈證並治（上）",
+        "author": "張仲景",
+        "era": "漢",
+        "school": null,
+        "edition": "維基文庫修訂 2607901；非方劑條文摘錄",
+        "publisher": "維基文庫",
+        "publication_year": null,
+        "language": "zh-Hant",
+        "copyright_status": "PUBLIC_DOMAIN",
+        "data_level": "PUBLIC",
+        "outbound_authorized": false,
+        "outbound_reason": null
+      }
+    }
+  ],
+  "excluded": [
+    {"category": "FORMULA_TEXT", "reason": "Absent from pinned fixture; upstream formulas need independent collation before VIB-46 acceptance"},
+    {"category": "HISTORICAL_CASES", "reason": "Owner must select exact edition, rights and sample before VIB-47 acceptance"},
+    {"category": "SCANNED_SOURCES", "reason": "User selected text-only first batch; OCR_REQUIRED blocks incomplete PDFs"},
+    {"category": "MODERN_PATIENT_DATA", "reason": "Outside V1 knowledge and theoretical research scope"}
+  ]
+}

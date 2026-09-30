@@ -10,7 +10,7 @@ from defusedxml import ElementTree
 from defusedxml.common import DefusedXmlException
 from pypdf import PdfReader
 
-PARSER_VERSION = "source-parser/v1"
+PARSER_VERSION = "source-parser/v2"
 SUPPORTED_FORMATS = frozenset({"txt", "md", "docx", "pdf"})
 WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -22,8 +22,10 @@ class SourceParseError(ValueError):
 
 
 class OCRRequired(SourceParseError):
-    def __init__(self):
-        super().__init__("OCR_REQUIRED", "PDF has no extractable text layer")
+    def __init__(self, page_numbers: list[int]):
+        self.page_numbers = page_numbers
+        pages = ", ".join(map(str, page_numbers))
+        super().__init__("OCR_REQUIRED", f"PDF pages require OCR or blank-page review: {pages}")
 
 
 @dataclass(frozen=True)
@@ -154,8 +156,12 @@ def parse_source_file(path: Path, file_format: str) -> ParsedDocument:
         raise
     except Exception as exc:  # Parser boundary for malformed third-party files.
         raise SourceParseError("INVALID_FILE", "PDF parser could not read this file") from exc
-    if not any(page.text.strip() for page in pages):
-        raise OCRRequired()
-    warnings = [f"page_{page.page_no}_without_text" for page in pages if not page.text.strip()]
-    return ParsedDocument(file_format, pages, None, warnings)
+    missing_text_pages = [page.page_no for page in pages if not page.text.strip()]
+    if missing_text_pages:
+        # A text cover must not make scanned body pages disappear from the corpus.
+        # Blank pages are also held until a curator confirms they carry no content.
+        raise OCRRequired(missing_text_pages)
+    if not pages:
+        raise SourceParseError("EMPTY_TEXT", "PDF contains no pages")
+    return ParsedDocument(file_format, pages, None, [])
 

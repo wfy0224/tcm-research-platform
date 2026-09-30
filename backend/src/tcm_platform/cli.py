@@ -29,6 +29,8 @@ from tcm_platform.debate_service import (
     retrieve_evidence_requests,
 )
 from tcm_platform.ids import new_id
+from tcm_platform.knowledge_extraction import extract_source_candidates, trace_extraction
+from tcm_platform.knowledge_formula_provenance import FormulaFieldSourceSpec
 from tcm_platform.knowledge_publish import (
     activate_knowledge_version,
     compare_knowledge_versions,
@@ -50,6 +52,7 @@ from tcm_platform.knowledge_service import (
     trace_evidence,
     trace_knowledge,
 )
+from tcm_platform.knowledge_terms import DECISIONS, TermSourceSpec, adjudicate_term
 from tcm_platform.knowledge_worker import process_next_knowledge_publish
 from tcm_platform.model_credentials import store_model_key
 from tcm_platform.models import (
@@ -136,6 +139,10 @@ def main() -> None:
     knowledge_trace = commands.add_parser("trace-knowledge", help="trace a draft object to source")
     knowledge_trace.add_argument("kind", choices=["concept", "relation", "herb", "formula_revision"])
     knowledge_trace.add_argument("object_id", type=UUID)
+    extract = commands.add_parser("extract-knowledge", help="extract local candidates into drafts")
+    extract.add_argument("source_revision_id", type=UUID)
+    extraction_trace = commands.add_parser("trace-extraction", help="trace frozen candidate spans")
+    extraction_trace.add_argument("extraction_id", type=UUID)
     mention = commands.add_parser("create-mention", help="record a source-anchored entity mention")
     mention.add_argument("segment_revision_id", type=UUID)
     mention.add_argument("start_offset", type=int)
@@ -149,6 +156,17 @@ def main() -> None:
     concept.add_argument("--mention", action="append", default=[], type=UUID)
     concept.add_argument("--era")
     concept.add_argument("--school")
+    adjudication = commands.add_parser("adjudicate-term", help="append a scoped human term draft")
+    adjudication.add_argument("source_concept_id", type=UUID)
+    adjudication.add_argument("--decision", required=True, choices=sorted(DECISIONS))
+    adjudication.add_argument("--basis", required=True)
+    adjudication.add_argument("--actor", required=True)
+    adjudication.add_argument("--sources", required=True, type=Path,
+                              help="JSON array of exact evidence/segment IDs and offsets")
+    adjudication.add_argument("--name")
+    adjudication.add_argument("--type")
+    adjudication.add_argument("--related-concept", type=UUID)
+    adjudication.add_argument("--mention", action="append", default=[], type=UUID)
     relation = commands.add_parser("create-relation", help="create a draft concept relation")
     relation.add_argument("subject_concept_id", type=UUID)
     relation.add_argument("object_concept_id", type=UUID)
@@ -162,12 +180,21 @@ def main() -> None:
     formula = commands.add_parser("create-formula", help="create a draft formula revision")
     formula.add_argument("name")
     formula.add_argument("--evidence", required=True, type=UUID)
-    formula.add_argument("--ingredient", action="append", required=True)
+    formula_ingredients = formula.add_mutually_exclusive_group(required=True)
+    formula_ingredients.add_argument("--ingredient", action="append")
+    formula_ingredients.add_argument("--ingredient-spec", type=Path,
+                                     help="UTF-8 JSON array of complete IngredientSpec fields")
+    formula.add_argument("--field-sources", type=Path,
+                         help="UTF-8 JSON array of field keys, evidence/segment IDs, offsets and basis")
     formula.add_argument("--formula-id", type=UUID)
     formula.add_argument("--era")
     formula.add_argument("--school")
     formula.add_argument("--indications")
     formula.add_argument("--effects")
+    formula.add_argument("--method")
+    formula.add_argument("--dosage-form")
+    formula.add_argument("--preparation")
+    formula.add_argument("--cautions")
     issue = commands.add_parser("open-quality-issue", help="record a quality finding")
     issue.add_argument("kind", choices=[
         "source_revision", "text_segment_revision", "evidence_revision",
@@ -348,6 +375,10 @@ def main() -> None:
         print(json.dumps(trace_evidence(args.evidence_revision_id), ensure_ascii=False))
     elif args.command == "trace-knowledge":
         print(json.dumps(trace_knowledge(args.kind, args.object_id), ensure_ascii=False))
+    elif args.command == "extract-knowledge":
+        print(json.dumps(extract_source_candidates(args.source_revision_id), ensure_ascii=False))
+    elif args.command == "trace-extraction":
+        print(json.dumps(trace_extraction(args.extraction_id), ensure_ascii=False))
     elif args.command == "create-mention":
         mention_id = create_entity_mention(
             args.segment_revision_id, start_offset=args.start_offset,
@@ -359,6 +390,20 @@ def main() -> None:
             args.name, concept_type=args.type, evidence_revision_id=args.evidence,
             terms=tuple(args.term), mention_ids=tuple(args.mention),
             era=args.era, school=args.school,
+        )
+        print(json.dumps({"concept_id": str(concept_id)}))
+    elif args.command == "adjudicate-term":
+        payload = json.loads(args.sources.read_text(encoding="utf-8-sig"))
+        if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
+            raise ValueError("term sources must be a JSON array of objects")
+        sources = tuple(TermSourceSpec(**{
+            **item, "evidence_revision_id": UUID(item["evidence_revision_id"]),
+            "segment_revision_id": UUID(item["segment_revision_id"]),
+        }) for item in payload)
+        concept_id = adjudicate_term(
+            args.source_concept_id, decision=args.decision, basis=args.basis, actor_id=args.actor,
+            sources=sources, canonical_name=args.name, concept_type=args.type,
+            related_concept_id=args.related_concept, mention_ids=tuple(args.mention),
         )
         print(json.dumps({"concept_id": str(concept_id)}))
     elif args.command == "create-relation":
@@ -374,11 +419,32 @@ def main() -> None:
         )
         print(json.dumps({"herb_id": str(herb_id)}))
     elif args.command == "create-formula":
+        if args.ingredient_spec is not None:
+            payload = json.loads(args.ingredient_spec.read_text(encoding="utf-8-sig"))
+            if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
+                raise ValueError("ingredient spec must be a JSON array of objects")
+            ingredients = tuple(IngredientSpec(**{
+                **item, **({"herb_id": UUID(item["herb_id"])} if item.get("herb_id") else {}),
+            }) for item in payload)
+        else:
+            ingredients = tuple(IngredientSpec(original_name=name) for name in args.ingredient)
+        field_sources = ()
+        if args.field_sources is not None:
+            payload = json.loads(args.field_sources.read_text(encoding="utf-8-sig"))
+            if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
+                raise ValueError("field sources must be a JSON array of objects")
+            field_sources = tuple(FormulaFieldSourceSpec(**{
+                **item,
+                "evidence_revision_id": UUID(item["evidence_revision_id"]),
+                "segment_revision_id": UUID(item["segment_revision_id"]),
+            }) for item in payload)
         revision_id = create_formula(
             args.name, evidence_revision_id=args.evidence,
-            ingredients=tuple(IngredientSpec(original_name=name) for name in args.ingredient),
+            ingredients=ingredients, field_sources=field_sources,
             formula_id=args.formula_id, era=args.era, school=args.school,
             indications=args.indications, effects=args.effects,
+            method=args.method, dosage_form=args.dosage_form,
+            preparation=args.preparation, cautions=args.cautions,
         )
         print(json.dumps({"formula_revision_id": str(revision_id)}))
     elif args.command == "open-quality-issue":

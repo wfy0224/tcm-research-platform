@@ -292,7 +292,7 @@ def test_research_api_creates_idempotent_task_and_serves_final_report(tmp_path, 
         assert export.status_code == 200 and export.json()["status"] == "COMPLETED"
         download = client.get(export.json()["download_url"])
         assert download.status_code == 200
-        assert provenance["quote_text"] in download.text
+        assert "\n".join("> " + line for line in provenance["quote_text"].splitlines()) in download.text
 
         created_cancel = client.post("/api/v1/research/tasks",
                                      headers={**command_headers,
@@ -1436,6 +1436,10 @@ def test_report_failure_does_not_complete_task_and_retry_is_idempotent(monkeypat
 def test_report_distinguishes_unsupported_and_conditional_claims():
     class MixedAuditGenerator(FakeGenerator):
         def complete_json(self, system_prompt, input_payload):
+            # This test targets two categories, independent of the chosen source's metadata.
+            # An expanded reviewed fixture pool may permit historical claims as well.
+            if input_payload.get("role") == "HistoricalScholar":
+                return {"claims": []}
             if "证据审计员" in system_prompt:
                 assertion = input_payload["assertion_text"]
                 verdict = ("UNSUPPORTED" if assertion.startswith("Classicist") else
@@ -1518,13 +1522,15 @@ def test_report_exports_are_derived_artifacts_with_internal_citation_links(tmp_p
         quote = finding["evidence"][0]["quote_text"]
         evidence_revision_id = finding["evidence"][0]["evidence_revision_id"]
     markdown_text = store.path_for(md_blob).read_text(encoding="utf-8")
-    assert quote in markdown_text
+    assert "\n".join("> " + line for line in quote.splitlines()) in markdown_text
     assert f"#evidence{evidence_revision_id.replace('-', '')}" in markdown_text
     assert "研究过程" in markdown_text
     with zipfile.ZipFile(io.BytesIO(store.path_for(docx_blob).read_bytes())) as archive:
         root = ET.fromstring(archive.read("word/document.xml"))
-        text_content = "".join(node.text or "" for node in root.iter()
-                               if node.tag.endswith("}t"))
+        text_content = "".join(
+            "\n" if node.tag.endswith("}br") else node.text or ""
+            for node in root.iter() if node.tag.endswith(("}t", "}br"))
+        )
         assert quote in text_content
         assert "研究过程" in text_content
         assert any(node.attrib.get("{http://schemas.openxmlformats.org/"

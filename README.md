@@ -78,6 +78,38 @@ uv run python -m tcm_platform.cli trace-knowledge formula_revision <formula_revi
 
 `create-relation <subject_concept_id> <object_concept_id> --type <关系类型> --assertion <断言> --evidence <evidence_revision_id>` 建立概念关系草稿。概念、关系、药物和方剂都须引用准确的 EvidenceRevision；`trace-knowledge` 可回溯到来源修订、段落修订、原文和定位。草稿对象只有通过人工审核并进入知识版本后才能供检索使用。
 
+来源完成分段后，`extract-knowledge <source_revision_id>` 用 `local-exact-terms/v4` 本地规则生成待审候选，`trace-extraction <extraction_id>` 返回批次、实体字符区间、关系原句和精确 Evidence 溯源。抽取只处理最外层可引用片段，避免段落和句子重复；同一来源修订与规则版本重复执行返回同一批次，失败时草稿和审计一起回滚。同批次只归并同类型原词，不猜测繁简/历史同义词，也不跨来源、时代或流派合并。一个原词可保留多种类型候选，此时标为歧义并禁止直接批准，也不从歧义端点推定命名关系。种子词表和明确命名关系只用于工程验证，缺失词汇不会被自动补造；条件、否定和禁忌原句保留，方名提及不会生成缺少药味的完整方剂。旧 v2/v3 批次保持原记录。
+
+v4 在同一结构父节点、同类型的连续片段中识别明确的“方名方”标题、完整药味列表和“右/上×味”煎服段，返回 `formula_count`、`formulas`。药味必须逐项包含原剂量，数量吻合；支持分号/顿号/换行分隔及括号炮制说明。合成示例为 `合成測試湯方：桂枝三兩（去皮）；芍藥三兩。右二味，以水七升，分溫服。`。共享剂量、缺药味、模糊剂量、替代药物、条件标题或未知列表文字均跳过整方；规则覆盖范围有限，真实方剂 C02 尚未冻结。新方剂和逐字段引用与批次共用事务，所有内容仍为 DRAFT，先审 Evidence 再审方剂。单位只复制原单位字符，规范剂量、比例、角色、药物绑定及未明确字段保持 null；煎服段完整保留，跨段引用附连接依据，不自动拆解禁忌或剂型。来源时代/流派保留在批次和精确来源链，不推定为方剂字段。
+
+`adjudicate-term <source_concept_id> --decision <NORMALIZE|HISTORICAL_SYNONYM|DISTINCT|UNRESOLVED> --basis <解释依据> --actor <校订者> --sources <JSON文件>` 追加人工术语裁定草稿。NORMALIZE 可用 `--name` 和 `--type` 指定规范名和类型；DISTINCT 明确保留独立含义；UNRESOLVED 保留原含义与未知字段且不能批准。`--mention <mention_id>` 可重复传入以选定部分提及，省略则选择原概念全部提及。时代和流派沿用来源概念，包括 null。原概念和原提及保持不变，新概念复制精确字符区间；裁定记录及其内容、词形、证据关联和提及不可原位更改，后续校订再次追加草稿。
+
+术语 sources 文件是以下对象的数组，字符区间按 Unicode 左闭右开计数，必须属于精确 EvidenceRevision。HISTORICAL_SYNONYM 还必须用 `--related-concept <已审核对照概念ID>` 指明对照，并在 sources 中引用其证据的精确范围；新概念继承对照名称和类型，但保留原时代/流派及独立身份，原词登记为有范围的 HISTORICAL 词形，不产生全局字符串合并。
+
+```json
+[{"evidence_revision_id":"<UUID>","segment_revision_id":"<UUID>","start_offset":0,"end_offset":3}]
+```
+
+`trace-knowledge concept <新概念ID>` 返回裁定者、解释、原词与复制提及、精确来源和对照快照。草稿须先审核所引 Evidence，再单独审核概念；审核、知识快照和激活均复验裁定。已发布概念的校订审核后继续使用 `supersede-knowledge concept <旧ID> <新ID>`；新旧知识版本分别保留相应对象。仅创建裁定不会改变原候选审核状态或自动更新其关系引用。
+
+`create-formula` 另支持 `--method`、`--dosage-form`、`--preparation`、`--cautions`，以及与 `--ingredient` 互斥的 `--ingredient-spec <UTF-8 JSON 文件>`。文件为 IngredientSpec 对象数组，例如：
+
+```json
+[{"original_name":"桂枝","amount_original":"三兩","amount_normalized":null,"unit":"兩","dose_ratio":null,"role":null,"processing":"去皮","herb_id":null}]
+```
+
+不明确的规范剂量、配伍角色和时代/流派保留 null，不自动换算古代单位。校订方剂时传原 `--formula-id` 建新 DRAFT 修订，再单独审核；旧修订及快照保留。
+
+`--field-sources <UTF-8 JSON 文件>` 保存逐字段引用，文件为对象数组。例如原文片段以“桂枝湯”开头时：
+
+```json
+[{"field_key":"original_name","evidence_revision_id":"<UUID>","segment_revision_id":"<UUID>","start_offset":0,"end_offset":3,"basis":null}]
+```
+
+字段键为修订字段名或 `ingredients.<从0开始的序号>.<字段名>`；每个有值字段在批准前必须具备引用。区间按 Python Unicode 字符计数，左闭右开，必须落在该 Evidence 实际引用的片段修订中。一个字段可引用多个范围；值与引文不同，以及规范剂量、比例、角色、药物绑定、时代或流派等解释字段，必须填 `basis` 说明依据。未知字段保持 null，不登记虚构引用。仅有部分引用的草稿可保存；审核、快照和激活都复验完整来源。旧已审核修订保留原版本标记，旧待审草稿须追加新修订。`trace-knowledge formula_revision` 返回字段值、原文区间和解释依据。
+
+完整进度和隔离验证命令见 `docs/VIB46_KNOWLEDGE_CANDIDATES_ACCEPTANCE.md`。本机原生 Python/uv 已有运行限制，验证使用该文档中的 Linux 容器入口。
+
 ## 人工校订与发布门禁 E5
 
 审核会保留每次人工决定；阻断级 QualityIssue 未解决时，不能批准对象或创建知识快照。先审核 EvidenceRevision，再审核引用它的概念、关系、药物或方剂：

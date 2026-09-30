@@ -385,6 +385,24 @@ class EvidenceSegmentRef(Base):
     sequence_no: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
+class KnowledgeExtraction(Base):
+    """Frozen output of one local candidate rule version on an exact source revision."""
+
+    __tablename__ = "knowledge_extraction"
+    __table_args__ = (
+        UniqueConstraint("source_revision_id", "extractor_version", name="uq_extraction_source_rule"),
+        {"schema": "knowledge"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    source_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.source_revision.id"), nullable=False
+    )
+    extractor_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    manifest: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class EntityMention(Base):
     __tablename__ = "entity_mention"
     __table_args__ = (Index("ix_mention_segment", "segment_revision_id"), {"schema": "knowledge"})
@@ -416,6 +434,9 @@ class Concept(Base):
     school: Mapped[str | None] = mapped_column(String(120))
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="DRAFT")
     row_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    requires_term_resolution: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
@@ -435,6 +456,35 @@ class ConceptTerm(Base):
     term_kind: Mapped[str] = mapped_column(String(30), nullable=False)
     era: Mapped[str | None] = mapped_column(String(120))
     school: Mapped[str | None] = mapped_column(String(120))
+
+
+class TermResolution(Base):
+    """A scoped human proposal; approval remains a separate HumanReview."""
+
+    __tablename__ = "term_resolution"
+    __table_args__ = (
+        UniqueConstraint("resolved_concept_id", name="uq_term_resolution_concept"),
+        CheckConstraint("source_concept_id <> resolved_concept_id", name="ck_term_resolution_new"),
+        CheckConstraint("decision IN ('NORMALIZE', 'HISTORICAL_SYNONYM', 'DISTINCT', 'UNRESOLVED')",
+                        name="ck_term_resolution_decision"),
+        {"schema": "knowledge"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    source_concept_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.concept.id"), nullable=False
+    )
+    resolved_concept_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.concept.id"), nullable=False
+    )
+    related_concept_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.concept.id")
+    )
+    decision: Mapped[str] = mapped_column(String(30), nullable=False)
+    basis: Mapped[str] = mapped_column(Text, nullable=False)
+    actor_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    provenance: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
 class ConceptEvidence(Base):
@@ -554,6 +604,7 @@ class FormulaRevision(Base):
         PG_UUID(as_uuid=True), ForeignKey("knowledge.formula.id"), nullable=False
     )
     revision_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    provenance_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     original_name: Mapped[str] = mapped_column(String(300), nullable=False)
     era: Mapped[str | None] = mapped_column(String(120))
     school: Mapped[str | None] = mapped_column(String(120))
@@ -603,6 +654,40 @@ class FormulaEvidence(Base):
     evidence_revision_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
     )
+
+
+class FormulaFieldSource(Base):
+    """Immutable field value and exact character span supporting one formula revision."""
+
+    __tablename__ = "formula_field_source"
+    __table_args__ = (
+        CheckConstraint("start_offset >= 0 AND end_offset > start_offset",
+                        name="ck_formula_field_source_span"),
+        UniqueConstraint("formula_revision_id", "field_key", "evidence_revision_id",
+                         "segment_revision_id", "start_offset", "end_offset",
+                         name="uq_formula_field_source_span"),
+        Index("ix_formula_field_source_revision", "formula_revision_id"),
+        {"schema": "knowledge"},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
+    formula_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.formula_revision.id"), nullable=False
+    )
+    field_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    value_snapshot: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("knowledge.evidence_revision.id"), nullable=False
+    )
+    segment_revision_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("source.text_segment_revision.id"), nullable=False
+    )
+    start_offset: Mapped[int] = mapped_column(Integer, nullable=False)
+    end_offset: Mapped[int] = mapped_column(Integer, nullable=False)
+    quote_text: Mapped[str] = mapped_column(Text, nullable=False)
+    segment_checksum: Mapped[str] = mapped_column(String(64), nullable=False)
+    basis: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
 class QualityIssue(Base):
