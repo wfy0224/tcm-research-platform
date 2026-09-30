@@ -17,6 +17,7 @@ from tcm_platform.models import (
     RetrievalGoldenQuery,
 )
 from tcm_platform.retrieval import Embedder, Reranker, search_published
+from tcm_platform.retrieval_diversity import DIVERSITY_POLICY
 
 GRADES = {"GOLD": 3, "COUNTER": 2, "OPTIONAL": 1, "HARD_NEGATIVE": 0}
 
@@ -128,12 +129,15 @@ def run_benchmark(
             if result.get("source_revision_id") and result.get("segment_revision_ids")
             and result.get("quote_text") and result.get("citation_locator")
         }
-        per_query.append({"query_id": str(query_id), **score_ranked(
+        per_query.append({"query_id": str(query_id),
+                          "ranking": [{"evidence_revision_id": result["evidence_revision_id"],
+                                       **result["diversity"]} for result in results],
+                          **score_ranked(
             ids, judgments, k=k, resolved_ids=resolved,
         )})
-    keys = [key for key in per_query[0] if key != "query_id"]
+    keys = [key for key in per_query[0] if key not in {"query_id", "ranking"}]
     aggregate = {key: sum(row[key] for row in per_query) / len(per_query) for key in keys}
-    metrics = {"aggregate": aggregate, "queries": per_query}
+    metrics = {"aggregate": aggregate, "queries": per_query, "ranking_policy": DIVERSITY_POLICY}
     with SessionLocal.begin() as session:
         runtime = session.get(KnowledgeRuntimeState, 1)
         if (runtime.active_knowledge_version_id != version_id

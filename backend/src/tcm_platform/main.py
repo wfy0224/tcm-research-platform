@@ -71,6 +71,16 @@ class JobResponse(BaseModel):
     max_attempts: int
 
 
+class RetrievalDiversityResponse(BaseModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+
+    policy: Literal["source-context/v1"]
+    relevance_rank: int
+    source_occurrence: int
+    context_overlap: float
+    selection_score: float
+
+
 class RetrievalEvidenceResponse(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
 
@@ -92,6 +102,7 @@ class RetrievalEvidenceResponse(BaseModel):
     matched_channels: list[str]
     retrieval_score: float
     rerank_score: float | None
+    diversity: RetrievalDiversityResponse | None = None
 
 
 class RetrievalSearchResponse(BaseModel):
@@ -126,7 +137,8 @@ def _public_retrieval_result(trace: dict) -> RetrievalEvidenceResponse:
             context_before=trace["context_before"], context_after=trace["context_after"],
             citation_locator=locator, segment_ids=segment_ids,
             matched_channels=trace["matched_channels"],
-            retrieval_score=trace["retrieval_score"], rerank_score=trace["rerank_score"])
+            retrieval_score=trace["retrieval_score"], rerank_score=trace["rerank_score"],
+            diversity=trace.get("diversity"))
 
 
 class HealthResponse(BaseModel):

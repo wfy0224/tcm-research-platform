@@ -19,7 +19,9 @@ from tcm_platform.knowledge_service import trace_evidence
 from tcm_platform.model_errors import ModelResponseError, ModelUnavailableError
 from tcm_platform.models import (
     EmbeddingRecord,
+    Evidence,
     EvidenceRevision,
+    EvidenceSegmentRef,
     IndexBuild,
     KnowledgeRuntimeState,
     KnowledgeVersion,
@@ -28,6 +30,7 @@ from tcm_platform.models import (
     utc_now,
 )
 from tcm_platform.outbound_policy import authorize_outbound
+from tcm_platform.retrieval_diversity import diversify
 from tcm_platform.retrieval_structured import structured_candidates
 
 HAN = re.compile(r"[\u3400-\u9fff]+|[a-zA-Z0-9]+")
@@ -335,13 +338,13 @@ def search_published(
         "exact": (
             "SELECT c.evidence_revision_id FROM knowledge.retrieval_chunk c " + allowed
             + " AND position(lower(:query) in lower(c.chunk_text)) > 0 "
-            "ORDER BY similarity(c.chunk_text, :query) DESC LIMIT :limit"
+            "ORDER BY similarity(c.chunk_text, :query) DESC, c.evidence_revision_id LIMIT :limit"
         ),
         "fts": (
             "SELECT c.evidence_revision_id FROM knowledge.retrieval_chunk c " + allowed
             + " AND c.search_vector @@ plainto_tsquery('simple', :terms) "
-            "ORDER BY ts_rank_cd(c.search_vector, plainto_tsquery('simple', :terms)) DESC "
-            "LIMIT :limit"
+            "ORDER BY ts_rank_cd(c.search_vector, plainto_tsquery('simple', :terms)) DESC, "
+            "c.evidence_revision_id LIMIT :limit"
         ),
     }
     if query_vector is not None:
@@ -350,7 +353,7 @@ def search_published(
             "SELECT c.evidence_revision_id FROM knowledge.retrieval_chunk c "
             "JOIN knowledge.embedding_record er ON er.chunk_id = c.id " + allowed
             + " AND er.dimensions = vector_dims(CAST(:vector AS vector)) "
-            "ORDER BY er.embedding <=> CAST(:vector AS vector) LIMIT :limit"
+            "ORDER BY er.embedding <=> CAST(:vector AS vector), c.evidence_revision_id LIMIT :limit"
         )
     weights = {"exact": 2.0, "fts": 1.5, "vector": 1.0,
                "structured": 1.5, "relation": 1.0}
@@ -366,12 +369,35 @@ def search_published(
             source_ids=scoped_sources, limit=candidate_limit,
         ))
         for channel, ranked in rankings_by_channel.items():
-            for rank, evidence_revision_id in enumerate(ranked, 1):
+            for rank, evidence_revision_id in enumerate(dict.fromkeys(ranked), 1):
                 scores[evidence_revision_id] += weights[channel] / (60 + rank)
                 matched[evidence_revision_id].append(channel)
-    ordered = sorted(scores, key=lambda item: (-scores[item], str(item)))[:min(100, max(limit * 3, 20))]
+        # Load only provenance for the bounded channel union, not full traces.
+        # Apply diversity before the rerank cap so one source cannot occupy it.
+        provenance: dict[UUID, dict] = {}
+        if scores:
+            for revision_id, source_id, source_revision_id, segment_id in session.execute(
+                select(EvidenceRevision.id, Evidence.source_id, EvidenceRevision.source_revision_id,
+                       EvidenceSegmentRef.segment_revision_id)
+                .join(Evidence, Evidence.id == EvidenceRevision.evidence_id)
+                .join(EvidenceSegmentRef,
+                      EvidenceSegmentRef.evidence_revision_id == EvidenceRevision.id)
+                .where(EvidenceRevision.id.in_(scores))
+            ):
+                proof = provenance.setdefault(revision_id, {
+                    "source_id": str(source_id), "source_revision_id": str(source_revision_id),
+                    "segment_revision_ids": [],
+                })
+                proof["segment_revision_ids"].append(str(segment_id))
+        if set(provenance) != set(scores):
+            raise ValueError("candidate evidence has no segment provenance")
+    ordered, _ = diversify(
+        sorted(scores, key=lambda item: (-scores[item], str(item))), scores=scores,
+        provenance=provenance, limit=min(100, max(limit * 3, 20)),
+    )
     traces = {revision_id: trace_evidence(revision_id) for revision_id in ordered}
     rerank_scores: dict[UUID, float] = {}
+    reranked = False
     if reranker and ordered:
         try:
             if getattr(reranker, "is_remote", False) and not query_outbound_authorized:
@@ -390,6 +416,7 @@ def search_published(
                 raise ModelResponseError("reranker returned invalid document indices or scores")
             rerank_scores = {ordered[index]: score for index, score in rankings}
             execution.channels.append("rerank")
+            reranked = True
             ordered = sorted(
                 ordered, key=lambda item: (-rerank_scores.get(item, float("-inf")),
                                        -scores[item], str(item))
@@ -402,10 +429,18 @@ def search_published(
             if not allow_model_fallback:
                 raise
             execution.degrade("rerank_unavailable")
+    if not reranked:
+        ordered = sorted(ordered, key=lambda item: (-scores[item], str(item)))
+    relevance = ({item: 1 / (60 + rank) for rank, item in enumerate(ordered, 1)}
+                 if reranked else scores)
+    ordered, explanations = diversify(
+        ordered, scores=relevance, provenance=provenance, limit=limit,
+    )
     return [
         {**traces[revision_id], "retrieval_score": scores[revision_id],
          "matched_channels": matched[revision_id],
          "query_text": original_query, "normalized_query": query,
-         "rerank_score": rerank_scores.get(revision_id)}
+         "rerank_score": rerank_scores.get(revision_id),
+         "diversity": explanations[revision_id]}
         for revision_id in ordered[:limit]
     ]

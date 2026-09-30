@@ -408,7 +408,12 @@ def add_task_evidence(
                 recorded.add(revision_id)
         append_event(session, event_type="research_task.evidence_retrieved", actor_id=actor_id,
                      aggregate_id=task_id,
-                     payload={"query": query, "result_count": len(results), "new_count": new_count})
+                     payload={"query": query, "result_count": len(results), "new_count": new_count,
+                              "ranking": [
+                                  {"evidence_revision_id": result["evidence_revision_id"],
+                                   **result["diversity"]}
+                                  for result in results if result.get("diversity")
+                              ]})
         if evidence_request_id is not None:
             request.status = "RETRIEVED" if results else "NO_RESULT"
             request.result_count = len(recorded)
