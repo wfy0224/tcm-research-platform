@@ -29,6 +29,8 @@ docker exec -e PYTHONPATH=/workspace/backend/src -e PYTHONDONTWRITEBYTECODE=1 -w
 
 ## 尚未完成
 
+后续 2026-09-30 本地检索/降级增量见 [专项验收](VIB48_LOCAL_RETRIEVAL_ACCEPTANCE.md)；以下是本次结构工程停点的历史范围。
+
 VIB-48 保持 In Progress：无密钥/断网本地 Exact/FTS/结构查询、UI 明示降级、证据浏览联调、多样性、未发布高相关片段转 QualityIssue、范围内查询候选规范化/裁定扩展的完整验收仍待补。
 
 Linear 已同步 In Progress 和本轮工程证据，评论 `533b394a-dbc2-4924-83ad-70340e6bb71f`。工程提交 `c9bc6f6`；验收及接续文档另行提交，最新 HEAD 以 git log 为准。
