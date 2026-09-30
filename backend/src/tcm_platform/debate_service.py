@@ -25,7 +25,12 @@ from tcm_platform.models import (
     utc_now,
 )
 from tcm_platform.research_runtime import StructuredGenerator, recorded_complete
-from tcm_platform.research_service import CLAIM_TYPES, LeaseGuard, add_task_evidence
+from tcm_platform.research_service import (
+    CLAIM_TYPES,
+    LeaseGuard,
+    add_task_evidence,
+    frozen_retrieval_clients,
+)
 from tcm_platform.retrieval import Embedder, Reranker, search_published
 
 CRITIC_PROMPT = (
@@ -215,7 +220,7 @@ def execute_critic(run_id: UUID, *, model: StructuredGenerator,
 
 
 def retrieve_evidence_requests(
-    task_id: UUID, *, embedder: Embedder, reranker: Reranker | None = None,
+    task_id: UUID, *, embedder: Embedder | None = None, reranker: Reranker | None = None,
     limit: int = 10, lease_guard: LeaseGuard | None = None,
 ) -> int:
     with SessionLocal() as session:
@@ -223,11 +228,9 @@ def retrieve_evidence_requests(
         if task is None or task.status != "DEBATING" or task.control_state != "ACTIVE":
             raise ValueError("research task is not debating")
         context = task.execution_context
-        if (context["embedding_model"] != embedder.model_version
-                or ((context["rerank_model"] is None) != (reranker is None))
-                or (reranker is not None
-                    and context["rerank_model"] != reranker.model_version)):
-            raise ValueError("retrieval models differ from frozen task context")
+        embedder, reranker = frozen_retrieval_clients(
+            context, embedder=embedder, reranker=reranker,
+        )
         requests = [(item.id, item.query_text) for item in session.scalars(
             select(EvidenceRequest).where(
                 EvidenceRequest.task_id == task_id,

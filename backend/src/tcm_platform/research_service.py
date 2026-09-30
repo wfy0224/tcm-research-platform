@@ -36,6 +36,7 @@ from tcm_platform.models import (
     TaskJob,
     utc_now,
 )
+from tcm_platform.publication_config import LOCAL_STRATEGY
 from tcm_platform.retrieval import Embedder, Reranker, search_published
 from tcm_platform.retrieval_query import query_metadata
 
@@ -165,6 +166,7 @@ def start_research_task(
             "workflow_version": "research-v1",
             "workflow_config": config.model_dump(mode="json"),
             "retrieval_profile_version": build.configuration.get("strategy", "hybrid-rrf-v1"),
+            "retrieval_strategy": build.configuration.get("strategy", "hybrid-rrf-v1"),
             "embedding_model": build.configuration["embedding_model"],
             "rerank_model": build.configuration.get("rerank_model"),
             "generation_model": model_version,
@@ -425,8 +427,30 @@ def add_task_evidence(
         return new_count
 
 
+def frozen_retrieval_clients(
+    context: Mapping, *, embedder: Embedder | None,
+    reranker: Reranker | None = None,
+) -> tuple[Embedder | None, Reranker | None]:
+    """Keep local indexing separate from the generation outbound permission.
+
+    Old contexts retain their strict model binding. Only an explicitly frozen
+    local strategy can omit retrieval models, and supplied cloud clients are
+    never used for that strategy.
+    """
+    strategy = context.get("retrieval_strategy", context.get("retrieval_profile_version"))
+    if strategy == LOCAL_STRATEGY:
+        if context.get("embedding_model") is not None or context.get("rerank_model") is not None:
+            raise ValueError("local retrieval context must not contain cloud retrieval models")
+        return None, None
+    if (embedder is None or context.get("embedding_model") != embedder.model_version
+            or ((context.get("rerank_model") is None) != (reranker is None))
+            or (reranker is not None and context.get("rerank_model") != reranker.model_version)):
+        raise ValueError("retrieval models differ from frozen task context")
+    return embedder, reranker
+
+
 def retrieve_for_task(
-    task_id: UUID, *, embedder: Embedder, reranker: Reranker | None = None,
+    task_id: UUID, *, embedder: Embedder | None = None, reranker: Reranker | None = None,
     limit: int = 10, lease_guard: LeaseGuard | None = None,
 ) -> int:
     with SessionLocal() as session:
@@ -434,11 +458,9 @@ def retrieve_for_task(
         if task is None or task.status != "RETRIEVING":
             raise ValueError("research task is not retrieving")
         context = task.execution_context
-        if (context["embedding_model"] != embedder.model_version
-                or ((context["rerank_model"] is None) != (reranker is None))
-                or (reranker is not None
-                    and context["rerank_model"] != reranker.model_version)):
-            raise ValueError("retrieval models differ from frozen task context")
+        embedder, reranker = frozen_retrieval_clients(
+            context, embedder=embedder, reranker=reranker,
+        )
         subquestions = list(session.scalars(select(ResearchSubquestion.question_text).where(
             ResearchSubquestion.task_id == task_id
         ).order_by(ResearchSubquestion.sequence_no)))
