@@ -1,0 +1,101 @@
+{
+  "schema_version": "c02-candidate/v1",
+  "selection_status": "PROPOSED",
+  "data_owner_role": "测试人员",
+  "data_owner_name": null,
+  "expert_review_status": "PENDING",
+  "expert_reviewer": null,
+  "outbound_authorized": false,
+  "source_url": "https://zh.wikisource.org/wiki/%E5%82%B7%E5%AF%92%E8%AB%96",
+  "revision_url": "https://zh.wikisource.org/w/index.php?title=%E5%82%B7%E5%AF%92%E8%AB%96&oldid=2607901",
+  "upstream_revision_id": 2607901,
+  "section": "辨太陽病脈證並治（上）第五",
+  "rights_basis": "Upstream page labels the ancient work PD-old/public domain; its footer separately states CC BY-SA 4.0 with possible additional terms. These observed notices are evidence for review, not project legal approval.",
+  "license_notice_url": "https://zh.wikisource.org/w/index.php?title=%E5%82%B7%E5%AF%92%E8%AB%96&oldid=2607901",
+  "physical_page_mapping": null,
+  "offset_semantics": "zero-based Unicode code points; half-open [source_start, source_end), against chapter_visible.txt after CRLF-to-LF only",
+  "extraction": {
+    "method": "STATIC_HTML_TEXT_NODE_BLOCK_EXTRACTION",
+    "script": "extract_candidate.ps1",
+    "html_archive": "upstream_revision_2607901.html",
+    "html_canonical_sha256": "b45028166e79b580abe5924c9de73f1d5ba7fccdb380135e324b4d93a99234d2",
+    "revision_evidence": "Archived HTML RLCONF.wgRevisionId=2607901; requested URL contains oldid=2607901.",
+    "chapter_boundaries": "After heading container for 辨太陽病脈證並治（上）第五, before heading container for 辨太陽病脈證並治（中）第六.",
+    "text_rule": "Replace br and closing p/dt/dd tags with LF, remove remaining markup, decode HTML entities once; preserve all resulting text characters and whitespace. The chapter baseline contains no script/style. This is text extraction, not rendered-page layout.",
+    "excerpt_rule": "Unique dt title followed by two dd nodes: ingredient/dose line and complete preparation/administration paragraph. Each excerpt is an exact substring of chapter_visible.txt.",
+    "rights_rule": "Extract actual PD-old notice paragraph and footer-info-copyright element from the same archived HTML using the same text rule."
+  },
+  "review_cautions": [
+    "Upstream marks the page unproofread and warns that conversion from simplified characters may be inaccurate; no editorial correction was performed.",
+    "Formula completeness and transcription are proposed for expert review only; no medical truth labels, benchmark qualification, production corpus import or freeze was performed.",
+    "Physical edition/page mapping and a named data owner/expert are still unconfirmed."
+  ],
+  "artifacts": [
+    {
+      "canonicalization": "CRLF_TO_LF_UTF8",
+      "use": "raw acquisition evidence, not excerpt offset baseline",
+      "content_format": "text/html",
+      "role": "UPSTREAM_TEXT",
+      "file": "upstream_revision_2607901.html",
+      "canonical_sha256": "b45028166e79b580abe5924c9de73f1d5ba7fccdb380135e324b4d93a99234d2"
+    },
+    {
+      "canonicalization": "CRLF_TO_LF_UTF8",
+      "use": "excerpt offset baseline",
+      "content_format": "text/plain",
+      "role": "UPSTREAM_TEXT",
+      "file": "chapter_visible.txt",
+      "canonical_sha256": "afe1c829413dbf5dcb4af2deae51e79430e2ce405bdabd2e04cae4121d6c1ec3"
+    },
+    {
+      "role": "EXCERPT",
+      "canonicalization": "CRLF_TO_LF_UTF8",
+      "file": "guizhi_tang.txt",
+      "canonical_sha256": "e2a580c1d7bbd53aa681207fbcc386692e236a81ad046399dc124fbd5bb05a60"
+    },
+    {
+      "role": "EXCERPT",
+      "canonicalization": "CRLF_TO_LF_UTF8",
+      "file": "guizhi_jia_ge_gen_tang.txt",
+      "canonical_sha256": "6adca616e43bfb8b5b2ec9044727bc361dba5bce872add7dafb5cde090dd7837"
+    },
+    {
+      "role": "EXCERPT",
+      "canonicalization": "CRLF_TO_LF_UTF8",
+      "file": "guizhi_jia_fu_zi_tang.txt",
+      "canonical_sha256": "6dd72a153ce7c58e4f5243944a16b91c73027b06246cb967962461b0743bf398"
+    },
+    {
+      "role": "RIGHTS_NOTICE",
+      "canonicalization": "CRLF_TO_LF_UTF8",
+      "file": "rights_notice.txt",
+      "canonical_sha256": "febec206a957bbb8698e087eda9abba116c9efc040ea92b810d651b621778939"
+    }
+  ],
+  "excerpts": [
+    {
+      "source_start": 518,
+      "text_sha256": "e2a580c1d7bbd53aa681207fbcc386692e236a81ad046399dc124fbd5bb05a60",
+      "source_end": 761,
+      "file": "guizhi_tang.txt",
+      "title": "桂枝湯方",
+      "source_file": "chapter_visible.txt"
+    },
+    {
+      "source_start": 820,
+      "text_sha256": "6adca616e43bfb8b5b2ec9044727bc361dba5bce872add7dafb5cde090dd7837",
+      "source_end": 954,
+      "file": "guizhi_jia_ge_gen_tang.txt",
+      "title": "桂枝加葛根湯方",
+      "source_file": "chapter_visible.txt"
+    },
+    {
+      "source_start": 1205,
+      "text_sha256": "6dd72a153ce7c58e4f5243944a16b91c73027b06246cb967962461b0743bf398",
+      "source_end": 1292,
+      "file": "guizhi_jia_fu_zi_tang.txt",
+      "title": "桂枝加附子湯方",
+      "source_file": "chapter_visible.txt"
+    }
+  ]
+}

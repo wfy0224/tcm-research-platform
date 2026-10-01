@@ -1,6 +1,6 @@
 """Run the real workspace API and Workers against a dedicated demonstration database.
 
-Linux test runtime only. The first stdin line supplies an ephemeral bootstrap code.
+Linux test runtime only. Development sessions connect automatically without a code.
 No model doubles, automatic knowledge approval, or preloaded business data are used.
 """
 
@@ -16,12 +16,14 @@ import threading
 from pathlib import Path
 
 PORT = 18068
+ORIGIN = "http://127.0.0.1:18067"
+UPSTREAM_HOST = "workspace-api"
 
 
 def forward():
     class Relay(socketserver.BaseRequestHandler):
         def handle(self):
-            with socket.create_connection(("workspace-api", PORT), timeout=10) as upstream:
+            with socket.create_connection((UPSTREAM_HOST, PORT), timeout=10) as upstream:
                 upstream.settimeout(None)
                 while True:
                     readable, _, _ = select.select([self.request, upstream], [], [], 1)
@@ -59,12 +61,8 @@ def serve(database: str):
     os.environ["TCM_DATA_ROOT"] = f"/tmp/{database}_store"
     os.environ["TCM_PREVIEW_CORPUS"] = "none"
     os.environ.setdefault("TCM_OUTBOUND_MODE", "LOCAL_ONLY")
-    os.environ["TCM_LOCAL_ALLOWED_ORIGINS"] = "http://127.0.0.1:18067"
-    os.environ["TCM_BOOTSTRAP_TTL_SECONDS"] = "3600"
-    initial = json.loads(sys.stdin.readline())
-    if not isinstance(initial.get("secret"), str) or len(initial["secret"]) < 32:
-        raise RuntimeError("an ephemeral bootstrap code is required on stdin")
-    os.environ["TCM_BOOTSTRAP_SECRET"] = initial["secret"]
+    os.environ["TCM_LOCAL_ALLOWED_ORIGINS"] = ORIGIN
+    os.environ["TCM_DEVELOPMENT_AUTO_SESSION"] = "true"
     Path(os.environ["TCM_DATA_ROOT"]).mkdir(parents=True, exist_ok=True)
 
     from alembic import command
@@ -128,5 +126,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--forward", action="store_true")
     parser.add_argument("--database", default="tcm_vib62_workspace_test")
+    parser.add_argument("--port", type=int, default=18068)
+    parser.add_argument("--origin", default="http://127.0.0.1:18067")
+    parser.add_argument("--upstream-host", default="workspace-api")
     arguments = parser.parse_args()
+    PORT, ORIGIN, UPSTREAM_HOST = arguments.port, arguments.origin, arguments.upstream_host
     forward() if arguments.forward else serve(arguments.database)

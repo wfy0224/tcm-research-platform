@@ -1,0 +1,69 @@
+- main:
+  - complementary:
+    - generic: 本
+    - generic: 中医文献研究
+    - navigation "工作区":
+      - button "知识库"
+      - button "证据检索"
+      - button "理论研究"
+  - generic: 研究空间 / 理论研究
+  - heading "理论研究" [level=1]
+  - paragraph: 提出问题，选择资料，查看研究过程与报告。
+  - generic: 本机工作区已连接
+  - region "从问题到可追溯报告":
+    - text: 理论研究工作区
+    - heading "从问题到可追溯报告" [level=2]
+    - complementary:
+      - heading "创建研究" [level=3]
+      - generic: 研究问题
+      - textbox "研究问题":
+        - /placeholder: 输入待研究的问题
+      - group "已发布来源":
+        - generic: 已发布来源
+        - paragraph: 不选择时使用当前已发布知识范围。开始后冻结版本与证据修订。
+        - checkbox "傷寒論·太阳病上篇（演示文献） 已发布"
+        - text: 傷寒論·太阳病上篇（演示文献）
+        - generic: 已发布
+        - checkbox "方剂学 已发布"
+        - text: 方剂学
+        - generic: 已发布
+        - checkbox "方剂学a 已发布"
+        - text: 方剂学a
+        - generic: 已发布
+        - checkbox "方剂学（麻黄汤与大青龙汤研究） 已发布" [checked]
+        - text: 方剂学（麻黄汤与大青龙汤研究）
+        - generic: 已发布
+      - button "创建研究任务" [disabled]
+      - heading "研究任务" [level=3]
+      - button "仅依据所选《方剂学》修订2的已审核原文，比较麻黄汤与大青龙汤的组成、证候和配伍，并解释大青龙汤为何倍用麻黄。请区分原方三两/六两与括注9g/12g，不把现代克数说成两倍；每个主要结论注明证据及不足，仅作理论研究。 待开始 · RT-01a0f690-2bea-7fc1-aa32-347c177acf1b":
+        - strong: 仅依据所选《方剂学》修订2的已审核原文，比较麻黄汤与大青龙汤的组成、证候和配伍，并解释大青龙汤为何倍用麻黄。请区分原方三两/六两与括注9g/12g，不把现代克数说成两倍；每个主要结论注明证据及不足，仅作理论研究。
+        - generic: 待开始 · RT-01a0f690-2bea-7fc1-aa32-347c177acf1b
+      - button "仅依据已发布原文，太阳病的脉象与伴随表现是什么？请区分直接记载与理论解释，不推导治疗建议。 已完成 · RT-01a0f2f0-f311-7572-9203-2ddd0aaa0edd":
+        - strong: 仅依据已发布原文，太阳病的脉象与伴随表现是什么？请区分直接记载与理论解释，不推导治疗建议。
+        - generic: 已完成 · RT-01a0f2f0-f311-7572-9203-2ddd0aaa0edd
+    - text: RT-01a0f690-2bea-7fc1-aa32-347c177acf1b
+    - heading "仅依据所选《方剂学》修订2的已审核原文，比较麻黄汤与大青龙汤的组成、证候和配伍，并解释大青龙汤为何倍用麻黄。请区分原方三两/六两与括注9g/12g，不把现代克数说成两倍；每个主要结论注明证据及不足，仅作理论研究。" [level=3]
+    - generic: 待开始
+    - paragraph: 执行状态：运行中 · 限定 1 项来源
+    - paragraph: 研究问题 → 原文证据 → 多角度观点 → 质疑与审计 → 可追溯报告
+    - generic: 研究模型
+    - combobox "研究模型" [disabled]:
+      - option "请选择已配置模型" [selected]
+    - status: 无法开始真实研究：服务尚未配置研究模型（TCM_RESEARCH_MODEL），请联系管理员完成配置。
+    - checkbox "同意将本次研究问题发送给所选云端模型。模型路由已配置，凭据与供应商可用性将在授权启动后核验。研究还会使用允许外发的原文证据；来源权利与外发权限由系统核验，调用可能产生费用。"
+    - text: 同意将本次研究问题发送给所选云端模型。模型路由已配置，凭据与供应商可用性将在授权启动后核验。研究还会使用允许外发的原文证据；来源权利与外发权限由系统核验，调用可能产生费用。
+    - button "开始研究" [disabled]
+    - button "暂停" [disabled]
+    - button "恢复" [disabled]
+    - button "取消"
+    - navigation "研究详情":
+      - button "研究概览"
+      - button "观点与审计"
+      - button "辩论过程"
+      - button "原文证据"
+      - button "争议与缺口"
+      - button "研究报告"
+    - region "研究概览":
+      - heading "研究概览" [level=3]
+      - paragraph: 子问题 0 · 观点 0 · 审计 0 · 争议 0
+  - generic "本地服务详情"

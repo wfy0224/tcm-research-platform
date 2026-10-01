@@ -23,6 +23,7 @@ def process_next_knowledge_publish(*, worker_id: str = "local-publisher") -> UUI
         job_id, generation = job.id, job.execution_generation
         version_id = UUID(job.payload["version_id"])
         configuration = job.payload["configuration"]
+        activate_on_success = job.payload.get("activate_on_success", True)
 
     try:
         embedder = None
@@ -62,7 +63,7 @@ def process_next_knowledge_publish(*, worker_id: str = "local-publisher") -> UUI
             already_active = (runtime is not None
                               and runtime.active_knowledge_version_id == version_id
                               and runtime.active_index_build_id == build_id)
-        if not already_active:
+        if activate_on_success and not already_active:
             activate_knowledge_version(version_id, build_id, actor_id=worker_id)
         with SessionLocal.begin() as session:
             complete_job(session, job_id=job_id, worker_id=worker_id,

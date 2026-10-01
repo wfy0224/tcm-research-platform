@@ -317,27 +317,42 @@ def render_structured_report(snapshot: dict, findings: dict) -> dict:
     }
 
 
-def persist_structured_report(session: Session, task_id: UUID) -> StructuredReport:
+def persist_structured_report(session: Session, task_id: UUID, *,
+                               allow_rejected_narrative: bool = False) -> StructuredReport:
     task = session.scalar(select(ResearchTask).where(
         ResearchTask.id == task_id).with_for_update())
     if task is None or task.status != "REPORTING" or task.control_state != "ACTIVE":
         raise ValueError("research task is not ready to save its report")
-    existing = session.scalar(select(StructuredReport).where(StructuredReport.task_id == task_id))
-    if existing is not None:
+    existing = session.scalar(select(StructuredReport).where(StructuredReport.task_id == task_id)
+                              .order_by(StructuredReport.revision_no.desc()).limit(1))
+    if existing is not None and existing.content.get("review_status") != "NEEDS_REVISION":
         return existing
     synthesis = session.scalar(select(ResearchSynthesis).where(
         ResearchSynthesis.task_id == task_id))
     if synthesis is None:
         raise ValueError("report requires committed Judge synthesis")
     content = render_structured_report(synthesis.input_snapshot, synthesis.findings)
+    from tcm_platform.report_narrative import accepted_narrative
+
+    narrative = accepted_narrative(session, task_id, allow_rejected=allow_rejected_narrative)
+    if narrative is not None:
+        content["answer"] = narrative
+        content["review_status"] = narrative["review_status"]
+        content["schema_version"] = "research-report/v3"
+    digest = _digest(content)
+    if existing is not None and existing.content_hash == digest:
+        return existing
     report = StructuredReport(id=new_id(), task_id=task_id, synthesis_id=synthesis.id,
-                              schema_version=REPORT_SCHEMA_VERSION,
-                              content_hash=_digest(content),
+                              revision_no=existing.revision_no + 1 if existing else 1,
+                              schema_version=content["schema_version"],
+                              content_hash=digest,
                               context_snapshot=synthesis.input_snapshot["execution_context"],
                               content=content)
     session.add(report)
     session.flush()
     append_event(session, event_type="research_task.report_saved",
                  actor_id="report-generator", aggregate_id=task_id,
-                 payload={"report_id": str(report.id), "content_hash": report.content_hash})
+                 payload={"report_id": str(report.id), "content_hash": report.content_hash,
+                          "revision_no": report.revision_no,
+                          "review_status": content.get("review_status", "ACCEPTED")})
     return report

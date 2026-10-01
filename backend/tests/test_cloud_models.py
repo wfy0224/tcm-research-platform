@@ -165,6 +165,30 @@ def test_completion_format_retry_is_separate_and_usage_is_redacted(monkeypatch):
     assert usage == {"total_tokens": 9, "format_retry_count": 1}
 
 
+@pytest.mark.parametrize("operation,expected_timeout", [("embed", 90), ("complete", 180)])
+def test_operation_timeout_preserves_bounded_transport(monkeypatch, operation, expected_timeout):
+    model = "BAAI/bge-m3" if operation == "embed" else "deepseek-ai/DeepSeek-V3.2"
+    monkeypatch.setattr(cloud_models, "current_permit", lambda: SimpleNamespace(
+        operation=operation, model_version=f"siliconflow/{model}"))
+    monkeypatch.setattr(cloud_models.settings, "model_completion_timeout_seconds", 180)
+    monkeypatch.setattr(cloud_models, "_admit_request", lambda host: None)
+    monkeypatch.setattr(cloud_models, "_record_start", lambda endpoint, digest: "fake-call")
+    monkeypatch.setattr(cloud_models, "_record_finish", lambda *args, **kwargs: None)
+    observed = []
+
+    class Opener:
+        def open(self, request, timeout):
+            observed.append(timeout)
+            raise TimeoutError("response deadline exceeded")
+
+    monkeypatch.setattr(cloud_models, "build_opener", lambda handler: Opener())
+    endpoint = "https://api.siliconflow.cn/v1/" + (
+        "embeddings" if operation == "embed" else "chat/completions")
+    with pytest.raises(ModelUnavailableError, match="connection failed"):
+        cloud_models._post_json(endpoint, "unit-test-key", {"model": model})
+    assert observed == [expected_timeout]
+
+
 def test_transport_retry_and_circuit_are_bounded(monkeypatch):
     monkeypatch.setattr(cloud_models, "current_permit", lambda: SimpleNamespace(
         model_version="siliconflow/BAAI/bge-m3"))

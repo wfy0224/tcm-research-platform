@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import ts from "typescript";
+const code = ts.transpileModule(await readFile(new URL("../src/knowledgeSelection.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
+const { invalidEvidenceRange, readingText } = await import(`data:text/javascript;base64,${Buffer.from(code).toString("base64")}`);
+const row = (n, type, parent = "chapter") => ({ segment_id: `s${n}`, sequence_no: n, segment_type: type, parent_segment_id: parent });
+const rows = [row(0,"CLAUSE"), row(1,"SENTENCE","s0"), row(2,"PARAGRAPH"), row(3,"SENTENCE","s2"), row(4,"CLAUSE")];
+assert.equal(invalidEvidenceRange(rows, [rows[0],rows[2],rows[4]]), false, "complete mixed-type sibling range must be citable");
+assert.equal(invalidEvidenceRange(rows, [rows[0],rows[4]]), true, "a different-type paragraph cannot be skipped");
+assert.equal(invalidEvidenceRange(rows, [rows[0],rows[1]]), true, "parent and child cannot repeat a quote");
+assert.equal(invalidEvidenceRange(rows, [rows[1],rows[3]]), true, "sentences from different parents cannot mix");
+assert.equal(invalidEvidenceRange([...rows,row(5,"CHAPTER"),row(6,"PARAGRAPH")], [rows[0],rows[2],rows[4],row(6,"PARAGRAPH")]), true);
+assert.equal(readingText("治病，经\n\n过长期积累。"), "治病，经过长期积累。");
+console.log("Knowledge selection passed: mixed body types, omitted content, parent-child duplication, sentence parents, headings and Chinese wraps.");

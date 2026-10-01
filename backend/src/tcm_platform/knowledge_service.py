@@ -38,6 +38,7 @@ from tcm_platform.models import (
     SourceRevision,
     TextSegmentRevision,
 )
+from tcm_platform.segmentation import PARAGRAPH_TYPES
 
 EVIDENCE_STRENGTHS = frozenset(
     {"DIRECT", "INDIRECT", "INTERPRETIVE", "EMPIRICAL", "BACKGROUND", "UNVERIFIED"}
@@ -109,19 +110,19 @@ def create_evidence(
         first, last = segments[0], segments[-1]
         if first.segment_type not in CITABLE_SEGMENT_TYPES:
             raise ValueError("structural headings cannot be cited as evidence")
+        compatible_types = PARAGRAPH_TYPES if first.segment_type in PARAGRAPH_TYPES else {first.segment_type}
         if any(
             row.source_revision_id != first.source_revision_id
-            or row.segment_type != first.segment_type
+            or row.segment_type not in compatible_types
             or row.parent_segment_id != first.parent_segment_id
             for row in segments
         ):
-            raise ValueError("evidence range must share a source revision, parent, and type")
+            raise ValueError("evidence range must share a source revision, parent, and level")
         siblings = list(session.scalars(
             select(TextSegmentRevision)
             .where(
                 TextSegmentRevision.source_revision_id == first.source_revision_id,
                 TextSegmentRevision.parent_segment_id == first.parent_segment_id,
-                TextSegmentRevision.segment_type == first.segment_type,
                 TextSegmentRevision.sequence_no.between(first.sequence_no, last.sequence_no),
             )
             .order_by(TextSegmentRevision.sequence_no)

@@ -11,7 +11,7 @@ from tcm_platform.knowledge_service import IngredientSpec
 
 _NUMBER = r"[一二三四五六七八九十百兩两〇零0-9]+"
 _DOSE_NUMBER = r"(?:[1-9][0-9]*|一?百|[一二三四五六七八九]?十[一二三四五六七八九]?|[一二三四五六七八九兩两])"
-_UNIT = r"兩|两|錢|钱|分|升|合|枚|斤|銖|铢"
+_UNIT = r"兩|两|錢|钱|分|升|合|枚|斤|銖|铢|斗"
 _HEADING = re.compile(r"(?m)^[ \t]*(?P<name>[\u3400-\u9fff]{1,40}(?:湯|汤|散|丸|飲|饮|方))方[：:]?[ \t]*")
 _TAIL = re.compile(r"(?:右|上)(?P<count>" + _NUMBER + r")味[，,。]")
 _INGREDIENT = re.compile(
@@ -99,37 +99,53 @@ def scan_formula_candidates(paragraphs: list[str]) -> list[FormulaCandidate]:
             method_end -= 1
         # Only a clear water preparation prefix with explicit administration is accepted.
         instructions = original[tail.end():method_end].lstrip()
-        if not instructions.startswith(("以水", "用水", "水煎")) or "服" not in instructions:
+        # The only additional preparation prefix is copied from the archived
+        # PROPOSED C02 block. Do not infer other chopping/preparation prose.
+        observed_preparation = tail.group() == "上五味，" and instructions.startswith("㕮咀三味，以水")
+        if not (instructions.startswith(("以水", "用水", "水煎")) or observed_preparation) or "服" not in instructions:
             continue
         ingredients, field_spans = [], spans_for("original_name", *heading.span("name"))
         valid = True
         for item in re.finditer(r"[^；;、\n]+", original[heading.end():tail.start()]):
             start = heading.end() + item.start()
             content = item.group()
-            stripped = content.strip(" \t\r。．.")
+            stripped = content.strip(" \t\r\u3000。．.")
             if not stripped:
                 continue
-            start += len(content) - len(content.lstrip(" \t\r。．."))
-            match = _INGREDIENT.fullmatch(stripped)
-            if match is None or re.search(_NUMBER, match["name"]) or re.search(
-                r"[或若各及另缺待加減减去取共等用不無无]", match["name"]
-            ):
-                valid = False
+            start += len(content) - len(content.lstrip(" \t\r\u3000。．."))
+            cursor = 0
+            while cursor < len(stripped):
+                # Match a complete herb/dose first; whitespace before its dose
+                # belongs to that herb. Only then may space delimit another herb.
+                match = _INGREDIENT.match(stripped, cursor)
+                if match is None or re.search(_NUMBER, match["name"]) or re.search(
+                    r"[或若各及另缺待加減减去取共等用不無无]", match["name"]
+                ):
+                    valid = False
+                    break
+                sequence = len(ingredients)
+                processing_group = "full_processing" if match["full_processing"] else "processing"
+                if match[processing_group] and re.search(r"或|若|酌|適量|适量|加減|加减", match[processing_group]):
+                    valid = False
+                    break
+                ingredients.append(IngredientSpec(
+                    original_name=match["name"], amount_original=match["amount"],
+                    unit=match["unit"], processing=match[processing_group],
+                ))
+                for field, group in (("original_name", "name"), ("amount_original", "amount"),
+                                     ("unit", "unit"), ("processing", processing_group)):
+                    if match[group] is not None:
+                        a, b = match.span(group)
+                        field_spans.extend(spans_for(f"ingredients.{sequence}.{field}", start + a, start + b))
+                cursor = match.end()
+                if cursor < len(stripped):
+                    separator = re.match(r"[ \t\r\u3000]+", stripped[cursor:])
+                    if separator is None:
+                        valid = False
+                        break
+                    cursor += separator.end()
+            if not valid:
                 break
-            sequence = len(ingredients)
-            processing_group = "full_processing" if match["full_processing"] else "processing"
-            if match[processing_group] and re.search(r"或|若|酌|適量|适量|加減|加减", match[processing_group]):
-                valid = False
-                break
-            ingredients.append(IngredientSpec(
-                original_name=match["name"], amount_original=match["amount"],
-                unit=match["unit"], processing=match[processing_group],
-            ))
-            for field, group in (("original_name", "name"), ("amount_original", "amount"),
-                                 ("unit", "unit"), ("processing", processing_group)):
-                if match[group] is not None:
-                    a, b = match.span(group)
-                    field_spans.extend(spans_for(f"ingredients.{sequence}.{field}", start + a, start + b))
         if not valid or len(ingredients) != count or len({i.original_name for i in ingredients}) != count:
             continue
         field_spans.extend(spans_for("method", tail.start(), method_end))

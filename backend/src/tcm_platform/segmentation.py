@@ -10,13 +10,50 @@ from uuid import UUID
 
 from tcm_platform.parsing import ParsedDocument
 
-RESOLVER_VERSION = "structure-resolver/v1"
+RESOLVER_VERSION = "structure-resolver/v2"
 NUMBER = r"[一二三四五六七八九十百千零〇两\d]+"
 VOLUME = re.compile(rf"^(?:卷{NUMBER}|第{NUMBER}卷)(?:[\s　].*)?$")
 CHAPTER = re.compile(rf"^(?:第{NUMBER}[篇章]|.{1,30}篇)(?:[\s　].*)?$")
 SECTION = re.compile(rf"^第{NUMBER}节(?:[\s　].*)?$")
 CLAUSE = re.compile(rf"^(?:第{NUMBER}条|\d{{1,5}}[.．、]|【[^】]{{1,30}}】)")
-SENTENCE = re.compile(r"[^。！？!?]+[。！？!?]*|[。！？!?]+")
+SENTENCE = re.compile(r"[^。！？!?]+[。！？!?]*[”’」』）)]*|[。！？!?]+[”’」』）)]*")
+PARAGRAPH_TYPES = frozenset({"CLAUSE", "PARAGRAPH", "COMMENTARY", "NOTE", "CASE_NOTE", "FORMULA_TEXT"})
+END_SENTENCE = re.compile(r"[。！？!?．.][\"”’」』）)]*$")
+
+
+def _new_block(line: str) -> bool:
+    return bool(VOLUME.match(line) or CHAPTER.match(line) or SECTION.match(line)
+                or CLAUSE.match(line) or line.startswith(("按语：", "按曰：", "案语：", "注：", "注曰：", "医案：", "病案：", "方：", "处方："))
+                or (len(line) <= 20 and not re.search(r"[，。；：！？、,.!?;:]", line)))
+
+
+def _logical_blocks(parsed: ParsedDocument):
+    """Join likely typesetting wraps; retain physical page/line provenance.
+
+    Short unpunctuated classical lines and headings remain separate. Long CJK
+    lines with unfinished sentences may continue even across OCR blank lines.
+    DOCX paragraph boundaries always take precedence over that heuristic.
+    """
+    lines, positions = [], []
+    previous = ""
+    for page in parsed.pages:
+        for line_no, raw in enumerate(page.text.splitlines(), 1):
+            line = raw.strip()
+            if not line:
+                continue
+            authoritative_break = (page.paragraph_starts is not None
+                                   and line_no in page.paragraph_starts)
+            wrapped = (len(previous) >= 30 and re.search(r"[\u3400-\u9fff]", previous)
+                       and not END_SENTENCE.search(previous) and not _new_block(line))
+            docx_wrap = page.paragraph_starts is not None and not authoritative_break
+            if lines and (authoritative_break or not (wrapped or docx_wrap)):
+                yield "\n".join(lines), positions
+                lines, positions = [], []
+            lines.append(line)
+            positions.append({"page_no": page.page_no, "line_no": line_no})
+            previous = line
+    if lines:
+        yield "\n".join(lines), positions
 
 
 def normalized(text: str) -> str:
@@ -115,70 +152,73 @@ def resolve_structure(parsed: ParsedDocument, *, title: str) -> list[SegmentDraf
     volume_no = 0
     section_no = 0
 
-    for page in parsed.pages:
-        for line_no, raw_line in enumerate(page.text.splitlines(), 1):
-            line = raw_line.strip()
-            if not line:
-                continue
-            if len(line) <= 100 and VOLUME.match(line):
-                volume_no += 1
-                volume = add(
-                    "VOLUME", book, line, path=f"volume:{volume_no}",
-                    page=page.page_no, chapter=None, paragraph=None,
-                )
-                chapter = None
-                section = None
-                continue
-            if len(line) <= 100 and CHAPTER.match(line):
-                chapter_no += 1
-                chapter = add(
-                    "CHAPTER", volume if volume is not None else book, line,
-                    path=f"chapter:{chapter_no}", page=page.page_no,
-                    chapter=chapter_no, paragraph=None,
-                )
-                section = None
-                continue
-            if len(line) <= 100 and SECTION.match(line):
-                section_no += 1
-                section = add(
-                    "SECTION", chapter if chapter is not None else (volume or book), line,
-                    path=f"section:{section_no}", page=page.page_no,
-                    chapter=chapter_no or None, paragraph=None,
-                )
-                continue
+    for line, physical_lines in _logical_blocks(parsed):
+        page = physical_lines[0]["page_no"]
+        if len(line) <= 100 and VOLUME.match(line):
+            volume_no += 1
+            volume = add(
+                "VOLUME", book, line, path=f"volume:{volume_no}",
+                page=page, chapter=None, paragraph=None,
+            )
+            chapter = None
+            section = None
+            continue
+        if len(line) <= 100 and CHAPTER.match(line):
+            chapter_no += 1
+            chapter = add(
+                "CHAPTER", volume if volume is not None else book, line,
+                path=f"chapter:{chapter_no}", page=page,
+                chapter=chapter_no, paragraph=None,
+            )
+            section = None
+            continue
+        if len(line) <= 100 and SECTION.match(line):
+            section_no += 1
+            section = add(
+                "SECTION", chapter if chapter is not None else (volume or book), line,
+                path=f"section:{section_no}", page=page,
+                chapter=chapter_no or None, paragraph=None,
+            )
+            continue
 
-            paragraph_no += 1
-            parent = section if section is not None else (
-                chapter if chapter is not None else (volume if volume is not None else book)
+        paragraph_no += 1
+        parent = section if section is not None else (
+            chapter if chapter is not None else (volume if volume is not None else book)
+        )
+        if CLAUSE.match(line):
+            kind = "CLAUSE"
+        elif line.startswith(("按语：", "按曰：", "案语：")):
+            kind = "COMMENTARY"
+        elif line.startswith(("注：", "注曰：")):
+            kind = "NOTE"
+        elif line.startswith(("医案：", "病案：")):
+            kind = "CASE_NOTE"
+        elif line.startswith(("方：", "处方：")):
+            kind = "FORMULA_TEXT"
+        else:
+            kind = "PARAGRAPH"
+        line_index = add(
+            kind, parent, line, path=f"paragraph:{paragraph_no}",
+            page=page, chapter=chapter_no or None, paragraph=paragraph_no,
+        )
+        drafts[line_index].structural_locator.update({
+            "line_start": physical_lines[0]["line_no"],
+            "line_end": physical_lines[-1]["line_no"],
+            "page_end": physical_lines[-1]["page_no"],
+            "physical_lines": physical_lines,
+        })
+        for sentence_no, sentence in enumerate(SENTENCE.findall(line), 1):
+            if not sentence.strip():
+                continue
+            add(
+                "SENTENCE", line_index, sentence,
+                path=f"paragraph:{paragraph_no}/sentence:{sentence_no}",
+                page=page, chapter=chapter_no or None, paragraph=paragraph_no,
             )
-            if CLAUSE.match(line):
-                kind = "CLAUSE"
-            elif line.startswith(("按语：", "按曰：", "案语：")):
-                kind = "COMMENTARY"
-            elif line.startswith(("注：", "注曰：")):
-                kind = "NOTE"
-            elif line.startswith(("医案：", "病案：")):
-                kind = "CASE_NOTE"
-            elif line.startswith(("方：", "处方：")):
-                kind = "FORMULA_TEXT"
-            else:
-                kind = "PARAGRAPH"
-            line_index = add(
-                kind, parent, line, path=f"paragraph:{paragraph_no}",
-                page=page.page_no, chapter=chapter_no or None, paragraph=paragraph_no,
-            )
-            for sentence_no, sentence in enumerate(SENTENCE.findall(line), 1):
-                if not sentence.strip():
-                    continue
-                add(
-                    "SENTENCE", line_index, sentence,
-                    path=f"paragraph:{paragraph_no}/sentence:{sentence_no}",
-                    page=page.page_no, chapter=chapter_no or None, paragraph=paragraph_no,
-                )
 
     siblings: dict[tuple[int | None, str], list[int]] = {}
     for index, draft in enumerate(drafts):
-        siblings.setdefault((draft.parent_index, draft.segment_type), []).append(index)
+        siblings.setdefault((draft.parent_index, "BODY" if draft.segment_type in PARAGRAPH_TYPES else draft.segment_type), []).append(index)
     for indices in siblings.values():
         for position, index in enumerate(indices):
             before = drafts[indices[position - 1]].original_text[-1000:] if position else ""

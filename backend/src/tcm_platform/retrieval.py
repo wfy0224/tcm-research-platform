@@ -43,7 +43,7 @@ from tcm_platform.retrieval_structured import structured_candidates
 
 HAN = re.compile(r"[\u3400-\u9fff]+|[a-zA-Z0-9]+")
 MAX_CHUNKS = 20_000
-MAX_CHUNK_CHARS = 4_000
+MAX_CHUNK_CHARS = 6_000
 
 
 @dataclass

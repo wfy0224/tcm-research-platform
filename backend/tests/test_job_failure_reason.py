@@ -28,6 +28,7 @@ PRIVATE_URL = "https://private.invalid/request?token=confidential"
     ("knowledge version is not ready", "完成发布"),
     ("target index is incomplete", "完成发布"),
     ("unexpected internal exception", "核对来源、审核与模型配置"),
+    ("ValueError: report narrative did not pass independent review after three drafts", "综合回答三稿"),
 ])
 @pytest.mark.parametrize("status", ["FAILED", "RETRY_WAIT"])
 def test_classifies_failure_without_exposing_exception(error, action, status):

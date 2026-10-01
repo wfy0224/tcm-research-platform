@@ -1,0 +1,944 @@
+{
+  "task_id": "RT-01a0f788-b1a8-7cee-9e52-7cee5d555a58",
+  "knowledge_version": "KV-000004",
+  "workflow_version": "research-v2",
+  "schema_version": "research-report/v2",
+  "content_hash": "218664a5f307a02f13fe1838987ab824515e8067ed33c4477191b20791be0568",
+  "evidence_count": 21,
+  "answer_paragraphs": 3,
+  "model_purposes": [
+    "Classicist",
+    "Critic",
+    "EvidenceAuditor",
+    "HistoricalScholar",
+    "Judge",
+    "Planner",
+    "ReportReviewer",
+    "ReportWriter",
+    "Theorist",
+    "complete",
+    "embed",
+    "rerank"
+  ],
+  "real_cloud_policy_verified": true,
+  "foreign_citation_rejected": true,
+  "conditional_upgrade_rejected": true,
+  "historical_report_unchanged": true,
+  "critique_count": 0,
+  "rebuttal_count": 0,
+  "actual_debate_verified": false,
+  "role_call_latency_total_ms": 1513545,
+  "recorded_token_usage": {
+    "prompt_tokens": 649590,
+    "completion_tokens": 15136,
+    "total_tokens": 664726
+  },
+  "recorded_cost": null,
+  "writer_drafts": 6,
+  "rejected_reviews": 5,
+  "accepted_input_schema": "report-narrative-input/v2",
+  "review_summary": "逐项复核结果：\n1.  第一段：引用了 claim_ids [01a0f78a-0afa-72aa-821c-db10ff4b420d, 01a0f7a3-3d3e-7a30-aea7-3a03fef27bf6, 01a0f7a4-51cb-7602-9f11-8d5fa2fcb1a0]。段落内容正确复述并综合了所引观点，包括大青龙汤与麻黄汤主治证候（风寒束表、里有郁热 vs. 纯风寒表实）及病机（表气闭郁更重）的区别，以及麻黄倍用以增强发汗之力、开泄腠理的原因。所有表述均有原文支持，未引入新事实或因果。\n2.  第二段：引用了 claim_ids [01a0f78a-0afa-7185-99e3-bf97ed129306, 01a0f7a3-3d3e-735d-ac83-9645ee932bbd, 01a0f78a-0afa-70c5-8ba2-6a0cb0f6b245, 01a0f7a4-51cb-733c-8392-2b935de19b84]。段落内容正确阐述了药物组成的差异（倍麻黄、甘草，加石膏等），并重点分析了麻黄与石膏配伍的相互制约关系（麻黄得石膏无助热，石膏得麻黄无凉遏），解释了麻黄得以倍用的配伍学原理。所有核心论述均有对应原文支持。\n3.  第三段：引用了 claim_id [01a0f7a3-3d3e-70c6-aa36-00bae1b8f989]。段落准确引用了柯琴的方论，解释了麻黄加量是为了解决“热伤其气，无津不能作汗”的问题，以达到“一汗而表里双解”的目的。内容与原文一致。\n全文各段落均直接回答了问题（分析大青龙汤中麻黄用量为什么比麻黄汤多），基于所引用的已审核观点进行了合理的综合与阐述，未发现越界、误引、遗漏关键限定、引入新事实或因果、混淆古今剂量等问题。因此，accepted 为 true。",
+  "pool": [
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:194",
+          "page_no": 1,
+          "line_end": 935,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 935,
+          "paragraph_no": 194,
+          "physical_lines": [
+            {
+              "line_no": 935,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:180",
+          "page_no": 1,
+          "line_end": 883,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 882,
+          "paragraph_no": 180,
+          "physical_lines": [
+            {
+              "line_no": 882,
+              "page_no": 1
+            },
+            {
+              "line_no": 883,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f68d-6484-7e98-9118-d6bc2bb2cfaa"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:276",
+          "page_no": 1,
+          "line_end": 1256,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1256,
+          "paragraph_no": 276,
+          "physical_lines": [
+            {
+              "line_no": 1256,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:255",
+          "page_no": 1,
+          "line_end": 1165,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1165,
+          "paragraph_no": 255,
+          "physical_lines": [
+            {
+              "line_no": 1165,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f755-4c7d-745e-9d51-c44b000de5e4"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:179",
+          "page_no": 1,
+          "line_end": 880,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 880,
+          "paragraph_no": 179,
+          "physical_lines": [
+            {
+              "line_no": 880,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:154",
+          "page_no": 1,
+          "line_end": 787,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 780,
+          "paragraph_no": 154,
+          "physical_lines": [
+            {
+              "line_no": 780,
+              "page_no": 1
+            },
+            {
+              "line_no": 781,
+              "page_no": 1
+            },
+            {
+              "line_no": 782,
+              "page_no": 1
+            },
+            {
+              "line_no": 784,
+              "page_no": 1
+            },
+            {
+              "line_no": 785,
+              "page_no": 1
+            },
+            {
+              "line_no": 787,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f755-366f-7d51-a01f-4b877687816c"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:460",
+          "page_no": 1,
+          "line_end": 1905,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1905,
+          "paragraph_no": 460,
+          "physical_lines": [
+            {
+              "line_no": 1905,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:456",
+          "page_no": 1,
+          "line_end": 1898,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1898,
+          "paragraph_no": 456,
+          "physical_lines": [
+            {
+              "line_no": 1898,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f75f-27e4-7bdb-b6ef-3b50148c5562"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:349",
+          "page_no": 1,
+          "line_end": 1543,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1543,
+          "paragraph_no": 349,
+          "physical_lines": [
+            {
+              "line_no": 1543,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:317",
+          "page_no": 1,
+          "line_end": 1422,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1422,
+          "paragraph_no": 317,
+          "physical_lines": [
+            {
+              "line_no": 1422,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f755-603d-7341-b8bd-c26e828d8dda"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:465",
+          "page_no": 1,
+          "line_end": 1917,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1915,
+          "paragraph_no": 465,
+          "physical_lines": [
+            {
+              "line_no": 1915,
+              "page_no": 1
+            },
+            {
+              "line_no": 1917,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:461",
+          "page_no": 1,
+          "line_end": 1907,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1906,
+          "paragraph_no": 461,
+          "physical_lines": [
+            {
+              "line_no": 1906,
+              "page_no": 1
+            },
+            {
+              "line_no": 1907,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f75f-282e-7e15-9785-e76cc5e1049e"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:4210",
+          "page_no": 1,
+          "line_end": 14611,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 14611,
+          "paragraph_no": 4210,
+          "physical_lines": [
+            {
+              "line_no": 14611,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:4206",
+          "page_no": 1,
+          "line_end": 14604,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 14602,
+          "paragraph_no": 4206,
+          "physical_lines": [
+            {
+              "line_no": 14602,
+              "page_no": 1
+            },
+            {
+              "line_no": 14604,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f760-1333-7bd2-80c7-ea7fc9a6e369"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:4211",
+          "page_no": 1,
+          "line_end": 14614,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 14612,
+          "paragraph_no": 4211,
+          "physical_lines": [
+            {
+              "line_no": 14612,
+              "page_no": 1
+            },
+            {
+              "line_no": 14613,
+              "page_no": 1
+            },
+            {
+              "line_no": 14614,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:4211",
+          "page_no": 1,
+          "line_end": 14614,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 14612,
+          "paragraph_no": 4211,
+          "physical_lines": [
+            {
+              "line_no": 14612,
+              "page_no": 1
+            },
+            {
+              "line_no": 14613,
+              "page_no": 1
+            },
+            {
+              "line_no": 14614,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f760-138e-7e26-886b-24985bba7344"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:2560",
+          "page_no": 1,
+          "line_end": 9050,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 9050,
+          "paragraph_no": 2560,
+          "physical_lines": [
+            {
+              "line_no": 9050,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:2545",
+          "page_no": 1,
+          "line_end": 9003,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 9003,
+          "paragraph_no": 2545,
+          "physical_lines": [
+            {
+              "line_no": 9003,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f759-95b4-73fb-a31c-2e7ffb5cdf8f"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:4088",
+          "page_no": 1,
+          "line_end": 14218,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 14218,
+          "paragraph_no": 4088,
+          "physical_lines": [
+            {
+              "line_no": 14218,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:4071",
+          "page_no": 1,
+          "line_end": 14163,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 14163,
+          "paragraph_no": 4071,
+          "physical_lines": [
+            {
+              "line_no": 14163,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f75b-a9a3-7f37-b650-1d887bb39b50"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:226",
+          "page_no": 1,
+          "line_end": 1063,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1063,
+          "paragraph_no": 226,
+          "physical_lines": [
+            {
+              "line_no": 1063,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:197",
+          "page_no": 1,
+          "line_end": 942,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 942,
+          "paragraph_no": 197,
+          "physical_lines": [
+            {
+              "line_no": 942,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f755-3878-706d-a6d1-9deec351d493"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:655",
+          "page_no": 1,
+          "line_end": 2558,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 2555,
+          "paragraph_no": 655,
+          "physical_lines": [
+            {
+              "line_no": 2555,
+              "page_no": 1
+            },
+            {
+              "line_no": 2556,
+              "page_no": 1
+            },
+            {
+              "line_no": 2558,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:651",
+          "page_no": 1,
+          "line_end": 2531,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 2528,
+          "paragraph_no": 651,
+          "physical_lines": [
+            {
+              "line_no": 2528,
+              "page_no": 1
+            },
+            {
+              "line_no": 2529,
+              "page_no": 1
+            },
+            {
+              "line_no": 2530,
+              "page_no": 1
+            },
+            {
+              "line_no": 2531,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f75f-33c1-7e5c-ab15-d06a0bac1265"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:3820",
+          "page_no": 1,
+          "line_end": 13331,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 13331,
+          "paragraph_no": 3820,
+          "physical_lines": [
+            {
+              "line_no": 13331,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:3816",
+          "page_no": 1,
+          "line_end": 13324,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 13324,
+          "paragraph_no": 3816,
+          "physical_lines": [
+            {
+              "line_no": 13324,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f75f-f905-766a-a6a6-0c2ae1450583"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:435",
+          "page_no": 1,
+          "line_end": 1833,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1833,
+          "paragraph_no": 435,
+          "physical_lines": [
+            {
+              "line_no": 1833,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:421",
+          "page_no": 1,
+          "line_end": 1794,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 1794,
+          "paragraph_no": 421,
+          "physical_lines": [
+            {
+              "line_no": 1794,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f755-81f9-7f32-8bdb-c28321cd27d4"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:3020",
+          "page_no": 1,
+          "line_end": 10572,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 10569,
+          "paragraph_no": 3020,
+          "physical_lines": [
+            {
+              "line_no": 10569,
+              "page_no": 1
+            },
+            {
+              "line_no": 10570,
+              "page_no": 1
+            },
+            {
+              "line_no": 10571,
+              "page_no": 1
+            },
+            {
+              "line_no": 10572,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:3016",
+          "page_no": 1,
+          "line_end": 10551,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 10550,
+          "paragraph_no": 3016,
+          "physical_lines": [
+            {
+              "line_no": 10550,
+              "page_no": 1
+            },
+            {
+              "line_no": 10551,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f75f-c433-7cd8-b0f9-a84f7aff7be6"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:1437",
+          "page_no": 1,
+          "line_end": 5228,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 5228,
+          "paragraph_no": 1437,
+          "physical_lines": [
+            {
+              "line_no": 5228,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:1420",
+          "page_no": 1,
+          "line_end": 5172,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 5172,
+          "paragraph_no": 1420,
+          "physical_lines": [
+            {
+              "line_no": 5172,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f757-840a-7a2e-a492-cc9acbfd050a"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:1147",
+          "page_no": 1,
+          "line_end": 4240,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 4240,
+          "paragraph_no": 1147,
+          "physical_lines": [
+            {
+              "line_no": 4240,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:1107",
+          "page_no": 1,
+          "line_end": 4140,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 4140,
+          "paragraph_no": 1107,
+          "physical_lines": [
+            {
+              "line_no": 4140,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f756-c37e-71e9-96d8-c7579fbdffc2"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:1466",
+          "page_no": 1,
+          "line_end": 5344,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 5344,
+          "paragraph_no": 1466,
+          "physical_lines": [
+            {
+              "line_no": 5344,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:1451",
+          "page_no": 1,
+          "line_end": 5292,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 5292,
+          "paragraph_no": 1451,
+          "physical_lines": [
+            {
+              "line_no": 5292,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f757-7fc4-77d0-baf3-920adfa20e93"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:826",
+          "page_no": 1,
+          "line_end": 3164,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 3164,
+          "paragraph_no": 826,
+          "physical_lines": [
+            {
+              "line_no": 3164,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:807",
+          "page_no": 1,
+          "line_end": 3087,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 3084,
+          "paragraph_no": 807,
+          "physical_lines": [
+            {
+              "line_no": 3084,
+              "page_no": 1
+            },
+            {
+              "line_no": 3085,
+              "page_no": 1
+            },
+            {
+              "line_no": 3086,
+              "page_no": 1
+            },
+            {
+              "line_no": 3087,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f756-3007-7c96-bf50-67c76a4205c3"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:130",
+          "page_no": 1,
+          "line_end": 710,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 705,
+          "paragraph_no": 130,
+          "physical_lines": [
+            {
+              "line_no": 705,
+              "page_no": 1
+            },
+            {
+              "line_no": 707,
+              "page_no": 1
+            },
+            {
+              "line_no": 708,
+              "page_no": 1
+            },
+            {
+              "line_no": 709,
+              "page_no": 1
+            },
+            {
+              "line_no": 710,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:126",
+          "page_no": 1,
+          "line_end": 675,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 674,
+          "paragraph_no": 126,
+          "physical_lines": [
+            {
+              "line_no": 674,
+              "page_no": 1
+            },
+            {
+              "line_no": 675,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f75f-138b-76bc-a9cc-b5f72d790c64"
+    },
+    {
+      "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+      "citation_locator": {
+        "end": {
+          "path": "paragraph:135",
+          "page_no": 1,
+          "line_end": 732,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 732,
+          "paragraph_no": 135,
+          "physical_lines": [
+            {
+              "line_no": 732,
+              "page_no": 1
+            }
+          ]
+        },
+        "start": {
+          "path": "paragraph:131",
+          "page_no": 1,
+          "line_end": 713,
+          "page_end": 1,
+          "chapter_no": null,
+          "line_start": 712,
+          "paragraph_no": 131,
+          "physical_lines": [
+            {
+              "line_no": 712,
+              "page_no": 1
+            },
+            {
+              "line_no": 713,
+              "page_no": 1
+            }
+          ]
+        },
+        "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+      },
+      "evidence_revision_id": "01a0f75f-13da-7fb2-aa15-cb2015706b1f"
+    }
+  ]
+}

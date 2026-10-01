@@ -41,7 +41,7 @@ from tcm_platform.models import (
 )
 from tcm_platform.storage import ContentAddressedStore
 
-RENDERER_VERSION = "report-export/v1"
+RENDERER_VERSION = "report-export/v6"
 FORMATS = frozenset({"markdown", "docx"})
 CATEGORY_TITLES = {
     "HIGH_CONFIDENCE": "高可信结论",
@@ -88,7 +88,7 @@ def _citation(item: dict) -> str:
     span = start if start == end else f"{start} 至 {end}"
     edition = f"，{item['source_edition']}" if item.get("source_edition") else ""
     return (f"《{item['source_title']}》{edition}，来源修订 {item['source_revision_no']}，"
-            f"定位 {span}，证据修订 {item['evidence_revision_id']}")
+            f"定位 {span}")
 
 
 def _process_snapshot(session, task_id: UUID) -> dict:
@@ -133,17 +133,76 @@ def _process_snapshot(session, task_id: UUID) -> dict:
 
 def report_blocks(content: dict, process: dict) -> list[Block]:
     """One factual outline drives both formats; all assertions come from the saved report."""
+    claims = {c["claim_id"]: c for category in CATEGORY_TITLES
+              for c in content["sections"].get(category, [])}
+    claim_numbers = {key: i for i, key in enumerate(claims, start=1)}
+    evidence = {e["evidence_revision_id"]: e for c in claims.values() for e in c["evidence"]}
+    for dispute in content["open_disputes"]:
+        for field in ("supporting_evidence", "opposing_evidence"):
+            evidence.update({e["evidence_revision_id"]: e for e in dispute[field]})
+    numbers = {key: i for i, key in enumerate(sorted(evidence), start=1)}
+    dispute_numbers = {row["dispute_id"]: i for i, row in
+                       enumerate(content["open_disputes"], start=1)}
+    gap_numbers = {row["gap_id"]: i for i, row in
+                   enumerate(content["unresolved_gaps"], start=1)}
+    critique_numbers = {row["id"]: i for i, row in enumerate(process["critiques"], start=1)}
+    labels = {
+        "Classicist": "经典研究", "HistoricalScholar": "历史考证", "Theorist": "理论分析",
+        "Planner": "研究规划", "Critic": "质疑审查", "Rebuttal": "回应质疑",
+        "Judge": "综合裁判", "ReportWriter": "综合写作", "ReportReviewer": "回答复核",
+        "COMPLETED": "已完成", "PENDING": "待执行", "FAILED": "执行失败",
+        "RUNNING": "执行中", "SUPPORTED": "证据支持", "PARTIALLY_SUPPORTED": "部分支持",
+        "UNSUPPORTED": "证据不足", "UNCERTAIN": "尚不确定", "CONTRADICTED": "存在矛盾",
+        "PASS": "通过", "FAIL": "未通过", "MECHANICAL": "引用完整性检查",
+        "SEMANTIC": "语义支持审计", "ACCEPT": "接受质疑", "PARTIAL_ACCEPT": "部分接受",
+        "REJECT": "驳回质疑", "REVISE": "修订观点", "WITHDRAW": "撤回观点",
+        "OVERCLAIM": "过度推断", "TEXTUAL_MISREAD": "原文误读", "HISTORICAL_SCOPE": "时代边界",
+        "EVIDENCE_GAP": "证据缺口", "CRITIQUE_EVIDENCE_GAP": "质疑指出证据缺口",
+        "CONTRADICTION": "结论矛盾", "STOP": "结束研究", "CONTINUE": "继续研究",
+        "ROUND_LIMIT": "达到最大研究轮次", "NO_CRITIQUES": "本轮无新增质疑",
+        "FOLLOWUP_REVIEW": "继续审查上一轮回应", "STABLE_EVIDENCE": "证据与观点已稳定",
+        "RESOLVED": "已处理", "OPEN": "待解决",
+    }
+
+    def label(value: str) -> str:
+        return labels.get(value, value)
+
+    def claim_label(value: str) -> str:
+        return f"观点 {claim_numbers[value]}" if value in claim_numbers else "未纳入报告的观点"
+
+    def claim_link(value: str) -> Block:
+        return Block("Link", "对应" + claim_label(value),
+                     link=_anchor("claim", value) if value in claim_numbers else None)
+
+    def audit_text(value: str) -> str:
+        # The auditor's prose uses local input positions, not report citation
+        # numbers. Keep the reasoning, without presenting those as global links.
+        return re.sub(r"证据\s*\d+", "引用材料", value)
+
     blocks = [
         Block("Title", "中医理论研究报告"),
         Block("Normal", f"研究问题：{content['question']}"),
-        Block("Normal", f"报告编号：{content['task_id']}"),
-        Block("Normal", f"知识版本：{content['knowledge_version_id']}；索引：{content['index_build_id']}"),
-        Block("Heading1", "综合摘要"),
     ]
+    if content.get("answer"):
+        pending = content.get("review_status") == "NEEDS_REVISION"
+        if pending:
+            blocks.append(Block("Normal", "报告已保存：下方综合回答草稿未通过复核，不作为已审核结论。"
+                                "已审计观点、争议、证据缺口及辩论记录完整保留。"))
+        blocks.append(Block("Heading1", "综合回答草稿（待修订）" if pending else "研究回答"))
+        for paragraph in content["answer"]["paragraphs"]:
+            blocks.append(Block("Normal", paragraph["text"]))
+            cited = sorted({e["evidence_revision_id"] for key in paragraph["claim_ids"]
+                            for e in claims[key]["evidence"]})
+            for evidence_id in cited:
+                blocks.append(Block("Link", f"依据 [{numbers[evidence_id]}]",
+                                    link=_anchor("evidence", evidence_id)))
+        if pending:
+            blocks.append(Block("Heading2", "综合回答需要修订的事项"))
+            blocks.extend(Block("Normal", issue) for issue in content["answer"]["review_issues"])
+    blocks.append(Block("Heading1", "附录：已审计观点"))
     for category, title in CATEGORY_TITLES.items():
         blocks.append(Block("Normal", f"{title}：{content['counts'][category]} 条"))
     blocks.append(Block("Normal", "分类沿用已审计的断言。争议与未验证内容不作为确定事实。"))
-    evidence_by_id: dict[str, dict] = {}
     for category, title in CATEGORY_TITLES.items():
         blocks.append(Block("Heading1", title))
         rows = content["sections"][category]
@@ -151,71 +210,103 @@ def report_blocks(content: dict, process: dict) -> list[Block]:
             blocks.append(Block("Normal", "本类无断言。"))
         for row in rows:
             claim_id = row["claim_id"]
-            blocks.append(Block("Heading2", row["assertion_text"],
+            blocks.append(Block("Heading2", f"{claim_label(claim_id)}：{row['assertion_text']}",
                                 anchor=_anchor("claim", claim_id)))
-            blocks.append(Block("Normal", f"断言 {claim_id}；角色 {row['agent_role']}；"
-                         f"审计 {row['audit_verdict']}；理由 {row['reason_id']}"))
-            blocks.append(Block("Normal", f"审计说明：{row['audit_rationale']}"))
+            blocks.append(Block("Normal", f"研究角度：{label(row['agent_role'])}；"
+                         f"审计结论：{label(row['audit_verdict'])}"))
+            blocks.append(Block("Normal", f"审计说明：{audit_text(row['audit_rationale'])}"))
             for item in row["evidence"]:
-                evidence_by_id[item["evidence_revision_id"]] = item
-                blocks.append(Block("Link", "引用证据：" + _citation(item),
+                blocks.append(Block("Link", f"证据 [{numbers[item['evidence_revision_id']]}]："
+                                    + _citation(item),
                                     link=_anchor("evidence", item["evidence_revision_id"])))
-            if row["dispute_ids"]:
-                blocks.append(Block("Normal", "关联争议：" + "、".join(row["dispute_ids"])))
-            if row["gap_ids"]:
-                blocks.append(Block("Normal", "证据缺口：" + "、".join(row["gap_ids"])))
+            for value in row["dispute_ids"]:
+                if value in dispute_numbers:
+                    blocks.append(Block("Link", f"关联争议 {dispute_numbers[value]}",
+                                        link=_anchor("dispute", value)))
+            for value in row["gap_ids"]:
+                if value in gap_numbers:
+                    blocks.append(Block("Link", f"证据缺口 {gap_numbers[value]}",
+                                        link=_anchor("gap", value)))
     blocks.append(Block("Heading1", "争议与限制"))
     for dispute in content["open_disputes"]:
-        blocks.append(Block("Heading2", f"争议 {dispute['dispute_id']}"))
-        blocks.append(Block("Normal", f"原因 {dispute['reason_code']}："
+        blocks.append(Block("Heading2", f"争议 {dispute_numbers[dispute['dispute_id']]}",
+                            anchor=_anchor("dispute", dispute["dispute_id"])))
+        blocks.append(Block("Normal", f"{label(dispute['reason_code'])}："
                      f"{dispute['rationale_summary']}"))
-        for label, key in (("支持", "supporting_evidence"), ("反对", "opposing_evidence")):
+        for support_label, key in (("支持", "supporting_evidence"), ("反对", "opposing_evidence")):
             for item in dispute[key]:
-                evidence_by_id[item["evidence_revision_id"]] = item
-                blocks.append(Block("Link", f"{label}证据：" + _citation(item),
+                blocks.append(Block("Link", f"{support_label}证据 [{numbers[item['evidence_revision_id']]}]："
+                                    + _citation(item),
                                     link=_anchor("evidence", item["evidence_revision_id"])))
     for gap in content["unresolved_gaps"]:
-        blocks.append(Block("Normal", f"缺口 {gap['gap_id']}，断言 {gap['claim_id']}："
-                     f"{gap['reason_code']}，{gap['rationale_summary']}"))
+        blocks.append(Block("Heading2", f"证据缺口 {gap_numbers[gap['gap_id']]}",
+                            anchor=_anchor("gap", gap["gap_id"])))
+        blocks.append(claim_link(gap["claim_id"]))
+        blocks.append(Block("Normal", f"{label(gap['reason_code'])}：{gap['rationale_summary']}"))
     blocks.append(Block("Normal", f"另有 {content['excluded_claim_count']} 条未审定断言未进入综合。"))
     blocks.append(Block("Heading1", "原文证据与定位"))
-    if not evidence_by_id:
+    if not evidence:
         blocks.append(Block("Normal", "本报告无已验证的原文证据。"))
-    for number, (evidence_id, item) in enumerate(sorted(evidence_by_id.items()), start=1):
+    for number, (evidence_id, item) in enumerate(sorted(evidence.items()), start=1):
         blocks.append(Block("Heading2", f"证据 {number} 《{item['source_title']}》",
                             anchor=_anchor("evidence", evidence_id)))
         blocks.append(Block("Normal", _citation(item)))
         blocks.append(Block("Quote", item["quote_text"]))
-        blocks.append(Block("Normal", f"来源 ID {item['source_id']}；"
-                     f"来源修订 ID {item['source_revision_id']}；"
-                     f"文本片段修订 ID {', '.join(item['segment_revision_ids'])}"))
     blocks.append(Block("Heading1", "研究过程"))
     for run in process["agent_runs"]:
-        blocks.append(Block("Normal", f"第 {run['round_no']} 轮 {run['role']}："
-                     f"{run['status']}；模型 {run['model_version']}；运行 {run['id']}"))
-    for audit in process["audits"]:
-        blocks.append(Block("Normal", f"审计 {audit['id']}：断言 {audit['claim_id']}；"
-                     f"第 {audit['sequence_no']} 次，{audit['stage']} / {audit['verdict']}；"
-                     f"{audit['rationale_summary']}"))
+        round_label = (f"第 {run['round_no'] + 1} 稿"
+                       if run["role"] in {"ReportWriter", "ReportReviewer"}
+                       else f"第 {run['round_no']} 轮" if run["round_no"] else "")
+        blocks.append(Block("Normal", f"{label(run['role'])} {round_label}："
+                     f"{label(run['status'])}；模型 {run['model_version']}"))
+    for number, audit in enumerate(process["audits"], start=1):
+        blocks.append(Block("Heading2", f"审计 {number} · {claim_label(audit['claim_id'])}"))
+        blocks.append(claim_link(audit["claim_id"]))
+        blocks.append(Block("Normal", f"第 {audit['sequence_no']} 次，"
+                     f"{label(audit['stage'])} / {label(audit['verdict'])}；"
+                     f"{audit_text(audit['rationale_summary'])}"))
     for critique in process["critiques"]:
-        blocks.append(Block("Normal", f"质疑 {critique['id']}：断言 "
-                     f"{critique['target_claim_id']}；{critique['issue_type']}；"
+        blocks.append(Block("Heading2", f"质疑 {critique_numbers[critique['id']]}",
+                            anchor=_anchor("critique", critique["id"])))
+        blocks.append(claim_link(critique["target_claim_id"]))
+        blocks.append(Block("Normal", f"{label(critique['issue_type'])}："
                      f"{critique['rationale_summary']}"))
-    for rebuttal in process["rebuttals"]:
-        blocks.append(Block("Normal", f"反驳 {rebuttal['id']}：质疑 {rebuttal['critique_id']}；"
-                     f"第 {rebuttal['round_no']} 轮 {rebuttal['action']}；"
+    for number, rebuttal in enumerate(process["rebuttals"], start=1):
+        blocks.append(Block("Heading2", f"回应 {number}"))
+        number = critique_numbers.get(rebuttal["critique_id"])
+        blocks.append(Block("Link", f"对应质疑 {number}" if number else "对应先前质疑",
+                            link=_anchor("critique", rebuttal["critique_id"]) if number else None))
+        blocks.append(Block("Normal", f"第 {rebuttal['round_no']} 轮，"
+                     f"{label(rebuttal['action'])}："
                      f"{rebuttal['rationale_summary']}"))
-    for stop in process["stop_evaluations"]:
-        blocks.append(Block("Normal", f"停止判断 {stop['id']}：第 {stop['round_no']} 轮，"
-                     f"{stop['decision']}；{stop['reason_code']}；输入哈希 {stop['input_hash']}"))
-    for review in process["human_reviews"]:
-        blocks.append(Block("Normal", f"人工复核 {review['id']}：{review['status']}；"
-                     f"{review['reason_code']}；{review['resolution_note'] or ''}"))
+    for number, stop in enumerate(process["stop_evaluations"], start=1):
+        blocks.append(Block("Normal", f"停止判断 {number}：第 {stop['round_no']} 轮，"
+                     f"{label(stop['decision'])}；{label(stop['reason_code'])}"))
+    for number, review in enumerate(process["human_reviews"], start=1):
+        blocks.append(Block("Normal", f"人工复核 {number}：{label(review['status'])}；"
+                     f"{label(review['reason_code'])}；{review['resolution_note'] or ''}"))
     blocks.append(Block("Heading1", "报告版本"))
-    blocks.append(Block("Normal", f"报告结构 {content['schema_version']}；"
-                 f"停止判断 {content['stop_evaluation_id']}；"
-                 f"运行指纹 {content['run_fingerprint']}"))
-    return blocks
+    metadata = process.get("report_metadata", {})
+    if metadata.get("revision_no"):
+        blocks.append(Block("Normal", f"报告修订：第 {metadata['revision_no']} 版"))
+    blocks.append(Block("Normal", "综合回答复核："
+                        + ("待修订" if content.get("review_status") == "NEEDS_REVISION"
+                           else "已通过" if content.get("answer") else "旧版报告无综合回答复核")))
+    if content.get("answer"):
+        blocks.append(Block("Normal", "回答复核：" + content["answer"]["review_summary"]))
+    # Review explanations can themselves contain internal references. Translate
+    # known references for display without rewriting saved reviews or quotations.
+    references = {key: claim_label(key) for key in claims}
+    references.update({key: f"证据 {number}" for key, number in numbers.items()})
+    references.update({key: f"质疑 {number}" for key, number in critique_numbers.items()})
+
+    def readable(value: str) -> str:
+        for key, name in references.items():
+            value = value.replace(f"claim {key}", name).replace(key, name)
+        return value
+
+    return [Block(block.style, readable(block.text) if block.style != "Quote" else block.text,
+                  anchor=block.anchor, link=block.link) for block in blocks]
 
 
 def _markdown_escape(value: str) -> str:
@@ -262,6 +353,8 @@ def render_docx(content: dict, process: dict) -> bytes:
         _w(props, "pStyle", val=block.style)
         if block.style in {"Title", "Heading1", "Heading2"}:
             _w(props, "keepNext")
+        if content.get("answer") and block.text == "附录：已审计观点":
+            _w(props, "pageBreakBefore")
         if block.anchor:
             _w(para, "bookmarkStart", id=str(number), name=block.anchor)
         run_parent = _w(para, "hyperlink", anchor=block.link) if block.link else para
@@ -294,6 +387,8 @@ def render_docx(content: dict, process: dict) -> bytes:
         ppr = _w(style, "pPr")
         _w(ppr, "spacing", before=before, after=after, line="320", lineRule="auto")
         _w(ppr, "widowControl")
+        if name in {"Heading1", "Heading2"}:
+            _w(ppr, "outlineLvl", val="0" if name == "Heading1" else "1")
         if name == "Quote":
             _w(ppr, "ind", left="420", right="260")
         rpr = _w(style, "rPr")
@@ -332,10 +427,11 @@ def queue_report_export(task_id: UUID, file_format: str, *,
         raise ValueError("report export format must be markdown or docx")
     with SessionLocal.begin() as session:
         report = session.scalar(select(StructuredReport).where(
-            StructuredReport.task_id == task_id))
+            StructuredReport.task_id == task_id).order_by(
+            StructuredReport.revision_no.desc()).limit(1))
         task = session.get(ResearchTask, task_id)
-        if report is None or task is None or task.status != "COMPLETED":
-            raise ValueError("only a completed research report can be exported")
+        if report is None or task is None:
+            raise ValueError("a saved research report is required for export")
         key = f"research.report_export:{report.id}:{file_format}:{RENDERER_VERSION}"
         session.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
                         {"key": key})
@@ -361,7 +457,10 @@ def queue_report_export(task_id: UUID, file_format: str, *,
                           resource_class=ResourceClass.EXPORT, actor_id=actor_id)
         export = ReportExport(id=new_id(), report_id=report.id, task_id=task_id,
                               file_format=file_format, renderer_version=RENDERER_VERSION,
-                              process_snapshot=_process_snapshot(session, task_id), job_id=job.id)
+                              process_snapshot={**_process_snapshot(session, task_id),
+                                                "report_metadata": {
+                                                    "revision_no": report.revision_no}},
+                              job_id=job.id)
         session.add(export)
         session.flush()
         append_event(session, event_type="research.report_export.queued",

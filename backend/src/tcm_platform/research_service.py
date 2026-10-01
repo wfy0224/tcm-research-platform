@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import or_, select, text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from tcm_platform.audit import append_event
@@ -31,7 +31,7 @@ from tcm_platform.models import (
     ResearchSubquestion,
     ResearchTask,
     SourceDocument,
-    SourceRevision,
+    StructuredReport,
     TaskEvidenceRef,
     TaskJob,
     utc_now,
@@ -163,7 +163,7 @@ def start_research_task(
             "source_ids": task.draft_scope["source_ids"],
             "knowledge_version_id": str(version.id),
             "index_build_id": str(build.id),
-            "workflow_version": "research-v1",
+            "workflow_version": "research-v3",
             "workflow_config": config.model_dump(mode="json"),
             "retrieval_profile_version": build.configuration.get("strategy", "hybrid-rrf-v1"),
             "retrieval_strategy": build.configuration.get("strategy", "hybrid-rrf-v1"),
@@ -175,10 +175,12 @@ def start_research_task(
             "outbound_source_ids": build.configuration.get("outbound_source_ids", []),
             "question_outbound_authorized": question_outbound_authorized,
             "roles": list(RESEARCH_ROLES),
-            "prompt_versions": {"Planner": "planner-v1", "Judge": "judge-v1",
-                                "EvidenceAuditor": "evidence-auditor-v1",
-                                "Critic": "critic-v1", "Rebuttal": "rebuttal-v1",
-                                **{role: f"{role.lower()}-v1" for role in RESEARCH_ROLES}},
+            "prompt_versions": {"Planner": "planner-v2", "Judge": "judge-v1",
+                                "EvidenceAuditor": "evidence-auditor-v2",
+                                "Critic": "critic-v3", "Rebuttal": "rebuttal-v1",
+                                "ReportWriter": "report-writer-v1",
+                                "ReportReviewer": "report-reviewer-v1",
+                                **{role: f"{role.lower()}-v2" for role in RESEARCH_ROLES}},
             "frozen_prompts": frozen_prompts(),
             "agent_schema": "research-agent-output/v1",
         }
@@ -310,7 +312,7 @@ def cancel_research_task(task_id: UUID, *, actor_id: str = "local-researcher") -
         if job.status == JobStatus.RUNNING.value:
             task.control_state = "CANCEL_REQUESTED"
         elif job.status in {JobStatus.PENDING.value, JobStatus.RETRY_WAIT.value,
-                            JobStatus.PAUSED.value}:
+                            JobStatus.PAUSED.value, JobStatus.FAILED.value}:
             task.control_state = "CANCELLED"
             task.status = "CANCELLED"
             job.status = JobStatus.CANCELLED.value
@@ -425,6 +427,63 @@ def add_task_evidence(
                          aggregate_id=evidence_request_id,
                          payload={"result_count": request.result_count})
         return new_count
+
+
+def retry_research_task(task_id: UUID, *, actor_id: str, idempotency_key: str) -> None:
+    """Resume exhausted infrastructure failures using the existing frozen run and checkpoints."""
+    with SessionLocal.begin() as session:
+        request_hash, replayed = _control_request_hash(
+            session, task_id, "retry", actor_id, idempotency_key)
+        if replayed:
+            return
+        job, task = _lock_research_control(session, task_id)
+        if task.status in {"COMPLETED", "CANCELLED", "WAITING_HUMAN"} or (
+            task.control_state != "ACTIVE" or task.execution_context is None
+        ):
+            raise ValueError("research task is not eligible for failure retry")
+        if job.status in {"PENDING", "RUNNING", "RETRY_WAIT"}:
+            return
+        if job.status != "FAILED":
+            raise ValueError("only an exhausted failed research job can retry")
+        append_event(session, event_type="research_task.failure_retried", actor_id=actor_id,
+                     aggregate_id=task.id, payload={"job_id": str(job.id),
+                                                  "previous_attempts": job.attempts,
+                                                  "request_hash": request_hash})
+        job.status = "PENDING"
+        job.attempts = 0
+        job.available_at = utc_now()
+        job.lease_owner = None
+        job.lease_expires_at = None
+        job.updated_at = utc_now()
+
+
+def revise_research_report(task_id: UUID, *, actor_id: str, idempotency_key: str) -> None:
+    """Request one bounded writing cycle while retaining every saved report revision."""
+    with SessionLocal.begin() as session:
+        request_hash, replayed = _control_request_hash(
+            session, task_id, "revise_report", actor_id, idempotency_key)
+        if replayed:
+            return
+        job, task = _lock_research_control(session, task_id)
+        report = session.scalar(select(StructuredReport).where(
+            StructuredReport.task_id == task_id).order_by(
+            StructuredReport.revision_no.desc()).limit(1))
+        if (task.status != "REPORT_REVIEW_REQUIRED" or task.control_state != "ACTIVE"
+                or job.status != "COMPLETED" or report is None
+                or report.content.get("review_status") != "NEEDS_REVISION"):
+            raise ValueError("only a saved revision-required report can be revised")
+        last_attempt = session.scalar(select(AgentRun.round_no).where(
+            AgentRun.task_id == task_id, AgentRun.role == "ReportWriter"
+        ).order_by(AgentRun.round_no.desc()).limit(1))
+        append_event(session, event_type="research_task.report_revision_requested",
+                     actor_id=actor_id, aggregate_id=task_id,
+                     payload={"request_hash": request_hash, "start_attempt": last_attempt + 1,
+                              "previous_report_id": str(report.id), "draft_budget": 3})
+        task.status = "REPORTING"
+        job.status, job.attempts, job.last_error = "PENDING", 0, None
+        job.available_at = utc_now()
+        job.lease_owner = job.lease_expires_at = None
+        job.updated_at = utc_now()
 
 
 def frozen_retrieval_clients(
@@ -552,24 +611,9 @@ def submit_first_round_output(
         if task.status != "RESEARCHING" or run.model_version != task.execution_context["generation_model"]:
             raise ValueError("AgentRun differs from frozen task context")
         visible = {UUID(value) for value in run.visible_evidence_ids}
-        if run.role == "HistoricalScholar" and output.claims:
-            historical_source = session.scalar(
-                select(SourceDocument.id)
-                .join(SourceRevision, SourceRevision.source_id == SourceDocument.id)
-                .join(EvidenceRevision, EvidenceRevision.source_revision_id == SourceRevision.id)
-                .where(
-                    EvidenceRevision.id.in_(visible),
-                    or_(
-                        SourceDocument.author.is_not(None),
-                        SourceDocument.era.is_not(None),
-                        SourceDocument.school.is_not(None),
-                        SourceDocument.edition.is_not(None),
-                        SourceDocument.publication_year.is_not(None),
-                    ),
-                )
-            )
-            if historical_source is None:
-                raise ValueError("HistoricalScholar requires explicit source history metadata")
+        # A quoted body may explicitly attribute a later interpretation even
+        # when bibliographic metadata is absent. This gate admits candidates;
+        # semantic audit decides whether the cited text supports their history.
         pool = {row.evidence_revision_id: row.id for row in session.scalars(
             select(TaskEvidenceRef).where(TaskEvidenceRef.task_id == run.task_id)
         )}

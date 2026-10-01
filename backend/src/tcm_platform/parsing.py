@@ -10,7 +10,7 @@ from defusedxml import ElementTree
 from defusedxml.common import DefusedXmlException
 from pypdf import PdfReader
 
-PARSER_VERSION = "source-parser/v2"
+PARSER_VERSION = "source-parser/v3"
 SUPPORTED_FORMATS = frozenset({"txt", "md", "docx", "pdf"})
 WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -32,6 +32,8 @@ class OCRRequired(SourceParseError):
 class ParsedPage:
     page_no: int
     text: str
+    # DOCX paragraph starts are authoritative; line breaks inside a paragraph are not.
+    paragraph_starts: list[int] | None = None
 
 
 @dataclass(frozen=True)
@@ -143,7 +145,11 @@ def parse_source_file(path: Path, file_format: str) -> ParsedDocument:
                 paragraphs.append(value)
         if not paragraphs:
             raise SourceParseError("EMPTY_TEXT", "DOCX contains no extractable text")
-        return ParsedDocument(file_format, [ParsedPage(1, "\n".join(paragraphs))], None, [])
+        starts, line_no = [], 1
+        for value in paragraphs:
+            starts.append(line_no)
+            line_no += len(value.split("\n"))
+        return ParsedDocument(file_format, [ParsedPage(1, "\n".join(paragraphs), starts)], None, [])
 
     try:
         reader = PdfReader(str(path))

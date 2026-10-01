@@ -53,7 +53,8 @@ def _load_parsed(store: ContentAddressedStore, digest: str) -> ParsedDocument:
     if len(payload) > MAX_PARSED_BYTES or hashlib.sha256(payload).hexdigest() != digest:
         raise ValueError("parsed artifact exceeds limit or checksum differs")
     data = json.loads(payload)
-    pages = [ParsedPage(page_no=int(p["page_no"]), text=str(p["text"])) for p in data["pages"]]
+    pages = [ParsedPage(page_no=int(p["page_no"]), text=str(p["text"]),
+                        paragraph_starts=p.get("paragraph_starts")) for p in data["pages"]]
     if not pages or any(page.page_no < 1 for page in pages):
         raise ValueError("parsed artifact has no valid pages")
     return ParsedDocument(

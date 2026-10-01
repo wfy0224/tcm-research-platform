@@ -1,0 +1,1551 @@
+{
+  "question": "比较麻黄汤和大青龙汤，分析大青龙汤中麻黄用量为什么比麻黄汤多",
+  "source": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+  "model_doubles": false,
+  "verified_at": "2026-10-01T13:59:02.775Z",
+  "task_id": "RT-01a0f788-b1a8-7cee-9e52-7cee5d555a58",
+  "model": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+  "task": {
+    "task_id": "RT-01a0f788-b1a8-7cee-9e52-7cee5d555a58",
+    "question": "比较麻黄汤和大青龙汤，分析大青龙汤中麻黄用量为什么比麻黄汤多",
+    "status": "COMPLETED",
+    "control_state": "ACTIVE",
+    "source_ids": [
+      "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350"
+    ],
+    "allowed_actions": [
+      "export"
+    ],
+    "job_id": "JOB-01a0f788-b28f-72ee-8a1f-ba401705fba4",
+    "report_available": true
+  },
+  "job": {
+    "job_id": "JOB-01a0f788-b28f-72ee-8a1f-ba401705fba4",
+    "job_type": "research.run",
+    "status": "COMPLETED",
+    "attempts": 3,
+    "max_attempts": 3,
+    "failure_reason": null
+  },
+  "details": {
+    "task_id": "RT-01a0f788-b1a8-7cee-9e52-7cee5d555a58",
+    "subquestions": [
+      {
+        "sequence_no": 1,
+        "question": "大青龙汤与麻黄汤在药物组成、主治证候及配伍结构上有何具体差异？"
+      },
+      {
+        "sequence_no": 2,
+        "question": "针对大青龙汤主治的‘太阳中风，脉浮紧，发热恶寒，身疼痛，不汗出而烦躁者’，其病机与麻黄汤证的核心区别是什么，这种区别如何体现在麻黄用量的增减上？"
+      },
+      {
+        "sequence_no": 3,
+        "question": "大青龙汤中麻黄用量的增加，与方中石膏的配伍存在何种关系？这种配伍关系对全方发汗与清里热的功效协同有何影响？"
+      },
+      {
+        "sequence_no": 4,
+        "question": "历代医家或方论中，对于大青龙汤中麻黄用量（如六两）与麻黄汤中麻黄用量（如三两）的差异，有哪些主要的解释或论述？这些解释是基于何种病机或治疗逻辑？"
+      }
+    ],
+    "evidence": [
+      {
+        "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-4c7b-7ca8-b19a-15572cedb8b7",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-3669-7048-a0dd-5360d486dd6d",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-27e2-7ac5-8044-65060e87caca",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-603b-7957-bc70-be7457283255",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-282d-7d31-adfa-501c70338250",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f760-1331-77c2-b3b5-d3d146ac1a39",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f760-138c-7a06-bd53-0fedd15fd8c7",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f759-95b3-7a4b-8e99-50747289cb21",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75b-a9a1-76ca-a5c6-b699f1a0b5d0",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-3877-7932-99b2-433359a27e48",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-33c0-764c-aaef-d536b7942a26",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-f904-766a-aaa7-b7e7db032f04",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-81f7-7df7-a437-3d68de880c3e",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-c432-75c1-abca-a0b0adeffa3d",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f757-8409-7abd-b90d-68df2539cd71",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f756-c37d-7b73-8b9c-c7432dbbf60b",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f757-7fc3-76fb-b549-647072fb2c08",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f756-3005-7659-aa5d-1f0ad3b15f68",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-138a-7bb0-888b-00bf2f7fb04e",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-13d8-7f45-a527-133fc8c9e705",
+        "revision_no": 1
+      }
+    ],
+    "agent_runs": [
+      {
+        "id": "RUN-9bf1a2ed058a21f9d890a424",
+        "role": "Classicist",
+        "round_no": 1,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-d3c9390eded4f4bd4ffb7bbc",
+        "role": "HistoricalScholar",
+        "round_no": 1,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-dd59afbefea39baad137822b",
+        "role": "Theorist",
+        "round_no": 1,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-b36375a59d2e0e56795bef9a",
+        "role": "Critic",
+        "round_no": 2,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": "已对输入的所有Claim进行逐项审查。审查覆盖了问题与子问题中关于药物组成差异、主治病机区别、麻黄增量与石膏配伍关系、历代医家解释等核心要点。所有Claim均有直接、明确的原文证据支持，未发现证据不足、过度推断、原文误读、时代边界混淆或明确矛盾之处。关于古制剂量，证据中同时列出了古制（如六两、三两）与现代克数换算（如12g、9g），但Claims中并未混淆口径，均以古制“六两”、“三两”进行对比，符合问题要求。论证边界清晰，未发现升级因果或依赖未给出资料的情况。因此，无实质质疑。"
+      },
+      {
+        "id": "RUN-78da28ebc69eaed6ba5bcb13",
+        "role": "Judge",
+        "round_no": 0,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-b133fccdb4d06472d9970c5b",
+        "role": "ReportWriter",
+        "round_no": 0,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-493368a53c7d33a1595f8a27",
+        "role": "ReportReviewer",
+        "round_no": 0,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-c7d3446e261386c2807836dc",
+        "role": "ReportWriter",
+        "round_no": 1,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-34ddc046b40a2035d86834b2",
+        "role": "ReportReviewer",
+        "round_no": 1,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-206f231002001791202708dc",
+        "role": "ReportWriter",
+        "round_no": 2,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-ba97bbf580f1baf8401c5dab",
+        "role": "ReportReviewer",
+        "round_no": 2,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-89641748115fa7aa006ec176",
+        "role": "ReportWriter",
+        "round_no": 3,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-4404fbd39e1e212869daaa2d",
+        "role": "ReportReviewer",
+        "round_no": 3,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-c637784ff1fc95ae7ae369a5",
+        "role": "ReportWriter",
+        "round_no": 4,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-7e2a8d709cda9e3f116a7f1a",
+        "role": "ReportReviewer",
+        "round_no": 4,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-e7ab4d5b85a87e27653093cc",
+        "role": "ReportWriter",
+        "round_no": 5,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-447cbf52bbeb156e79535ee4",
+        "role": "ReportReviewer",
+        "round_no": 5,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      }
+    ],
+    "claims": [
+      {
+        "id": "CLM-c2339b9c63afcca3641ad0f9",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-9bf1a2ed058a21f9d890a424",
+        "agent_role": "Classicist",
+        "claim_type": "DIRECT_TEXT",
+        "assertion_text": "大青龙汤与麻黄汤在药物组成上的具体差异是：大青龙汤由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。",
+        "rationale_summary": "证据中明确指出大青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。这直接说明了两个方剂在组成上的具体变化。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-8610759459e6f46c9fb39d38",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-9bf1a2ed058a21f9d890a424",
+        "agent_role": "Classicist",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤中麻黄用量的增加与方中石膏的配伍存在相互制约的关系：麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞。这种配伍关系使得全方在发汗解表的同时兼清里热，实现表里双解的功效协同。",
+        "rationale_summary": "证据阐述了大青龙汤的配伍关系，明确指出“麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞”。这说明了麻黄（用量大）与石膏（性大寒）配伍的相互制约、协同作用，共同达到发汗散寒兼清里热的目的。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-960397429c8babddba58bed0",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-9bf1a2ed058a21f9d890a424",
+        "agent_role": "Classicist",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤主治证候的核心区别在于兼有“内有郁热”而见“烦躁”，其病机为风寒束表、里有郁热，这区别于麻黄汤证的纯风寒表实。这种病机区别体现在麻黄用量上，大青龙汤倍用麻黄（六两）以确保其发汗之力，以开泄腠理、发汗散寒，同时配伍石膏清解内热。",
+        "rationale_summary": "证据指出大青龙汤主治“外感风寒，内有郁热证”，症见“不汗出而烦躁”，其病机为“风寒束表，里有郁热”。而麻黄汤主治“外感风寒表实证”，无烦躁。证据进一步说明大青龙汤“倍用麻黄”是“为确保其发汗之力”，以应对风寒重证兼内热的情况，这与麻黄汤仅用麻黄三两不同。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f755-3669-7048-a0dd-5360d486dd6d",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-e52f8c1f7417ee879d0312c9",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-d3c9390eded4f4bd4ffb7bbc",
+        "agent_role": "HistoricalScholar",
+        "claim_type": "HISTORICAL_FACT",
+        "assertion_text": "大青龙汤的药物组成是在麻黄汤基础上倍用麻黄和甘草，减少杏仁用量，并加入石膏、生姜、大枣而成。",
+        "rationale_summary": "证据中明确说明大青龙汤“系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成”，并列出两方具体药物组成，证实了药物组成的差异。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f755-3669-7048-a0dd-5360d486dd6d",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-8863cb7351519b30dd75889b",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-d3c9390eded4f4bd4ffb7bbc",
+        "agent_role": "HistoricalScholar",
+        "claim_type": "LATER_INTERPRETATION",
+        "assertion_text": "大青龙汤中麻黄用量倍于麻黄汤，是为了确保其发汗之力，以应对风寒束表更重、表气闭郁更甚的病机，同时配伍石膏以清解内热，防止麻黄辛温助热。",
+        "rationale_summary": "证据指出大青龙汤证属“风寒重证，兼内有郁热”，故“倍用麻黄以确保其发汗之力”，并配石膏“清解内热”。同时，麻黄与石膏配伍，使“麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞”，解释了麻黄增量与石膏配伍的关系。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-3c3392b5bd7f483bb57a9de6",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-d3c9390eded4f4bd4ffb7bbc",
+        "agent_role": "HistoricalScholar",
+        "claim_type": "LATER_INTERPRETATION",
+        "assertion_text": "柯琴在《伤寒来苏集》中解释大青龙汤麻黄用量增加的原因，认为其主治证“烦躁是热伤其气，无津不能作汗”，故倍用麻黄发汗，并加石膏生津，以达到“一汗而表里双解”的目的。",
+        "rationale_summary": "证据引用了柯琴的方论，指出大青龙汤证与麻黄汤证在“喘与烦躁”上的不同，认为烦躁是热伤气津，故加石膏生津，并“倍麻黄以发汗”，以实现表里双解。这提供了历代医家对麻黄用量差异的一种解释。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-dff6abd4c38f6be680a6e2ef",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-dd59afbefea39baad137822b",
+        "agent_role": "Theorist",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤与麻黄汤在药物组成上的主要差异在于，大青龙汤是在麻黄汤基础上倍用麻黄、甘草，减少杏仁用量，并加入石膏、生姜、大枣而成。",
+        "rationale_summary": "证据中明确指出大青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。这直接说明了二者在药物组成上的具体差异。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-25453023c8e0dbd7b372bdb4",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-dd59afbefea39baad137822b",
+        "agent_role": "Theorist",
+        "claim_type": "THEORETICAL_INFERENCE",
+        "assertion_text": "（推论）大青龙汤中麻黄用量倍于麻黄汤，其直接原因在于大青龙汤主治风寒束表、表气闭郁较重且内有郁热之证，需要更强的发汗开表之力以解除表闭，为清泄里热创造条件。",
+        "rationale_summary": "证据指出大青龙汤证属“风寒重证，兼内有郁热”，且其麻黄“量为麻黄汤之倍，则开泄腠理，发汗散寒之力尤峻”。这支持了麻黄增量是为了应对更重的表寒闭郁，从而强力发汗解表。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-28615d5e2a94eaec90bfe184",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-dd59afbefea39baad137822b",
+        "agent_role": "Theorist",
+        "claim_type": "THEORETICAL_INFERENCE",
+        "assertion_text": "（推论）大青龙汤中麻黄用量的增加与方中石膏的配伍存在相互制约、协同增效的关系：大量麻黄得石膏之寒，可防其辛温助热；大量石膏得麻黄之散，可防其寒凉遏表。这种配伍确保了在强力发汗的同时，能有效清解里热，实现表里双解。",
+        "rationale_summary": "证据中分析方解时提到“麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞”。这揭示了麻黄与石膏在药性上的相互制约与协同，是解释麻黄增量与石膏配伍关系的核心依据。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      }
+    ],
+    "audits": [
+      {
+        "id": "AUD-6e336b6a123776a756b61ec1",
+        "claim_id": "CLM-c2339b9c63afcca3641ad0f9",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-ae4c7d1acf1aff7d9551bc51",
+        "claim_id": "CLM-c2339b9c63afcca3641ad0f9",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据原文在【鉴别】部分明确指出：“大青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。” 这与断言文本完全一致。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-64aabeb3b76967f4eeaeb6e5",
+        "claim_id": "CLM-8610759459e6f46c9fb39d38",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-430f9a3fc0bb61f9e62dabaa",
+        "claim_id": "CLM-8610759459e6f46c9fb39d38",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据原文明确表述了'麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞'，这与断言中关于麻黄与石膏配伍相互制约关系的描述完全一致。原文也明确指出该方'发汗解表，兼清里热'，与断言中'实现表里双解的功效协同'相符。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-5b556f755ea4f032fa9ed797",
+        "claim_id": "CLM-960397429c8babddba58bed0",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f755-3669-7048-a0dd-5360d486dd6d",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-ec6634e97a28009fef11aabe",
+        "claim_id": "CLM-960397429c8babddba58bed0",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据明确支持了断言的所有核心点：1) 大青龙汤主治证候的核心区别在于兼有“内有郁热”而见“烦躁”，病机为“风寒束表、里有郁热”，区别于麻黄汤证的纯风寒表实；2) 这种病机区别体现在麻黄用量上，大青龙汤“倍用麻黄（六两）以确保其发汗之力，以开泄腠理、发汗散寒”；3) 同时配伍石膏清解内热。这些信息在证据中均有直接、明确的表述。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-b86e9a670715b23bfc3e12bd",
+        "claim_id": "CLM-e52f8c1f7417ee879d0312c9",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f755-3669-7048-a0dd-5360d486dd6d",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-bcba712b6a0fa74b871094e1",
+        "claim_id": "CLM-e52f8c1f7417ee879d0312c9",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据中明确说明大青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-33f533b8567dffbf81d20969",
+        "claim_id": "CLM-8863cb7351519b30dd75889b",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-cd81cba5ea90ff9002650877",
+        "claim_id": "CLM-8863cb7351519b30dd75889b",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据明确支持断言。证据指出大青龙汤中麻黄用量是麻黄汤的一倍，以确保其发汗之力，用于风寒束表更重、表气闭郁更甚的病机。同时，证据说明配伍石膏是为了清解内热，防止麻黄辛温助热，如‘石膏辛甘而寒，清里热并透郁热’和‘麻黄得石膏，辛温发表而无助热之弊’。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-db740d09849b349cb269d06b",
+        "claim_id": "CLM-3c3392b5bd7f483bb57a9de6",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-2e4457df85b5f67c2f00cef9",
+        "claim_id": "CLM-3c3392b5bd7f483bb57a9de6",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据中直接引用了柯琴《伤寒来苏集》的原文，明确解释了烦躁是“热伤其气，无津不能作汗”，因此“倍麻黄以发汗”并“加石膏之甘以生津”，以达到“一汗而表里双解”的目的，与Claim完全一致。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-d57042679b6a9fb2f5fe6b1e",
+        "claim_id": "CLM-dff6abd4c38f6be680a6e2ef",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-09a254e6a6d553955e8c35a1",
+        "claim_id": "CLM-dff6abd4c38f6be680a6e2ef",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据原文在【鉴别】部分明确说明“大青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成”，与断言完全一致。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-ec2f92f0b779fac3335d35bc",
+        "claim_id": "CLM-25453023c8e0dbd7b372bdb4",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-2a6795d980c3f3d562c2a732",
+        "claim_id": "CLM-25453023c8e0dbd7b372bdb4",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据明确指出大青龙汤中麻黄用量是麻黄汤的一倍，并解释其原因为‘风寒束表，表气闭郁较重’且‘内有郁热’，需要‘更强的发汗开表之力’以解除表闭，为清泄里热创造条件，这与Claim的推论完全一致。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-3a2688cfa5b3b8d33f66a757",
+        "claim_id": "CLM-28615d5e2a94eaec90bfe184",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-250816c945011beb88444eb8",
+        "claim_id": "CLM-28615d5e2a94eaec90bfe184",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "原文证据中明确阐述了麻黄与石膏的配伍关系：“麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞。”这直接支持了断言中关于麻黄与石膏相互制约、协同增效，以及实现表里双解的观点。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      }
+    ],
+    "canonical_claims": [
+      {
+        "id": "CAN-67479f496c70910af572cef6",
+        "claim_type": "DIRECT_TEXT",
+        "assertion_text": "大青龙汤与麻黄汤在药物组成上的具体差异是：大青龙汤由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。",
+        "members": [
+          {
+            "claim_id": "CLM-c2339b9c63afcca3641ad0f9",
+            "audit_id": "AUD-ae4c7d1acf1aff7d9551bc51"
+          }
+        ]
+      },
+      {
+        "id": "CAN-b49547c058bf8c6375f03a2b",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤中麻黄用量的增加与方中石膏的配伍存在相互制约的关系：麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞。这种配伍关系使得全方在发汗解表的同时兼清里热，实现表里双解的功效协同。",
+        "members": [
+          {
+            "claim_id": "CLM-8610759459e6f46c9fb39d38",
+            "audit_id": "AUD-430f9a3fc0bb61f9e62dabaa"
+          }
+        ]
+      },
+      {
+        "id": "CAN-5a0e31ee4083a1b3eec30199",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤主治证候的核心区别在于兼有“内有郁热”而见“烦躁”，其病机为风寒束表、里有郁热，这区别于麻黄汤证的纯风寒表实。这种病机区别体现在麻黄用量上，大青龙汤倍用麻黄（六两）以确保其发汗之力，以开泄腠理、发汗散寒，同时配伍石膏清解内热。",
+        "members": [
+          {
+            "claim_id": "CLM-960397429c8babddba58bed0",
+            "audit_id": "AUD-ec6634e97a28009fef11aabe"
+          }
+        ]
+      },
+      {
+        "id": "CAN-a168d18f64495298070abc05",
+        "claim_type": "HISTORICAL_FACT",
+        "assertion_text": "大青龙汤的药物组成是在麻黄汤基础上倍用麻黄和甘草，减少杏仁用量，并加入石膏、生姜、大枣而成。",
+        "members": [
+          {
+            "claim_id": "CLM-e52f8c1f7417ee879d0312c9",
+            "audit_id": "AUD-bcba712b6a0fa74b871094e1"
+          }
+        ]
+      },
+      {
+        "id": "CAN-d95ac064a54dec8d11dfcea4",
+        "claim_type": "LATER_INTERPRETATION",
+        "assertion_text": "大青龙汤中麻黄用量倍于麻黄汤，是为了确保其发汗之力，以应对风寒束表更重、表气闭郁更甚的病机，同时配伍石膏以清解内热，防止麻黄辛温助热。",
+        "members": [
+          {
+            "claim_id": "CLM-8863cb7351519b30dd75889b",
+            "audit_id": "AUD-cd81cba5ea90ff9002650877"
+          }
+        ]
+      },
+      {
+        "id": "CAN-e60ea75a14852bd67dea8cb7",
+        "claim_type": "LATER_INTERPRETATION",
+        "assertion_text": "柯琴在《伤寒来苏集》中解释大青龙汤麻黄用量增加的原因，认为其主治证“烦躁是热伤其气，无津不能作汗”，故倍用麻黄发汗，并加石膏生津，以达到“一汗而表里双解”的目的。",
+        "members": [
+          {
+            "claim_id": "CLM-3c3392b5bd7f483bb57a9de6",
+            "audit_id": "AUD-2e4457df85b5f67c2f00cef9"
+          }
+        ]
+      },
+      {
+        "id": "CAN-f83ef3e89864fea45ce113bd",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤与麻黄汤在药物组成上的主要差异在于，大青龙汤是在麻黄汤基础上倍用麻黄、甘草，减少杏仁用量，并加入石膏、生姜、大枣而成。",
+        "members": [
+          {
+            "claim_id": "CLM-dff6abd4c38f6be680a6e2ef",
+            "audit_id": "AUD-09a254e6a6d553955e8c35a1"
+          }
+        ]
+      },
+      {
+        "id": "CAN-5b208fe181acd8e9852d03ce",
+        "claim_type": "THEORETICAL_INFERENCE",
+        "assertion_text": "（推论）大青龙汤中麻黄用量倍于麻黄汤，其直接原因在于大青龙汤主治风寒束表、表气闭郁较重且内有郁热之证，需要更强的发汗开表之力以解除表闭，为清泄里热创造条件。",
+        "members": [
+          {
+            "claim_id": "CLM-25453023c8e0dbd7b372bdb4",
+            "audit_id": "AUD-2a6795d980c3f3d562c2a732"
+          }
+        ]
+      },
+      {
+        "id": "CAN-f1106d276786d7a3b444bb29",
+        "claim_type": "THEORETICAL_INFERENCE",
+        "assertion_text": "（推论）大青龙汤中麻黄用量的增加与方中石膏的配伍存在相互制约、协同增效的关系：大量麻黄得石膏之寒，可防其辛温助热；大量石膏得麻黄之散，可防其寒凉遏表。这种配伍确保了在强力发汗的同时，能有效清解里热，实现表里双解。",
+        "members": [
+          {
+            "claim_id": "CLM-28615d5e2a94eaec90bfe184",
+            "audit_id": "AUD-250816c945011beb88444eb8"
+          }
+        ]
+      }
+    ],
+    "debate": {
+      "critiques": [],
+      "evidence_requests": [],
+      "retrievals": [],
+      "rebuttals": []
+    },
+    "disputes": [],
+    "evidence_gaps": [],
+    "stop_evaluations": [
+      {
+        "id": "STP-3615a95770a6e87d20094b8f",
+        "round_no": 2,
+        "decision": "STOP",
+        "reason_code": "NO_CRITIQUES"
+      }
+    ],
+    "human_reviews": []
+  },
+  "retry_from": {
+    "task_id": "RT-01a0f788-b1a8-7cee-9e52-7cee5d555a58",
+    "job_id": "JOB-01a0f788-b28f-72ee-8a1f-ba401705fba4",
+    "task_status": "REPORTING",
+    "previous_attempts": 3
+  },
+  "report": {
+    "task_id": "RT-01a0f788-b1a8-7cee-9e52-7cee5d555a58",
+    "schema_version": "research-report/v2",
+    "content_hash": "218664a5f307a02f13fe1838987ab824515e8067ed33c4477191b20791be0568",
+    "question": "比较麻黄汤和大青龙汤，分析大青龙汤中麻黄用量为什么比麻黄汤多",
+    "counts": {
+      "DISPUTED": 0,
+      "UNRESOLVED": 0,
+      "CONDITIONAL": 2,
+      "UNSUPPORTED": 0,
+      "HIGH_CONFIDENCE": 7
+    },
+    "sections": {
+      "DISPUTED": [],
+      "UNRESOLVED": [],
+      "CONDITIONAL": [
+        {
+          "assertion_text": "（推论）大青龙汤中麻黄用量的增加与方中石膏的配伍存在相互制约、协同增效的关系：大量麻黄得石膏之寒，可防其辛温助热；大量石膏得麻黄之散，可防其寒凉遏表。这种配伍确保了在强力发汗的同时，能有效清解里热，实现表里双解。",
+          "claim_type": "THEORETICAL_INFERENCE",
+          "agent_role": "Theorist",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "原文证据中明确阐述了麻黄与石膏的配伍关系：“麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞。”这直接支持了断言中关于麻黄与石膏相互制约、协同增效，以及实现表里双解的观点。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "assertion_text": "（推论）大青龙汤中麻黄用量倍于麻黄汤，其直接原因在于大青龙汤主治风寒束表、表气闭郁较重且内有郁热之证，需要更强的发汗开表之力以解除表闭，为清泄里热创造条件。",
+          "claim_type": "THEORETICAL_INFERENCE",
+          "agent_role": "Theorist",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "证据明确指出大青龙汤中麻黄用量是麻黄汤的一倍，并解释其原因为‘风寒束表，表气闭郁较重’且‘内有郁热’，需要‘更强的发汗开表之力’以解除表闭，为清泄里热创造条件，这与Claim的推论完全一致。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        }
+      ],
+      "UNSUPPORTED": [],
+      "HIGH_CONFIDENCE": [
+        {
+          "assertion_text": "大青龙汤中麻黄用量的增加与方中石膏的配伍存在相互制约的关系：麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞。这种配伍关系使得全方在发汗解表的同时兼清里热，实现表里双解的功效协同。",
+          "claim_type": "TEXTUAL_RELATION",
+          "agent_role": "Classicist",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "证据原文明确表述了'麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞'，这与断言中关于麻黄与石膏配伍相互制约关系的描述完全一致。原文也明确指出该方'发汗解表，兼清里热'，与断言中'实现表里双解的功效协同'相符。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "assertion_text": "大青龙汤与麻黄汤在药物组成上的具体差异是：大青龙汤由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。",
+          "claim_type": "DIRECT_TEXT",
+          "agent_role": "Classicist",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "证据原文在【鉴别】部分明确指出：“大青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。” 这与断言文本完全一致。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "assertion_text": "大青龙汤主治证候的核心区别在于兼有“内有郁热”而见“烦躁”，其病机为风寒束表、里有郁热，这区别于麻黄汤证的纯风寒表实。这种病机区别体现在麻黄用量上，大青龙汤倍用麻黄（六两）以确保其发汗之力，以开泄腠理、发汗散寒，同时配伍石膏清解内热。",
+          "claim_type": "TEXTUAL_RELATION",
+          "agent_role": "Classicist",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "证据明确支持了断言的所有核心点：1) 大青龙汤主治证候的核心区别在于兼有“内有郁热”而见“烦躁”，病机为“风寒束表、里有郁热”，区别于麻黄汤证的纯风寒表实；2) 这种病机区别体现在麻黄用量上，大青龙汤“倍用麻黄（六两）以确保其发汗之力，以开泄腠理、发汗散寒”；3) 同时配伍石膏清解内热。这些信息在证据中均有直接、明确的表述。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "assertion_text": "柯琴在《伤寒来苏集》中解释大青龙汤麻黄用量增加的原因，认为其主治证“烦躁是热伤其气，无津不能作汗”，故倍用麻黄发汗，并加石膏生津，以达到“一汗而表里双解”的目的。",
+          "claim_type": "LATER_INTERPRETATION",
+          "agent_role": "HistoricalScholar",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "证据中直接引用了柯琴《伤寒来苏集》的原文，明确解释了烦躁是“热伤其气，无津不能作汗”，因此“倍麻黄以发汗”并“加石膏之甘以生津”，以达到“一汗而表里双解”的目的，与Claim完全一致。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "assertion_text": "大青龙汤的药物组成是在麻黄汤基础上倍用麻黄和甘草，减少杏仁用量，并加入石膏、生姜、大枣而成。",
+          "claim_type": "HISTORICAL_FACT",
+          "agent_role": "HistoricalScholar",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "证据中明确说明大青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "assertion_text": "大青龙汤中麻黄用量倍于麻黄汤，是为了确保其发汗之力，以应对风寒束表更重、表气闭郁更甚的病机，同时配伍石膏以清解内热，防止麻黄辛温助热。",
+          "claim_type": "LATER_INTERPRETATION",
+          "agent_role": "HistoricalScholar",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "证据明确支持断言。证据指出大青龙汤中麻黄用量是麻黄汤的一倍，以确保其发汗之力，用于风寒束表更重、表气闭郁更甚的病机。同时，证据说明配伍石膏是为了清解内热，防止麻黄辛温助热，如‘石膏辛甘而寒，清里热并透郁热’和‘麻黄得石膏，辛温发表而无助热之弊’。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "assertion_text": "大青龙汤与麻黄汤在药物组成上的主要差异在于，大青龙汤是在麻黄汤基础上倍用麻黄、甘草，减少杏仁用量，并加入石膏、生姜、大枣而成。",
+          "claim_type": "TEXTUAL_RELATION",
+          "agent_role": "Theorist",
+          "audit_verdict": "SUPPORTED",
+          "audit_rationale": "证据原文在【鉴别】部分明确说明“大青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成”，与断言完全一致。",
+          "reason_type": "AUDIT",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        }
+      ]
+    },
+    "open_disputes": [],
+    "unresolved_gaps": [],
+    "excluded_claim_count": 0,
+    "answer": {
+      "paragraphs": [
+        {
+          "text": "大青龙汤中麻黄用量比麻黄汤多，主要是为了应对其主治证候中更重的风寒束表与表气闭郁，并确保有足够的发汗之力以解除表闭，为清泄里热创造条件。麻黄汤主治单纯的风寒表实证，而大青龙汤主治的是“风寒束表，里有郁热”之证，其病机特点是外感风寒较重，表气闭郁更甚，导致阳气内郁化热，出现“不汗出而烦躁”的核心症状。因此，方中麻黄用量倍于麻黄汤，旨在增强开泄腠理、发汗散寒的峻猛之力，以强力打开表闭。",
+          "kind": "explanation",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "text": "麻黄用量的增加与方中配伍石膏密切相关，二者形成了相互制约、协同增效的配伍关系。大青龙汤是在麻黄汤基础上倍用麻黄和甘草，减少杏仁用量，再加入石膏、生姜、大枣而成。加入的石膏性寒，用以清解内热。根据方论解释，这种配伍使得“麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏之虞”。这意味着，大量麻黄借助石膏的寒性，可以防止其辛温之性助长内热；而大量石膏借助麻黄的宣散之性，可以防止其寒凉之性遏制表邪外透。这种寒温并用、表里同治的配伍，是麻黄得以倍用而不致助热的关键。",
+          "kind": "explanation",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        },
+        {
+          "text": "后世医家也从病机角度解释了麻黄加量的原因。例如，柯琴认为，大青龙汤证见“烦躁是热伤其气，无津不能作汗”，因此需要“倍麻黄以发汗”，并加入石膏生津，以达到“一汗而表里双解”的目的。这一解释进一步说明了麻黄加量是为了解决因热伤气津导致的汗源不足和汗出不畅问题，通过强力发汗来同时解除表寒与里热。需要指出的是，以上分析基于传统方剂理论对药物配伍与病机关系的阐释，其具体机制和临床有效性需结合更多实践来验证。",
+          "kind": "explanation",
+          "evidence": [
+            {
+              "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+              "evidence_revision_no": 1,
+              "source_id": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+              "source_title": "方剂学（麻黄汤与大青龙汤研究）",
+              "source_edition": null,
+              "source_revision_no": 2,
+              "quote_text": "【组成】麻黄去节，六两(12g) 桂枝二两(6g)甘草炙，二两(6g)杏仁去皮尖，四十粒(6g)石\n膏如鸡子大，碎(18g)生姜三两(9g)大枣十二枚，擘(6g)\n【用法】上七味，以水九升，先煮麻黄，减二升，去上沫，内诸药，煮取三升，去滓，温服\n一升，取微似汗。汗出多者，温粉扑之。一服汗者，停后服。若复服，汗多亡阳，遂虚，恶风烦\n躁，不得眠也(现代用法：水煎温服，取微汗)。\n【功用】发汗解表，兼清里热。\n【主治】\n1.外感风寒，内有郁热证。恶寒发热，头身疼痛，不汗出而烦躁，脉浮紧。\n2.溢饮。身体疼重，或四肢浮肿，恶寒身热，无汗，烦躁，脉浮紧。\n【证治机理】风寒束表，卫阳被遏，营阴郁滞，毛窍闭塞，故见恶寒发热、头身疼痛、无\n汗、脉浮紧之风寒表实证。表寒证又与烦躁、口渴并见，当系阳盛之体，外受风寒，寒邪较甚，\n表气闭郁较重，致使阳气内郁而化热，热邪伤津则口渴；热无宣泄之径，扰于胸中则烦，烦甚\n则躁。正如张秉成所谓：“阳盛之人，外为风寒骤加，则阳气内郁而不伸，故见燥烦不宁之象。”\n(《成方便读》)此证为风寒束表，里有郁热。法当发汗解表为主，兼清郁热。\n《金匮要略》又以本方治疗外感风寒，水饮内郁化热之溢饮。溢饮乃“饮水流行，归于四\n肢，当汗出而不汗出，身体疼重”之病证。风寒外束，水饮溢于四肢，则身体疼痛或浮肿，饮邪\n郁而化热则烦躁。二者病症虽异，但同属风寒束表、里有郁热之证，故皆用本方以异病同治。\n【方解】方中麻黄为君，发汗解表、宣肺平喘、利水消肿，其量为麻黄汤之倍，则开泄腠\n理，发汗散寒之力尤峻。桂枝辛温，解肌发汗，助麻黄解表而和营卫；石膏辛甘而寒，清里热并\n透郁热，二者同为臣药。麻黄得石膏，辛温发表而无助热之弊；石膏得麻黄，大寒清热而无凉遏\n之虞。杏仁降利肺气，与麻黄相合，宣降肺气，以适肺性；生姜、大枣合用则和脾胃、调营卫，\n兼助解表、益汗源，共为佐药。甘草益气和中，既缓辛温峻散之力，又调和诸药，且防石膏寒凉\n伤中，为佐使药。诸药相伍，寒温并用，发汗散寒之中又兼清解里热之效。\n本方麻黄发汗解表，桂枝温阳化气，生姜温胃散水，皆助麻黄发汗行水。麻黄、杏仁宣降肺\n气以通调水道；石膏清泄溢饮郁热；姜、枣、草益气和中，和营卫，运化水湿。全方发汗解表，\n宣通腠理，开鬼门以发越水气；宣降肺气，通调水道以利湿化饮，故亦治溢饮有表证兼里热者。\n【运用】本方为治疗外感风寒，里兼郁热证之常用方。以恶寒发热，无汗，烦躁，脉浮紧为\n辨证要点。表虚者，不可用，故原书强调：“若脉微弱，汗出恶风者，不可服。”本方发汗之功居\n解表诸方之冠，故“一服得汗者，停后服”,以防过剂；原书要求“取微似汗”“汗出多者，温粉\n扑之”。\n【鉴别】大青龙汤与麻黄汤均可治疗外感风寒表实证，同用麻黄、桂枝辛温解表发汗。然大\n青龙汤系由麻黄汤倍用麻黄、甘草，减少杏仁用量，再加石膏、生姜、大枣而成。证属风寒重\n证，兼内有郁热，故方中配以辛甘大寒之石膏以清解内热；且倍用麻黄以确保其发汗之力；减杏\n仁用量，乃因无喘逆之症。\n【方论选录】此即加味麻黄汤也。诸症全是麻黄，而有喘与烦躁之不同。喘者是寒郁其气，\n升降不得自如，故多杏仁之苦以降气；烦躁是热伤其气，无津不能作汗，故特加石膏之甘以生\n津。然其质沉，其性寒，恐其内热顿除，而外之表邪不解，变为寒中而协热下利，是引贼破家\n矣。故必倍麻黄以发汗，又倍甘草以和中，更用姜、枣以调营卫，一汗而表里双解，风热两除。\n此大青龙清内攘外之功，所以佐麻、桂二方之不及也。(柯琴《伤寒来苏集·伤寒论注》卷二)",
+              "context_before": "《伤寒论》",
+              "context_after": "【医案举例】何保义从王太尉军中，得伤寒，脉浮涩而紧。许叔微曰：“若头痛，发热，恶\n风无汗，则麻黄证也；烦躁，则青龙汤证也。”何曰：“今烦躁甚。”投以大青龙汤，三投汗解。",
+              "citation_locator": {
+                "end": {
+                  "path": "paragraph:194",
+                  "page_no": 1,
+                  "line_end": 935,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 935,
+                  "paragraph_no": 194,
+                  "physical_lines": [
+                    {
+                      "line_no": 935,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "start": {
+                  "path": "paragraph:180",
+                  "page_no": 1,
+                  "line_end": 883,
+                  "page_end": 1,
+                  "chapter_no": null,
+                  "line_start": 882,
+                  "paragraph_no": 180,
+                  "physical_lines": [
+                    {
+                      "line_no": 882,
+                      "page_no": 1
+                    },
+                    {
+                      "line_no": 883,
+                      "page_no": 1
+                    }
+                  ]
+                },
+                "source_revision_id": "01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc"
+              },
+              "evidence_strength": "DIRECT"
+            }
+          ]
+        }
+      ],
+      "review_summary": "逐项复核结果：\n1.  第一段：引用了 claim_ids [01a0f78a-0afa-72aa-821c-db10ff4b420d, 01a0f7a3-3d3e-7a30-aea7-3a03fef27bf6, 01a0f7a4-51cb-7602-9f11-8d5fa2fcb1a0]。段落内容正确复述并综合了所引观点，包括大青龙汤与麻黄汤主治证候（风寒束表、里有郁热 vs. 纯风寒表实）及病机（表气闭郁更重）的区别，以及麻黄倍用以增强发汗之力、开泄腠理的原因。所有表述均有原文支持，未引入新事实或因果。\n2.  第二段：引用了 claim_ids [01a0f78a-0afa-7185-99e3-bf97ed129306, 01a0f7a3-3d3e-735d-ac83-9645ee932bbd, 01a0f78a-0afa-70c5-8ba2-6a0cb0f6b245, 01a0f7a4-51cb-733c-8392-2b935de19b84]。段落内容正确阐述了药物组成的差异（倍麻黄、甘草，加石膏等），并重点分析了麻黄与石膏配伍的相互制约关系（麻黄得石膏无助热，石膏得麻黄无凉遏），解释了麻黄得以倍用的配伍学原理。所有核心论述均有对应原文支持。\n3.  第三段：引用了 claim_id [01a0f7a3-3d3e-70c6-aa36-00bae1b8f989]。段落准确引用了柯琴的方论，解释了麻黄加量是为了解决“热伤其气，无津不能作汗”的问题，以达到“一汗而表里双解”的目的。内容与原文一致。\n全文各段落均直接回答了问题（分析大青龙汤中麻黄用量为什么比麻黄汤多），基于所引用的已审核观点进行了合理的综合与阐述，未发现越界、误引、遗漏关键限定、引入新事实或因果、混淆古今剂量等问题。因此，accepted 为 true。"
+    }
+  },
+  "outcome": "COMPLETED_WITH_REVIEWED_NARRATIVE"
+}

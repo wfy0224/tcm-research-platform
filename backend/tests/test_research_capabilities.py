@@ -55,7 +55,7 @@ def test_missing_model_reports_actionable_configuration_reason(
     response = client.get(PATH)
     assert response.status_code == 200
     assert response.json()["models"] == []
-    assert "TCM_RESEARCH_MODEL" in response.json()["unavailable_reason"]
+    assert "模型设置" in response.json()["unavailable_reason"]
 
 
 @pytest.mark.parametrize("provider,model", [

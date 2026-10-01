@@ -1,0 +1,9 @@
+{
+  "reading_segments": 4211,
+  "covered_paragraphs": 4211,
+  "total_chunks": 843,
+  "reviewed_chunks": 843,
+  "failed": [],
+  "simulated_data": false,
+  "selection_based_on_answer": false
+}

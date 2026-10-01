@@ -1,0 +1,15 @@
+{
+  "synthetic": true,
+  "checks": [
+    "EV-start",
+    "EV-middle",
+    "EV-end",
+    "sentence target",
+    "evidence failure/retry",
+    "segment failure/retry",
+    "missing target blocks false focus",
+    "return original revision and long-document paragraph",
+    "report citation and return to selected task/tab"
+  ],
+  "model_calls": 0
+}

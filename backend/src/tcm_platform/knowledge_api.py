@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
+from sqlalchemy.orm import aliased
 
 from tcm_platform.api_contract import (
     Actor,
@@ -25,6 +26,10 @@ from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal
 from tcm_platform.enums import ResourceClass
 from tcm_platform.knowledge_extraction import EXTRACTOR_VERSION, extract_source_candidates
+from tcm_platform.knowledge_formula_provenance import (
+    FormulaFieldSourceSpec,
+    validate_formula_field_sources,
+)
 from tcm_platform.knowledge_publish import (
     ISSUE_TARGETS,
     REVIEW_TARGETS,
@@ -32,6 +37,7 @@ from tcm_platform.knowledge_publish import (
     compare_knowledge_versions,
     create_knowledge_version,
     open_quality_issue,
+    preview_snapshot_items,
     resolve_quality_issue,
     review_object,
     supersede_reviewed_object,
@@ -79,6 +85,7 @@ from tcm_platform.publication_config import (
     publication_configuration,
     validate_local_configuration,
 )
+from tcm_platform.segmentation import PARAGRAPH_TYPES
 from tcm_platform.source_import import SourceMetadata, import_file
 
 router = APIRouter(prefix="/api/v1/knowledge", tags=["knowledge"])
@@ -140,6 +147,14 @@ class IngredientDraft(StrictModel):
     processing: str | None = None
 
 
+class FormulaFieldDraft(StrictModel):
+    field_key: str = Field(min_length=1, max_length=100)
+    segment_ref: str
+    start_offset: int = Field(ge=0)
+    end_offset: int = Field(gt=0)
+    basis: str | None = Field(default=None, max_length=4000)
+
+
 class FormulaDraft(StrictModel):
     original_name: str = Field(min_length=1, max_length=300)
     evidence_id: str
@@ -154,11 +169,19 @@ class FormulaDraft(StrictModel):
     dosage_form: str | None = None
     preparation: str | None = None
     cautions: str | None = None
+    field_sources: list[FormulaFieldDraft] = Field(default_factory=list, max_length=1000)
 
 
 class ReviewRequest(StrictModel):
     decision: Literal["APPROVE", "REJECT"]
-    note: str = Field(min_length=1, max_length=4000)
+    note: str = Field(default="", max_length=4000)
+
+
+class BatchReviewRequest(ReviewRequest):
+    source_id: str
+    source_revision_no: int = Field(ge=1)
+    kinds: list[Literal["evidence_revision", "formula_revision", "concept", "herb", "relation"]] = Field(
+        default_factory=lambda: ["evidence_revision", "formula_revision"], min_length=1, max_length=5)
 
 
 class IssueRequest(StrictModel):
@@ -179,6 +202,7 @@ class SupersedeRequest(StrictModel):
 
 
 class PublishRequest(StrictModel):
+    activate_on_success: bool = True
     strategy: Literal["local-fts-exact-v1", "hybrid-rrf-v1"] | None = None
     embedding_model: str | None = Field(default=None, min_length=1, max_length=200)
     rerank_model: str | None = Field(default=None, min_length=1, max_length=200)
@@ -395,6 +419,7 @@ def source_detail(source_public_id: str, actor: Annotated[Actor, Depends(_read_a
                 "language": source.language, "copyright_status": source.copyright_status,
                 "source_type": source.source_type, "status": source.status,
                 "data_level": source.data_level, "outbound_authorized": source.outbound_authorized,
+                "outbound_reason": revisions[-1].metadata_snapshot.get("outbound_reason") if revisions else None,
                 "revisions": [{"revision_no": row.revision_no, "file_format": row.file_format,
                                "file_size_bytes": row.file_size_bytes,
                                "status": jobs[row.id].status if row.id in jobs else "UNKNOWN",
@@ -406,14 +431,17 @@ def source_detail(source_public_id: str, actor: Annotated[Actor, Depends(_read_a
 def source_segments(source_public_id: str, revision_no: int,
                     actor: Annotated[Actor, Depends(_read_actor)],
                     limit: int = Query(default=100, ge=1, le=500),
-                    after: int = Query(default=-1, ge=-1)):
+                    after: int = Query(default=-1, ge=-1),
+                    view: Literal["all", "reading"] = "all"):
     with SessionLocal() as session:
         revision = _revision(
             session, "source_revision", f"{source_public_id}@{revision_no}", actor)
-        rows = session.scalars(select(TextSegmentRevision).where(
+        query = select(TextSegmentRevision).where(
             TextSegmentRevision.source_revision_id == revision.id,
-            TextSegmentRevision.sequence_no > after).order_by(
-                TextSegmentRevision.sequence_no).limit(limit)).all()
+            TextSegmentRevision.sequence_no > after)
+        if view == "reading":
+            query = query.where(TextSegmentRevision.segment_type != "SENTENCE")
+        rows = session.scalars(query.order_by(TextSegmentRevision.sequence_no).limit(limit)).all()
         return [{"segment_id": session.get(TextSegment, row.segment_id).public_id,
                  "source_revision_no": revision_no, "sequence_no": row.sequence_no,
                  "segment_type": row.segment_type, "original_text": row.original_text,
@@ -544,18 +572,27 @@ def draft_evidence(payload: EvidenceDraft, actor: Annotated[Actor, Depends(_writ
 @router.get("/evidence")
 def list_evidence(actor: Annotated[Actor, Depends(_read_actor)],
                   source_id: str | None = None, version_id: str | None = None,
-                  limit: int = Query(default=50, ge=1, le=100)):
+                  limit: int = Query(default=50, ge=1, le=100),
+                  offset: int = Query(default=0, ge=0),
+                  source_revision_no: int | None = Query(default=None, ge=1)):
+    if source_revision_no is not None and source_id is None:
+        raise ApiError("INVALID_SOURCE_FILTER", status=422, category="validation",
+                       detail="source_revision_no requires source_id")
     with SessionLocal() as session:
         query = select(EvidenceRevision).join(Evidence).order_by(
             EvidenceRevision.created_at.desc(), EvidenceRevision.id.desc())
-        if source_id:
+        if source_id is not None:
             query = query.where(Evidence.source_id == resolve_public_id(session, "source", source_id, actor))
+            if source_revision_no is not None:
+                revision = _revision(session, "source_revision",
+                                     f"{source_id}@{source_revision_no}", actor)
+                query = query.where(EvidenceRevision.source_revision_id == revision.id)
         if version_id:
             version = resolve_public_id(session, "knowledge_version", version_id, actor)
             query = query.join(KnowledgeVersionItem,
                                KnowledgeVersionItem.evidence_revision_id == EvidenceRevision.id).where(
                                    KnowledgeVersionItem.knowledge_version_id == version)
-        return [_evidence_view(session, row) for row in session.scalars(query.limit(limit))]
+        return [_evidence_view(session, row) for row in session.scalars(query.offset(offset).limit(limit))]
 
 
 @router.post("/evidence/batch")
@@ -583,7 +620,40 @@ def evidence_detail(evidence_public_id: str,
         if row is None:
             raise ApiError("RESOURCE_NOT_FOUND", status=404, category="reference",
                            detail="evidence revision does not exist")
-        return _evidence_view(session, row)
+        detail = _evidence_view(session, row)
+        # Frozen evidence retains its original context excerpts. For reading,
+        # resolve whole adjacent siblings from the same immutable source revision.
+        anchors = session.scalars(select(TextSegmentRevision).join(
+            TextSegment, TextSegment.id == TextSegmentRevision.segment_id
+        ).where(
+            TextSegmentRevision.source_revision_id == row.source_revision_id,
+            TextSegment.public_id.in_(detail["segment_ids"]),
+        ).order_by(TextSegmentRevision.sequence_no)).all()
+
+        def adjacent(anchor, *, before):
+            query = select(TextSegmentRevision).where(
+                TextSegmentRevision.source_revision_id == row.source_revision_id,
+                TextSegmentRevision.parent_segment_id == anchor.parent_segment_id,
+            )
+            query = query.where(
+                TextSegmentRevision.segment_type.in_(PARAGRAPH_TYPES)
+                if anchor.segment_type in PARAGRAPH_TYPES
+                else TextSegmentRevision.segment_type == anchor.segment_type
+            )
+            query = query.where(
+                TextSegmentRevision.sequence_no < anchor.sequence_no if before
+                else TextSegmentRevision.sequence_no > anchor.sequence_no
+            ).order_by(
+                TextSegmentRevision.sequence_no.desc() if before
+                else TextSegmentRevision.sequence_no.asc()
+            ).limit(1)
+            sibling = session.scalar(query)
+            return sibling.original_text if sibling else ""
+
+        detail.update(full_context_before=adjacent(anchors[0], before=True),
+                      full_context_after=adjacent(anchors[-1], before=False),
+                      context_complete=True)
+        return detail
 
 
 @router.post("/drafts/concepts", status_code=201)
@@ -643,6 +713,12 @@ def draft_formula(payload: FormulaDraft, actor: Annotated[Actor, Depends(_write_
             amount_original=row.amount_original, amount_normalized=row.amount_normalized,
             unit=row.unit, dose_ratio=row.dose_ratio, role=row.role,
             processing=row.processing) for row in payload.ingredients)
+        field_sources = tuple(FormulaFieldSourceSpec(
+            field_key=row.field_key, evidence_revision_id=revision.id,
+            segment_revision_id=_revision(
+                session, "text_segment_revision", row.segment_ref, actor).id,
+            start_offset=row.start_offset, end_offset=row.end_offset,
+            basis=row.basis) for row in payload.field_sources)
     try:
         revision_id = create_formula(payload.original_name, evidence_revision_id=revision.id,
                                      ingredients=ingredients, formula_id=formula_id,
@@ -650,6 +726,7 @@ def draft_formula(payload: FormulaDraft, actor: Annotated[Actor, Depends(_write_
                                      indications=payload.indications, effects=payload.effects,
                                      method=payload.method, dosage_form=payload.dosage_form,
                                      preparation=payload.preparation, cautions=payload.cautions,
+                                     field_sources=field_sources,
                                      actor_id=actor.actor_id)
     except ValueError as exc:
         raise _invalid(exc) from exc
@@ -662,11 +739,45 @@ def draft_formula(payload: FormulaDraft, actor: Annotated[Actor, Depends(_write_
 @router.get("/drafts/{kind}")
 def list_drafts(kind: Literal["concept", "relation", "herb", "formula_revision"],
                 actor: Annotated[Actor, Depends(_read_actor)],
-                limit: int = Query(default=50, ge=1, le=100)):
+                limit: int = Query(default=50, ge=1, le=100),
+                offset: int = Query(default=0, ge=0),
+                include_history: bool = False,
+                source_id: str | None = None,
+                source_revision_no: int | None = Query(default=None, ge=1)):
     models = {"concept": Concept, "relation": KnowledgeRelation,
               "herb": Herb, "formula_revision": FormulaRevision}
+    links = {
+        "concept": (ConceptEvidence, ConceptEvidence.concept_id),
+        "relation": (RelationEvidence, RelationEvidence.relation_id),
+        "herb": (HerbEvidence, HerbEvidence.herb_id),
+        "formula_revision": (FormulaEvidence, FormulaEvidence.formula_revision_id),
+    }
+    if source_revision_no is not None and source_id is None:
+        raise ApiError("INVALID_SOURCE_FILTER", status=422, category="validation",
+                       detail="source_revision_no requires source_id")
     with SessionLocal() as session:
-        rows = session.scalars(select(models[kind]).order_by(models[kind].created_at.desc()).limit(limit))
+        model = models[kind]
+        query = select(model)
+        if kind == "formula_revision" and not include_history:
+            historical = aliased(FormulaRevision)
+            latest = select(func.max(historical.revision_no)).where(
+                historical.formula_id == FormulaRevision.formula_id).scalar_subquery()
+            query = query.where(FormulaRevision.revision_no == latest)
+        if source_id is not None:
+            internal_source_id = resolve_public_id(session, "source", source_id, actor)
+            source_filter = [SourceRevision.source_id == internal_source_id]
+            if source_revision_no is not None:
+                revision = _revision(session, "source_revision",
+                                     f"{source_id}@{source_revision_no}", actor)
+                source_filter.append(SourceRevision.id == revision.id)
+            link_model, target_field = links[kind]
+            linked_source = select(link_model.id).join(
+                EvidenceRevision, EvidenceRevision.id == link_model.evidence_revision_id
+            ).join(SourceRevision, SourceRevision.id == EvidenceRevision.source_revision_id).where(
+                target_field == model.id, *source_filter
+            ).exists()
+            query = query.where(linked_source)
+        rows = session.scalars(query.order_by(model.created_at.desc(), model.id.desc()).offset(offset).limit(limit))
         return [{"ref": (f"{session.get(Formula, row.formula_id).public_id}@{row.revision_no}"
                          if kind == "formula_revision" else row.public_id),
                  "status": row.status} for row in rows]
@@ -703,10 +814,31 @@ def draft_detail(kind: Literal["concept", "relation", "herb", "formula_revision"
                           terms=list(session.scalars(select(HerbTerm.term).where(
                               HerbTerm.herb_id == row.id))))
         else:
+            try:
+                sources = validate_formula_field_sources(session, row.id, require_complete=False)
+            except ValueError as exc:
+                raise _invalid(exc, conflict=True) from exc
+            public_sources = []
+            for source in sources:
+                value = source["value_snapshot"]
+                if source["field_key"].endswith(".herb_id"):
+                    value = session.get(Herb, UUID(value)).public_id
+                public_sources.append({
+                    **{key: source[key] for key in (
+                        "field_key", "structural_locator", "start_offset", "end_offset",
+                        "quote_text", "basis", "segment_checksum")},
+                    "value_snapshot": value,
+                    "evidence_ref": _public_ref(session, "evidence_revision",
+                                                UUID(source["evidence_revision_id"])),
+                    "segment_ref": _public_ref(session, "text_segment_revision",
+                                               UUID(source["segment_revision_id"])),
+                    "source_ref": _public_ref(session, "source_revision",
+                                              UUID(source["source_revision_id"])),
+                })
             detail.update(original_name=row.original_name, era=row.era, school=row.school,
                           indications=row.indications, effects=row.effects, method=row.method,
                           dosage_form=row.dosage_form, preparation=row.preparation,
-                          cautions=row.cautions,
+                          cautions=row.cautions, field_sources=public_sources,
                           ingredients=[{
                               "original_name": ingredient.original_name,
                               "herb_id": (session.get(Herb, ingredient.herb_id).public_id
@@ -721,6 +853,53 @@ def draft_detail(kind: Literal["concept", "relation", "herb", "formula_revision"
         return detail
 
 
+@router.post("/reviews/batch")
+def review_batch(payload: BatchReviewRequest, actor: Annotated[Actor, Depends(_write_actor)]):
+    """Review the entire explicit source revision, including objects beyond UI pages.
+
+    Evidence goes first. A failure is returned per object; successful decisions
+    remain recorded and a replay only visits drafts that still need a decision.
+    """
+    note = payload.note.strip()
+    if payload.decision == "REJECT" and not note:
+        raise ApiError("REVIEW_NOTE_REQUIRED", status=422, category="validation",
+                       detail="拒绝时请填写原因")
+    note = note or "用户批量通过此来源修订；系统逐项校验原文引用与字段出处，非医学专家审核。"
+    targets = []
+    with SessionLocal() as session:
+        revision = _revision(session, "source_revision",
+                             f"{payload.source_id}@{payload.source_revision_no}", actor)
+        evidence_ids = select(EvidenceRevision.id).where(
+            EvidenceRevision.source_revision_id == revision.id)
+        if "evidence_revision" in payload.kinds:
+            targets.extend(("evidence_revision", row.id, _public_ref(session, "evidence_revision", row.id))
+                           for row in session.scalars(select(EvidenceRevision).where(
+                               EvidenceRevision.id.in_(evidence_ids), EvidenceRevision.status == "DRAFT"
+                           ).order_by(EvidenceRevision.created_at, EvidenceRevision.id)))
+        links = {"formula_revision": (FormulaRevision, FormulaEvidence, FormulaEvidence.formula_revision_id),
+                 "concept": (Concept, ConceptEvidence, ConceptEvidence.concept_id),
+                 "herb": (Herb, HerbEvidence, HerbEvidence.herb_id),
+                 "relation": (KnowledgeRelation, RelationEvidence, RelationEvidence.relation_id)}
+        for kind in dict.fromkeys(payload.kinds):
+            if kind == "evidence_revision":
+                continue
+            model, link, field = links[kind]
+            ids = select(field).where(link.evidence_revision_id.in_(evidence_ids))
+            for row in session.scalars(select(model).where(model.id.in_(ids), model.status == "DRAFT")
+                                       .order_by(model.created_at, model.id)):
+                targets.append((kind, row.id, _public_ref(session, kind, row.id)))
+    completed, failed = [], []
+    for kind, object_id, ref in targets:
+        try:
+            review_object(kind, object_id, reviewer_id=actor.actor_id,
+                          decision=payload.decision, note=note)
+            completed.append({"kind": kind, "ref": ref})
+        except ValueError as exc:
+            failed.append({"kind": kind, "ref": ref, "reason": str(exc)})
+    return {"total": len(targets), "completed": completed, "failed": failed,
+            "source_id": payload.source_id, "source_revision_no": payload.source_revision_no}
+
+
 @router.post("/reviews/{kind}/{target_ref}", status_code=201)
 def review(kind: Literal["evidence_revision", "concept", "relation", "herb", "formula_revision"],
            target_ref: str, payload: ReviewRequest,
@@ -728,8 +907,11 @@ def review(kind: Literal["evidence_revision", "concept", "relation", "herb", "fo
     with SessionLocal() as session:
         target = _target(session, kind, target_ref, actor)
     try:
+        if payload.decision == "REJECT" and not payload.note.strip():
+            raise ValueError("拒绝时请填写原因")
         review_object(kind, target.id, reviewer_id=actor.actor_id,
-                      decision=payload.decision, note=payload.note)
+                      decision=payload.decision,
+                      note=payload.note.strip() or "用户审核通过；系统校验原文引用与字段出处，非医学专家审核。")
     except ValueError as exc:
         raise _invalid(exc, conflict=True) from exc
     return {"target_ref": target_ref, "status": "REVIEWED" if payload.decision == "APPROVE" else "REJECTED"}
@@ -823,6 +1005,48 @@ def _public_ref(session, kind: str, object_id: UUID) -> str:
     return session.get(ISSUE_TARGETS[kind], object_id).public_id
 
 
+@router.get("/publication-preview")
+def publication_preview(actor: Annotated[Actor, Depends(_read_actor)]):
+    with SessionLocal() as session:
+        items = preview_snapshot_items(session)
+        included = {kind: len(ids) for kind, ids in items.items()}
+        excluded = []
+        for kind, (model, _) in REVIEW_TARGETS.items():
+            rows = session.execute(select(model.status, func.count()).where(
+                model.id.not_in(items[kind])).group_by(model.status))
+            excluded.extend({"kind": kind, "status": status, "count": count,
+                             "reason": "已被较新修订替代" if status == "REVIEWED" else
+                             "已拒绝" if status == "REJECTED" else "尚未人工核对通过"}
+                            for status, count in rows)
+        sources = session.execute(select(
+            SourceDocument.public_id, SourceDocument.title,
+            SourceRevision.revision_no, func.count(EvidenceRevision.id),
+        ).join(SourceRevision, SourceRevision.source_id == SourceDocument.id).join(
+            EvidenceRevision, EvidenceRevision.source_revision_id == SourceRevision.id).where(
+            EvidenceRevision.id.in_(items["evidence_revision"])).group_by(
+            SourceDocument.public_id, SourceDocument.title, SourceRevision.revision_no)
+            .order_by(SourceDocument.title, SourceRevision.revision_no))
+        return {"item_counts": included, "excluded": excluded,
+                "sources": [{"source_id": source_id, "title": title,
+                             "revision_no": revision_no, "evidence_count": count}
+                            for source_id, title, revision_no, count in sources]}
+
+
+@router.post("/versions/prepare")
+def prepare_version(payload: PublishRequest, actor: Annotated[Actor, Depends(_write_actor)]):
+    """Resume an identical frozen manifest while holding the shared runtime lock."""
+    try:
+        configuration = payload.model_dump(exclude={"activate_on_success"})
+        if all(value is None for value in configuration.values()):
+            configuration = publication_configuration()["configuration"]
+        version_id = create_knowledge_version(actor_id=actor.actor_id, reuse_existing=True,
+                                              configuration=configuration)
+    except ValueError as exc:
+        raise _invalid(exc, conflict=True) from exc
+    with SessionLocal() as session:
+        return version_detail(session.get(KnowledgeVersion, version_id).public_id, actor)
+
+
 @router.post("/versions", status_code=201)
 def snapshot_version(actor: Annotated[Actor, Depends(_write_actor)]):
     try:
@@ -853,6 +1077,10 @@ def version_detail(version_public_id: str, actor: Annotated[Actor, Depends(_read
     with SessionLocal() as session:
         version_id = resolve_public_id(session, "knowledge_version", version_public_id, actor)
         version = session.get(KnowledgeVersion, version_id)
+        job = next((row for row in session.scalars(select(TaskJob).where(
+            TaskJob.job_type == "knowledge.publish").order_by(
+                TaskJob.created_at.desc(), TaskJob.id.desc()))
+                    if row.payload.get("version_id") == str(version_id)), None)
         builds = session.scalars(select(IndexBuild).where(IndexBuild.knowledge_version_id == version_id)
                                  .order_by(IndexBuild.created_at.desc())).all()
         runtime = session.get(KnowledgeRuntimeState, 1)
@@ -866,6 +1094,9 @@ def version_detail(version_public_id: str, actor: Annotated[Actor, Depends(_read
                 "reference_manifest_hash": version.reference_manifest_hash,
                 "active": runtime is not None and runtime.active_knowledge_version_id == version_id,
                 "item_counts": counts,
+                "publication_job": ({"job_id": job.public_id, "status": job.status,
+                                     "attempts": job.attempts,
+                                     "max_attempts": job.max_attempts} if job else None),
                 "index_builds": [{"index_build_id": _opaque("IB", row.id),
                                   "status": row.status, "fts_status": row.fts_status,
                                   "vector_status": row.vector_status}
@@ -876,7 +1107,7 @@ def version_detail(version_public_id: str, actor: Annotated[Actor, Depends(_read
 def publish_version(version_public_id: str, payload: PublishRequest, request: Request,
                     actor: Annotated[Actor, Depends(_write_actor)]):
     key = required_idempotency_key(request.headers.get("Idempotency-Key"))
-    configuration = payload.model_dump()
+    configuration = payload.model_dump(exclude={"activate_on_success"})
     if all(value is None for value in configuration.values()):
         try:
             configuration = publication_configuration()["configuration"]
@@ -907,6 +1138,9 @@ def publish_version(version_public_id: str, payload: PublishRequest, request: Re
                            detail="knowledge version already has a different index configuration")
         running = next((row for row in jobs if row.status != "FAILED"), None)
         if running is not None:
+            if running.payload.get("activate_on_success", True) != payload.activate_on_success:
+                raise ApiError("KNOWLEDGE_CONFLICT", status=409, category="conflict",
+                               detail="publication activation confirmation differs from existing job")
             return accepted_job_response(running)
         if version.status not in {"PRE_PUBLISH_SNAPSHOT", "INDEXING", "VALIDATING"}:
             raise ApiError("KNOWLEDGE_CONFLICT", status=409, category="conflict",
@@ -914,7 +1148,8 @@ def publish_version(version_public_id: str, payload: PublishRequest, request: Re
         job = enqueue_actor_job(session, actor=actor, capability="knowledge.write",
                                 idempotency_key=key, job_type="knowledge.publish",
                                 payload={"version_id": str(version_id),
-                                         "configuration": configuration},
+                                         "configuration": configuration,
+                                         "activate_on_success": payload.activate_on_success},
                                 resource_class=ResourceClass.EMBEDDING)
         return accepted_job_response(job)
 

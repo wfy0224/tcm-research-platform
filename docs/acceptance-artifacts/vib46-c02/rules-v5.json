@@ -1,0 +1,848 @@
+{
+  "purpose": "PROPOSED_CORPUS_RULE_INSPECTION",
+  "acceptance_ready": false,
+  "parser_version": "source-parser/v2",
+  "resolver_version": "structure-resolver/v1",
+  "extractor_version": "local-exact-terms/v5",
+  "preflight": {
+    "schema_version": "c02-preflight-report/v1",
+    "structural_valid": true,
+    "acceptance_ready": false,
+    "verification_scope": "LOCAL_MATERIAL_INTEGRITY_ONLY",
+    "blockers": [
+      "OWNER_SELECTION_PENDING",
+      "EXPERT_REVIEW_PENDING",
+      "PHYSICAL_EDITION_UNVERIFIED"
+    ],
+    "errors": [],
+    "artifact_count": 6,
+    "excerpt_count": 3,
+    "candidate": {
+      "schema_version": "c02-candidate/v1",
+      "selection_status": "PROPOSED",
+      "data_owner_role": "测试人员",
+      "expert_review_status": "PENDING",
+      "outbound_authorized": false,
+      "physical_page_mapping": null
+    }
+  },
+  "inspections": [
+    {
+      "file": "guizhi_tang.txt",
+      "paragraph_count": 3,
+      "formula_count": 1,
+      "result": "DRAFT_CANDIDATES_ONLY",
+      "groups": [
+        {
+          "segments": [
+            {
+              "sequence_no": 1,
+              "original_text": "桂枝湯方"
+            },
+            {
+              "sequence_no": 3,
+              "original_text": "桂枝三兩（去皮）　芍藥三兩　甘草二兩（炙）　生薑三兩（切）　大棗十二枚（擘）"
+            },
+            {
+              "sequence_no": 5,
+              "original_text": "上五味，㕮咀三味，以水七升，微火煮取三升，去滓，適寒溫，服一升。服已須臾，啜熱稀粥一升餘，以助藥力。溫覆令一時許，遍身漐漐微似有汗者益佳，不可令如水流漓，病必不除。若一服汗出病差，停後服，不必盡劑。若不汗，更取依前法，又不汗，後服小促其間，半日許，令三取盡。若病重者，一日一夜服，周時觀之，服一劑盡，病證猶在者，更作服。若不汗出，乃服至二、三劑。禁生冷、粘滑、肉麵、五辛、酒酪、臭惡等物。"
+            }
+          ],
+          "candidates": [
+            {
+              "original_name": "桂枝湯",
+              "ingredients": [
+                {
+                  "original_name": "桂枝",
+                  "herb_id": null,
+                  "amount_original": "三兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "去皮"
+                },
+                {
+                  "original_name": "芍藥",
+                  "herb_id": null,
+                  "amount_original": "三兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": null
+                },
+                {
+                  "original_name": "甘草",
+                  "herb_id": null,
+                  "amount_original": "二兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "炙"
+                },
+                {
+                  "original_name": "生薑",
+                  "herb_id": null,
+                  "amount_original": "三兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "切"
+                },
+                {
+                  "original_name": "大棗",
+                  "herb_id": null,
+                  "amount_original": "十二枚",
+                  "amount_normalized": null,
+                  "unit": "枚",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "擘"
+                }
+              ],
+              "method": "上五味，㕮咀三味，以水七升，微火煮取三升，去滓，適寒溫，服一升。服已須臾，啜熱稀粥一升餘，以助藥力。溫覆令一時許，遍身漐漐微似有汗者益佳，不可令如水流漓，病必不除。若一服汗出病差，停後服，不必盡劑。若不汗，更取依前法，又不汗，後服小促其間，半日許，令三取盡。若病重者，一日一夜服，周時觀之，服一劑盡，病證猶在者，更作服。若不汗出，乃服至二、三劑。禁生冷、粘滑、肉麵、五辛、酒酪、臭惡等物。",
+              "spans": [
+                {
+                  "field_key": "original_name",
+                  "segment_index": 0,
+                  "start_offset": 0,
+                  "end_offset": 3,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.original_name",
+                  "segment_index": 1,
+                  "start_offset": 0,
+                  "end_offset": 2,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 2,
+                  "end_offset": 4,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.unit",
+                  "segment_index": 1,
+                  "start_offset": 3,
+                  "end_offset": 4,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.processing",
+                  "segment_index": 1,
+                  "start_offset": 5,
+                  "end_offset": 7,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.original_name",
+                  "segment_index": 1,
+                  "start_offset": 9,
+                  "end_offset": 11,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 11,
+                  "end_offset": 13,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.unit",
+                  "segment_index": 1,
+                  "start_offset": 12,
+                  "end_offset": 13,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.original_name",
+                  "segment_index": 1,
+                  "start_offset": 14,
+                  "end_offset": 16,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 16,
+                  "end_offset": 18,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.unit",
+                  "segment_index": 1,
+                  "start_offset": 17,
+                  "end_offset": 18,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.processing",
+                  "segment_index": 1,
+                  "start_offset": 19,
+                  "end_offset": 20,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.original_name",
+                  "segment_index": 1,
+                  "start_offset": 22,
+                  "end_offset": 24,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 24,
+                  "end_offset": 26,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.unit",
+                  "segment_index": 1,
+                  "start_offset": 25,
+                  "end_offset": 26,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.processing",
+                  "segment_index": 1,
+                  "start_offset": 27,
+                  "end_offset": 28,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.original_name",
+                  "segment_index": 1,
+                  "start_offset": 30,
+                  "end_offset": 32,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 32,
+                  "end_offset": 35,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.unit",
+                  "segment_index": 1,
+                  "start_offset": 34,
+                  "end_offset": 35,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.processing",
+                  "segment_index": 1,
+                  "start_offset": 36,
+                  "end_offset": 37,
+                  "basis": null
+                },
+                {
+                  "field_key": "method",
+                  "segment_index": 2,
+                  "start_offset": 0,
+                  "end_offset": 194,
+                  "basis": null
+                }
+              ],
+              "segment_indices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "guizhi_jia_ge_gen_tang.txt",
+      "paragraph_count": 3,
+      "formula_count": 1,
+      "result": "DRAFT_CANDIDATES_ONLY",
+      "groups": [
+        {
+          "segments": [
+            {
+              "sequence_no": 1,
+              "original_text": "桂枝加葛根湯方"
+            },
+            {
+              "sequence_no": 3,
+              "original_text": "葛根四兩 麻黄三兩（去节）　芍藥二兩　生薑三兩（切）　甘草二兩（炙）　大棗十二枚（擘）　桂枝二兩（去皮）"
+            },
+            {
+              "sequence_no": 5,
+              "original_text": "上七味，以水一斗，先煮麻黃、葛根，減二升，去上沫，內諸藥，煮取三升，去滓，溫服一升，覆取微似汗，不須啜粥。餘如桂枝法將息及禁忌。諸湯皆彷此。"
+            }
+          ],
+          "candidates": [
+            {
+              "original_name": "桂枝加葛根湯",
+              "ingredients": [
+                {
+                  "original_name": "葛根",
+                  "herb_id": null,
+                  "amount_original": "四兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": null
+                },
+                {
+                  "original_name": "麻黄",
+                  "herb_id": null,
+                  "amount_original": "三兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "去节"
+                },
+                {
+                  "original_name": "芍藥",
+                  "herb_id": null,
+                  "amount_original": "二兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": null
+                },
+                {
+                  "original_name": "生薑",
+                  "herb_id": null,
+                  "amount_original": "三兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "切"
+                },
+                {
+                  "original_name": "甘草",
+                  "herb_id": null,
+                  "amount_original": "二兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "炙"
+                },
+                {
+                  "original_name": "大棗",
+                  "herb_id": null,
+                  "amount_original": "十二枚",
+                  "amount_normalized": null,
+                  "unit": "枚",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "擘"
+                },
+                {
+                  "original_name": "桂枝",
+                  "herb_id": null,
+                  "amount_original": "二兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "去皮"
+                }
+              ],
+              "method": "上七味，以水一斗，先煮麻黃、葛根，減二升，去上沫，內諸藥，煮取三升，去滓，溫服一升，覆取微似汗，不須啜粥。餘如桂枝法將息及禁忌。諸湯皆彷此。",
+              "spans": [
+                {
+                  "field_key": "original_name",
+                  "segment_index": 0,
+                  "start_offset": 0,
+                  "end_offset": 6,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.original_name",
+                  "segment_index": 1,
+                  "start_offset": 0,
+                  "end_offset": 2,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 2,
+                  "end_offset": 4,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.unit",
+                  "segment_index": 1,
+                  "start_offset": 3,
+                  "end_offset": 4,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.original_name",
+                  "segment_index": 1,
+                  "start_offset": 5,
+                  "end_offset": 7,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 7,
+                  "end_offset": 9,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.unit",
+                  "segment_index": 1,
+                  "start_offset": 8,
+                  "end_offset": 9,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.processing",
+                  "segment_index": 1,
+                  "start_offset": 10,
+                  "end_offset": 12,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.original_name",
+                  "segment_index": 1,
+                  "start_offset": 14,
+                  "end_offset": 16,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 16,
+                  "end_offset": 18,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.unit",
+                  "segment_index": 1,
+                  "start_offset": 17,
+                  "end_offset": 18,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.original_name",
+                  "segment_index": 1,
+                  "start_offset": 19,
+                  "end_offset": 21,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 21,
+                  "end_offset": 23,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.unit",
+                  "segment_index": 1,
+                  "start_offset": 22,
+                  "end_offset": 23,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.processing",
+                  "segment_index": 1,
+                  "start_offset": 24,
+                  "end_offset": 25,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.original_name",
+                  "segment_index": 1,
+                  "start_offset": 27,
+                  "end_offset": 29,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 29,
+                  "end_offset": 31,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.unit",
+                  "segment_index": 1,
+                  "start_offset": 30,
+                  "end_offset": 31,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.processing",
+                  "segment_index": 1,
+                  "start_offset": 32,
+                  "end_offset": 33,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.5.original_name",
+                  "segment_index": 1,
+                  "start_offset": 35,
+                  "end_offset": 37,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.5.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 37,
+                  "end_offset": 40,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.5.unit",
+                  "segment_index": 1,
+                  "start_offset": 39,
+                  "end_offset": 40,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.5.processing",
+                  "segment_index": 1,
+                  "start_offset": 41,
+                  "end_offset": 42,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.6.original_name",
+                  "segment_index": 1,
+                  "start_offset": 44,
+                  "end_offset": 46,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.6.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 46,
+                  "end_offset": 48,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.6.unit",
+                  "segment_index": 1,
+                  "start_offset": 47,
+                  "end_offset": 48,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.6.processing",
+                  "segment_index": 1,
+                  "start_offset": 49,
+                  "end_offset": 51,
+                  "basis": null
+                },
+                {
+                  "field_key": "method",
+                  "segment_index": 2,
+                  "start_offset": 0,
+                  "end_offset": 70,
+                  "basis": null
+                }
+              ],
+              "segment_indices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "guizhi_jia_fu_zi_tang.txt",
+      "paragraph_count": 3,
+      "formula_count": 1,
+      "result": "DRAFT_CANDIDATES_ONLY",
+      "groups": [
+        {
+          "segments": [
+            {
+              "sequence_no": 1,
+              "original_text": "桂枝加附子湯方"
+            },
+            {
+              "sequence_no": 3,
+              "original_text": "桂枝三兩（去皮）　芍藥三兩　甘草二兩（炙）　生薑三兩（切）　大棗十二枚（擘）　附子一枚（炮，去皮，破八片）"
+            },
+            {
+              "sequence_no": 5,
+              "original_text": "上六味，以水七升，煮取三升，去滓，溫服一升。"
+            }
+          ],
+          "candidates": [
+            {
+              "original_name": "桂枝加附子湯",
+              "ingredients": [
+                {
+                  "original_name": "桂枝",
+                  "herb_id": null,
+                  "amount_original": "三兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "去皮"
+                },
+                {
+                  "original_name": "芍藥",
+                  "herb_id": null,
+                  "amount_original": "三兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": null
+                },
+                {
+                  "original_name": "甘草",
+                  "herb_id": null,
+                  "amount_original": "二兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "炙"
+                },
+                {
+                  "original_name": "生薑",
+                  "herb_id": null,
+                  "amount_original": "三兩",
+                  "amount_normalized": null,
+                  "unit": "兩",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "切"
+                },
+                {
+                  "original_name": "大棗",
+                  "herb_id": null,
+                  "amount_original": "十二枚",
+                  "amount_normalized": null,
+                  "unit": "枚",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "擘"
+                },
+                {
+                  "original_name": "附子",
+                  "herb_id": null,
+                  "amount_original": "一枚",
+                  "amount_normalized": null,
+                  "unit": "枚",
+                  "dose_ratio": null,
+                  "role": null,
+                  "processing": "炮，去皮，破八片"
+                }
+              ],
+              "method": "上六味，以水七升，煮取三升，去滓，溫服一升。",
+              "spans": [
+                {
+                  "field_key": "original_name",
+                  "segment_index": 0,
+                  "start_offset": 0,
+                  "end_offset": 6,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.original_name",
+                  "segment_index": 1,
+                  "start_offset": 0,
+                  "end_offset": 2,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 2,
+                  "end_offset": 4,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.unit",
+                  "segment_index": 1,
+                  "start_offset": 3,
+                  "end_offset": 4,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.0.processing",
+                  "segment_index": 1,
+                  "start_offset": 5,
+                  "end_offset": 7,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.original_name",
+                  "segment_index": 1,
+                  "start_offset": 9,
+                  "end_offset": 11,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 11,
+                  "end_offset": 13,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.1.unit",
+                  "segment_index": 1,
+                  "start_offset": 12,
+                  "end_offset": 13,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.original_name",
+                  "segment_index": 1,
+                  "start_offset": 14,
+                  "end_offset": 16,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 16,
+                  "end_offset": 18,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.unit",
+                  "segment_index": 1,
+                  "start_offset": 17,
+                  "end_offset": 18,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.2.processing",
+                  "segment_index": 1,
+                  "start_offset": 19,
+                  "end_offset": 20,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.original_name",
+                  "segment_index": 1,
+                  "start_offset": 22,
+                  "end_offset": 24,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 24,
+                  "end_offset": 26,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.unit",
+                  "segment_index": 1,
+                  "start_offset": 25,
+                  "end_offset": 26,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.3.processing",
+                  "segment_index": 1,
+                  "start_offset": 27,
+                  "end_offset": 28,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.original_name",
+                  "segment_index": 1,
+                  "start_offset": 30,
+                  "end_offset": 32,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 32,
+                  "end_offset": 35,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.unit",
+                  "segment_index": 1,
+                  "start_offset": 34,
+                  "end_offset": 35,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.4.processing",
+                  "segment_index": 1,
+                  "start_offset": 36,
+                  "end_offset": 37,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.5.original_name",
+                  "segment_index": 1,
+                  "start_offset": 39,
+                  "end_offset": 41,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.5.amount_original",
+                  "segment_index": 1,
+                  "start_offset": 41,
+                  "end_offset": 43,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.5.unit",
+                  "segment_index": 1,
+                  "start_offset": 42,
+                  "end_offset": 43,
+                  "basis": null
+                },
+                {
+                  "field_key": "ingredients.5.processing",
+                  "segment_index": 1,
+                  "start_offset": 44,
+                  "end_offset": 52,
+                  "basis": null
+                },
+                {
+                  "field_key": "method",
+                  "segment_index": 2,
+                  "start_offset": 0,
+                  "end_offset": 22,
+                  "basis": null
+                }
+              ],
+              "segment_indices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "database_writes": 0,
+  "model_calls": 0
+}

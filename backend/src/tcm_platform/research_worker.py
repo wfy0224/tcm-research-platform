@@ -8,7 +8,7 @@ from sqlalchemy import select
 from tcm_platform.audit import append_event
 from tcm_platform.audit_service import mechanical_audit_claim, semantic_audit_claim
 from tcm_platform.claim_normalization import normalize_task_claims
-from tcm_platform.cloud_models import research_model_for_version
+from tcm_platform.cloud_models import cloud_clients_from_environment, research_model_for_version
 from tcm_platform.db import SessionLocal
 from tcm_platform.debate_service import (
     audit_revised_claims,
@@ -40,6 +40,7 @@ from tcm_platform.models import (
     TaskJob,
     utc_now,
 )
+from tcm_platform.report_narrative import ReportReviewExhausted, execute_report_narrative
 from tcm_platform.research_runtime import (
     StructuredGenerator,
     execute_first_round,
@@ -55,6 +56,15 @@ from tcm_platform.stop_service import evaluate_stop
 
 LEASE_SECONDS = 300
 HEARTBEAT_SECONDS = 30
+
+
+def worker_retrieval_clients(context: dict, *, embedder: Embedder | None = None,
+                             reranker: Reranker | None = None):
+    """Resolve configured real clients, then enforce the task's frozen model binding."""
+    if (embedder is None and reranker is None and
+            context.get("retrieval_strategy") == "hybrid-rrf-v1"):
+        embedder, reranker = cloud_clients_from_environment()
+    return frozen_retrieval_clients(context, embedder=embedder, reranker=reranker)
 
 
 class ResearchControlRequested(RuntimeError):
@@ -213,7 +223,7 @@ def run_next_research_job(
             if (task is None or task.execution_context is None
                     or model.model_version != task.execution_context["generation_model"]):
                 raise ValueError("research Worker model differs from frozen task route")
-            embedder, reranker = frozen_retrieval_clients(
+            embedder, reranker = worker_retrieval_clients(
                 task.execution_context, embedder=embedder, reranker=reranker,
             )
         while True:
@@ -336,12 +346,19 @@ def run_next_research_job(
                 node_phase = "JUDGE_SYNTHESIZED"
                 execute_judge(judge_state[0], model=model, lease_guard=guard)
             elif status == "REPORTING":
+                node_phase = "REPORT_NARRATIVE_REVIEWED"
+                review_required = False
+                try:
+                    execute_report_narrative(task_id, model=model, lease_guard=guard)
+                except ReportReviewExhausted:
+                    review_required = True
                 node_phase = "STRUCTURED_REPORT_SAVED"
                 with SessionLocal.begin() as session:
                     guard(session)
-                    report = persist_structured_report(session, task_id)
+                    report = persist_structured_report(session, task_id,
+                        allow_rejected_narrative=review_required)
                     task = session.get(ResearchTask, task_id)
-                    task.status = "COMPLETED"
+                    task.status = "REPORT_REVIEW_REQUIRED" if review_required else "COMPLETED"
                     complete_job(session, job_id=job_id, worker_id=worker_id,
                                  generation=generation,
                                  result={"task_id": str(task_id), "status": task.status,

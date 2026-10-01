@@ -1,0 +1,200 @@
+- main:
+  - complementary:
+    - generic: 本
+    - generic: 中医文献研究
+    - navigation "工作区":
+      - button "知识库"
+      - button "证据检索"
+      - button "理论研究"
+  - generic: 研究空间 / 文献管理
+  - heading "知识库" [level=1]
+  - paragraph: 阅读原文，核对证据，整理可追溯的知识。
+  - generic: 本机工作区已连接
+  - region "文献资料 4":
+    - heading "文献资料 4" [level=2]:
+      - text: 文献资料
+      - generic: "4"
+    - button "＋ 导入文献"
+    - button "刷新状态"
+    - navigation "知识工作区":
+      - button "1 · 来源与原文"
+      - button "2 · 证据与人工审核"
+      - button "3 · 质量与版本发布"
+    - complementary "当前流程下一步":
+      - strong: 下一步：创建已审核知识快照
+      - paragraph: 按下方按钮创建快照、发布索引、激活版本；每一步完成后继续下一步。
+    - heading "发布质量概况" [level=3]
+    - paragraph: 阻断 0 · 警告 27 · 提示 0
+    - button "创建已审核知识快照"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"ac7f7bc8d4458e3e7302fa698b82c191c0068134645e8d2b79029baca6909f85\", \"locator\": {\"chapter_no\": null, \"line_end\": 1910, \"line_start\": 1910, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 463, \"path\": \"paragraph:463\", \"physical_lines\": [{\"line_no\": 1910, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5f2-d2d7-7be1-a891-57dd34f24fdc\"}], \"source_revision_id\": \"01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5cf-015c-73c2-8d3f-2a656676f458@2
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"c7347a7194419005b2f579c8985e1c5ef54c12cce204630080f5f023f08f035d\", \"locator\": {\"chapter_no\": null, \"line_end\": 1904, \"line_start\": 1904, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 459, \"path\": \"paragraph:459\", \"physical_lines\": [{\"line_no\": 1904, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5f2-d2d7-738a-9339-2d25ea642029\"}], \"source_revision_id\": \"01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5cf-015b-75c2-8aa4-d73134f595e4@2
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"c1ac1c810d8b53f65378844dc3cd3cdd11e6ac47c01e496043c928ed0c7ee90d\", \"locator\": {\"chapter_no\": null, \"line_end\": 1917, \"line_start\": 1915, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 465, \"path\": \"paragraph:465\", \"physical_lines\": [{\"line_no\": 1915, \"page_no\": 1}, {\"line_no\": 1917, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5f2-d2d7-7339-bac5-c78e1f6c4ae4\"}], \"source_revision_id\": \"01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5f2-cd49-7a18-bb40-d675af41e6ec@2
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"f1caefb78ddbcfec912e8b61e0de997278c931c4180da9be3be085c01f3dcba9\", \"locator\": {\"chapter_no\": null, \"line_end\": 1234, \"line_start\": 1225, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 269, \"path\": \"paragraph:269\", \"physical_lines\": [{\"line_no\": 1225, \"page_no\": 1}, {\"line_no\": 1226, \"page_no\": 1}, {\"line_no\": 1227, \"page_no\": 1}, {\"line_no\": 1228, \"page_no\": 1}, {\"line_no\": 1230, \"page_no\": 1}, {\"line_no\": 1232, \"page_no\": 1}, {\"line_no\": 1234, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5f2-d2b7-75cf-8976-d857d3072842\"}], \"source_revision_id\": \"01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5f2-cd31-7d62-973e-04e66f0c3651@2
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"838da527d2af0923160bad0839e4899ee816c610086e0a82d58d39871afc2ba2\", \"locator\": {\"chapter_no\": null, \"line_end\": 1240, \"line_start\": 1236, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 270, \"path\": \"paragraph:270\", \"physical_lines\": [{\"line_no\": 1236, \"page_no\": 1}, {\"line_no\": 1237, \"page_no\": 1}, {\"line_no\": 1238, \"page_no\": 1}, {\"line_no\": 1239, \"page_no\": 1}, {\"line_no\": 1240, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5f2-d2b7-7239-9733-033035719589\"}], \"source_revision_id\": \"01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5f2-cd31-73c4-bca5-13d711851db8@2
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"319f9d506702f5831eb40c31fb08cd32f6629a5b41dac4494a85eaa2a8214e64\", \"locator\": {\"chapter_no\": null, \"line_end\": 938, \"line_start\": 937, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 195, \"path\": \"paragraph:195\", \"physical_lines\": [{\"line_no\": 937, \"page_no\": 1}, {\"line_no\": 938, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5f2-d2aa-74b6-999f-8be1da50c0e7\"}], \"source_revision_id\": \"01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5f2-cd24-7918-b5f6-3939980c3826@2
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"3470fa222d6b6bcb7fb4d72a54ab7d0c2d7639fd0eaa5089e1b1fcc16f7d5878\", \"locator\": {\"chapter_no\": null, \"line_end\": 942, \"line_start\": 942, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 197, \"path\": \"paragraph:197\", \"physical_lines\": [{\"line_no\": 942, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5f2-d2aa-70c8-a6b4-72df696b49cd\"}], \"source_revision_id\": \"01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5cf-00bf-756d-9079-b5a6e2d50602@2
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"67778acd7024e074b39b480ce0659e70fabcdfda433523d7f3d854296821e7a9\", \"locator\": {\"chapter_no\": null, \"line_end\": 878, \"line_start\": 878, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 178, \"path\": \"paragraph:178\", \"physical_lines\": [{\"line_no\": 878, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5f2-d2a7-7050-80f4-b0951bff80c3\"}], \"source_revision_id\": \"01a0f5f1-ea2e-773b-a8d2-4dcbd42c35cc\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5cf-00bd-7ccd-be66-6b09e451ca46@2
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"ac7f7bc8d4458e3e7302fa698b82c191c0068134645e8d2b79029baca6909f85\", \"locator\": {\"chapter_no\": null, \"line_end\": 1910, \"line_start\": 1910, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 463, \"path\": \"paragraph:463\", \"physical_lines\": [{\"line_no\": 1910, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-5157-7792-b9c8-efda5d34fdbc\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3b6f-74ff-9f57-78de409fbb3a@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"c1ac1c810d8b53f65378844dc3cd3cdd11e6ac47c01e496043c928ed0c7ee90d\", \"locator\": {\"chapter_no\": null, \"line_end\": 1917, \"line_start\": 1915, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 465, \"path\": \"paragraph:465\", \"physical_lines\": [{\"line_no\": 1915, \"page_no\": 1}, {\"line_no\": 1917, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-5157-75c6-86ab-ce7706765985\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3b6f-72be-a553-5276d4434d36@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"c7347a7194419005b2f579c8985e1c5ef54c12cce204630080f5f023f08f035d\", \"locator\": {\"chapter_no\": null, \"line_end\": 1904, \"line_start\": 1904, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 459, \"path\": \"paragraph:459\", \"physical_lines\": [{\"line_no\": 1904, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-5156-7226-be12-1edb81d96157\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3b6e-74c2-9678-9b7b4a14c082@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"f1caefb78ddbcfec912e8b61e0de997278c931c4180da9be3be085c01f3dcba9\", \"locator\": {\"chapter_no\": null, \"line_end\": 1234, \"line_start\": 1225, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 269, \"path\": \"paragraph:269\", \"physical_lines\": [{\"line_no\": 1225, \"page_no\": 1}, {\"line_no\": 1226, \"page_no\": 1}, {\"line_no\": 1227, \"page_no\": 1}, {\"line_no\": 1228, \"page_no\": 1}, {\"line_no\": 1230, \"page_no\": 1}, {\"line_no\": 1232, \"page_no\": 1}, {\"line_no\": 1234, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-50ed-7fe0-95b0-522dacdf03d7\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3b12-7629-b4a8-2f59ffb0080e@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"838da527d2af0923160bad0839e4899ee816c610086e0a82d58d39871afc2ba2\", \"locator\": {\"chapter_no\": null, \"line_end\": 1240, \"line_start\": 1236, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 270, \"path\": \"paragraph:270\", \"physical_lines\": [{\"line_no\": 1236, \"page_no\": 1}, {\"line_no\": 1237, \"page_no\": 1}, {\"line_no\": 1238, \"page_no\": 1}, {\"line_no\": 1239, \"page_no\": 1}, {\"line_no\": 1240, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-50ed-7c4c-9d26-f33961546a47\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3b12-77d7-8c9f-62ee827ee7e7@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"3470fa222d6b6bcb7fb4d72a54ab7d0c2d7639fd0eaa5089e1b1fcc16f7d5878\", \"locator\": {\"chapter_no\": null, \"line_end\": 942, \"line_start\": 942, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 197, \"path\": \"paragraph:197\", \"physical_lines\": [{\"line_no\": 942, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-50c1-7dd3-9724-67ecb548121c\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3aec-7334-84f7-0d82f189657e@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"319f9d506702f5831eb40c31fb08cd32f6629a5b41dac4494a85eaa2a8214e64\", \"locator\": {\"chapter_no\": null, \"line_end\": 938, \"line_start\": 937, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 195, \"path\": \"paragraph:195\", \"physical_lines\": [{\"line_no\": 937, \"page_no\": 1}, {\"line_no\": 938, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-50c1-7796-bb5e-ca71ea635bb1\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3aec-76fa-8a74-cb1794c193bd@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"56e5295206b86a6f1b7aa71e321c9d284149b3902c976172a3bb811b7c5d2879\", \"locator\": {\"chapter_no\": null, \"line_end\": 929, \"line_start\": 925, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 192, \"path\": \"paragraph:192\", \"physical_lines\": [{\"line_no\": 925, \"page_no\": 1}, {\"line_no\": 926, \"page_no\": 1}, {\"line_no\": 928, \"page_no\": 1}, {\"line_no\": 929, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-50be-74f3-87d0-fd6efb182612\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3aea-7b72-ba59-3ed896d2c5f5@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"67778acd7024e074b39b480ce0659e70fabcdfda433523d7f3d854296821e7a9\", \"locator\": {\"chapter_no\": null, \"line_end\": 878, \"line_start\": 878, \"page_end\": 1, \"page_no\": 1, \"paragraph_no\": 178, \"path\": \"paragraph:178\", \"physical_lines\": [{\"line_no\": 878, \"page_no\": 1}]}, \"segment_revision_id\": \"01a0f5ee-50b7-746c-b1cb-34335c521acb\"}], \"source_revision_id\": \"01a0f5ee-371b-7553-a3fa-13fe9672ab09\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f5ee-3ae3-731b-aa8b-efb31f9f3a64@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"d975e4cfd2647232b58e9ee206e3a196dc93ae103c619d8631cd333161b3addb\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 1339, \"path\": \"paragraph:1339\"}, \"segment_revision_id\": \"01a0f534-cf23-7f73-9f52-5cc90b83b571\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c814-7996-8831-bc500a501e68@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"ac7f7bc8d4458e3e7302fa698b82c191c0068134645e8d2b79029baca6909f85\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 1336, \"path\": \"paragraph:1336\"}, \"segment_revision_id\": \"01a0f534-cf23-7ccf-a2fa-6030b2e4aecf\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c814-773a-8093-d2bee6a536b7@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"c7347a7194419005b2f579c8985e1c5ef54c12cce204630080f5f023f08f035d\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 1331, \"path\": \"paragraph:1331\"}, \"segment_revision_id\": \"01a0f534-cf22-7f5a-8b04-3475590400a2\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c813-7595-8d62-d3b1b55334b2@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"1ee853838476ffa158c58f3e8be3eacf0a56a29a227034731b5046a86b9071df\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 880, \"path\": \"paragraph:880\"}, \"segment_revision_id\": \"01a0f534-ceeb-751f-a151-584d28a38c1e\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c801-7f69-ac44-f29732ea21ca@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"4fe1a38a9dd9060e7a76bf47e2e51a424f0f3e5944346c26094674842467ba57\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 874, \"path\": \"paragraph:874\"}, \"segment_revision_id\": \"01a0f534-ceea-7e19-8554-fe35d389e052\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c801-73fe-846c-2e9232045314@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"a5a7833d9a8983be50d33834de92c94e6a758f2d0aa5d02d8991871846b3e936\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 875, \"path\": \"paragraph:875\"}, \"segment_revision_id\": \"01a0f534-ceea-7db1-b822-2cdb112ee845\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c801-7bcc-b5de-a07b6f20c85c@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"5efca30ef259ec4ae649a58aa8841b344e041289e3317c2795120425d0ee28a8\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 670, \"path\": \"paragraph:670\"}, \"segment_revision_id\": \"01a0f534-ced4-7e75-8054-93b66cadbefe\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c7fa-705b-8043-fd18f101fe30@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"3470fa222d6b6bcb7fb4d72a54ab7d0c2d7639fd0eaa5089e1b1fcc16f7d5878\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 672, \"path\": \"paragraph:672\"}, \"segment_revision_id\": \"01a0f534-ced4-706c-b758-56d5d2981d5b\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c7fa-7aff-b1d5-c32c9599ce79@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"314d33ddb5d0e002e4ad75877fcfd55c28257de19772fd1e12b562f4da9c1341\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 660, \"path\": \"paragraph:660\"}, \"segment_revision_id\": \"01a0f534-ced3-7bbf-b3f3-2f08cfbc79ea\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c7fa-7109-a223-75ca026bf284@1
+      - button "处理此问题"
+    - article:
+      - strong: RETRIEVAL_UNPUBLISHED_EXACT_V1
+      - generic: 警告
+      - paragraph: "{\"evidence_revision_id\": null, \"index_build_id\": \"01a0f68e-a5c7-73ca-a175-626caf4deb54\", \"knowledge_version_id\": \"01a0f68e-7a84-72be-ab15-6b495da0ef60\", \"match_basis\": \"segment_exact\", \"normalized_query\": \"大青龙汤\", \"policy\": \"unpublished-exact/v1\", \"query_text\": \"大青龙汤\", \"requires_human_review\": true, \"segments\": [{\"checksum\": \"67778acd7024e074b39b480ce0659e70fabcdfda433523d7f3d854296821e7a9\", \"locator\": {\"chapter_no\": null, \"page_no\": 1, \"paragraph_no\": 628, \"path\": \"paragraph:628\"}, \"segment_revision_id\": \"01a0f534-cecf-7d3e-a8b3-8526e342b474\"}], \"source_revision_id\": \"01a0f534-c4e2-74f5-92ff-b66073481b47\", \"task_id\": null}"
+      - generic: text_segment_revision · SEG-01a0f534-c7f9-7d58-a344-5f9d1ce7ea28@1
+      - button "处理此问题"
+    - complementary:
+      - heading "知识版本" [level=3]
+      - button "版本 2 · 当前检索版本 可用":
+        - strong: 版本 2 · 当前检索版本
+        - generic: 可用
+      - button "版本 1 可用":
+        - strong: 版本 1
+        - generic: 可用
+    - paragraph: 选择快照查看索引构建与发布状态。
+  - generic "本地服务详情"

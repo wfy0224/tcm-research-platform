@@ -1,72 +1,192 @@
-.kwWorkspace { margin-top: 28px; }
-.kwWorkspace h2, .kwWorkspace h3, .kwWorkspace h4 { margin-top: 0; }
-.kwHeader, .kwCardHead, .kwSourceTitle, .kwQuality, .kwReviewHead { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
-.kwHeader p, .kwSourceTitle p { color: #64746f; margin-bottom: 0; }
-.kwWorkspace button { cursor: pointer; }
-.kwWorkspace button:disabled { cursor: not-allowed; opacity: .5; }
-.kwTabs { display: flex; gap: 8px; border-bottom: 1px solid #dbe4dd; margin: 24px 0; padding-bottom: 12px; flex-wrap: wrap; }
-.kwTabs button { background: #eef3ed; color: #355a49; border: 1px solid transparent; }
-.kwTabs button.active { background: #285443; color: #fff; }
-.kwNotice, .kwJob, .kwQuality, .kwPublished { border: 1px solid #cfdfd4; background: #f0f7f1; padding: 15px; border-radius: 10px; margin: 16px 0; }
-.kwError, .kwQuality.blocked, .kwJob.failed { padding: 14px; color: #8c302c; background: #fff1ed; border: 1px solid #edc6bc; border-radius: 8px; }
-.kwJob { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.kwJob small { overflow-wrap: anywhere; color: #64746f; }
-.kwImport { border: 1px solid #dce5dc; border-radius: 10px; padding: 16px; margin-bottom: 22px; }
-.kwWorkspace summary { cursor: pointer; font-weight: 600; padding: 3px 0; }
-.kwForm { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 15px; margin-top: 18px; }
-.kwWorkspace label { display: grid; gap: 6px; color: #3c5648; font-size: 14px; }
-.kwWorkspace input, .kwWorkspace select, .kwWorkspace textarea { border: 1px solid #cad8ce; border-radius: 6px; padding: 10px; background: #fff; min-width: 0; width: 100%; color: #243a30; font: inherit; }
-.kwWorkspace textarea { min-height: 90px; resize: vertical; }
-.kwWorkspace input[type=checkbox] { width: 16px; flex: 0 0 16px; margin: 0; }
-.kwWorkspace .kwInline { display: flex; align-items: center; grid-column: 1 / -1; }
-.kwHint { font-size: 13px; color: #65766a; line-height: 1.65; }
-.kwForm .kwHint { margin: 0; grid-column: 1 / -1; }
-.kwSourceGrid { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 22px; }
-.kwSourceList, .kwVersions { display: flex; flex-direction: column; gap: 9px; }
-.kwSourceList button, .kwVersions button { text-align: left; padding: 14px; background: #f5f7f3; color: #345044; border: 1px solid #dbe4dc; border-radius: 8px; display: grid; gap: 5px; }
-.kwSourceList button.selected, .kwVersions button.selected { background: #e5f0e7; border-color: #567d64; }
-.kwSourceList small, .kwVersions small { color: #687b6e; }
-.kwSourceTitle { margin-bottom: 18px; }
-.kwSourceTitle label { min-width: 200px; }
-.kwSegmentGrid { display: grid; grid-template-columns: minmax(190px, .85fr) minmax(0, 1.25fr); gap: 16px; }
-.kwSegments { max-height: 590px; overflow: auto; border: 1px solid #dbe4dc; padding: 12px; border-radius: 8px; }
-.kwSegmentRow { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 6px; }
-.kwSegmentRow.child { margin-left: 10px; }
-.kwSegmentRow.selected { background: #e9f0e8; }
-.kwSegmentRow button { display: grid; gap: 6px; background: transparent; color: #334b3e; text-align: left; padding: 8px 0; border: 0; font-weight: 400; }
-.kwSegmentRow small { color: #607563; }
-.kwSegmentRow span { line-height: 1.6; font-size: 14px; }
-.kwOriginal { background: #fbfaf5; padding: 22px; border: 1px solid #e4e4d8; border-radius: 8px; overflow-wrap: anywhere; }
-.kwOriginal h4 { margin-bottom: 10px; }
-.kwWorkspace blockquote { white-space: pre-wrap; margin: 12px 0 20px; border-left: 3px solid #b3c9b3; padding: 10px 14px; background: #f5f7f0; line-height: 1.85; color: #334233; }
-.kwOriginal > p { white-space: pre-wrap; line-height: 1.85; }
-.kwOriginal details { margin: 16px 0; }
-.kwWorkspace h5 { margin: 14px 0 5px; color: #597160; }
-.kwWorkspace details p { white-space: pre-wrap; line-height: 1.7; font-size: 14px; color: #617061; }
-.kwLocator { display: flex; gap: 14px; flex-wrap: wrap; color: #617061; font-size: 12px; overflow-wrap: anywhere; }
-.kwLocator div { display: flex; gap: 5px; max-width: 100%; }
-.kwLocator dd { margin: 0; }
-.kwEvidenceBar { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; border-top: 1px solid #dce5dc; margin-top: 18px; padding-top: 18px; }
-.kwEvidenceBar small { color: #64746b; }
-.kwReviewHead { align-items: center; margin-bottom: 20px; }
+.kwWorkspace { margin: 0; padding: 0 !important; overflow: clip; }
+.kwWorkspace h2, .kwWorkspace h3, .kwWorkspace h4 { margin: 0; font-weight: 600; }
+.kwWorkspace h3 { font-size: 14px; } .kwWorkspace h4 { font-size: 12px; }
+.kwWorkspace button { appearance: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 500; background: #fff; color: #49616b; border: 1px solid #d9e2e7; border-radius: 6px; padding: 8px 13px; line-height: 1.35; }
+.kwWorkspace button:hover:not(:disabled) { background: #f3f7f8; border-color: #bccfd4; }
+.kwWorkspace button:disabled { cursor: not-allowed; color: #9aa8ae; background: #f4f6f7; border-color: #e4e9ec; opacity: 1; }
+.kwWorkspace button.kwPrimary { background: #24695f; border-color: #24695f; color: #fff; }
+.kwWorkspace button.kwPrimary:hover:not(:disabled) { background: #1c584f; border-color: #1c584f; }
+.kwWorkspace button.kwPrimary:disabled { background: #e5ece9; border-color: #e5ece9; color: #93a6a0; }
+.kwHeader { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 21px 24px 18px; }
+.kwHeader h2 { font-size: 16px; display: flex; align-items: center; gap: 9px; }
+.kwCount { display: inline-grid; place-items: center; background: #eef3f5; border-radius: 5px; color: #6f828c; min-width: 24px; height: 22px; font-size: 11px; font-weight: 500; padding: 0 5px; }
+.kwHeader p { color: #91a0a8; font-size: 11px; margin: 6px 0 0; }
+.kwToolbarActions { display: flex; gap: 8px; }
+.kwTabs { display: flex; gap: 24px; padding: 0 24px; margin: 0; border-bottom: 1px solid #e6ecef; }
+.kwTabs button { border: 0; border-radius: 0; padding: 12px 0; background: none; color: #6e8189; border-bottom: 2px solid transparent; white-space: nowrap; }
+.kwTabs button.active { color: #24695f; border-bottom-color: #24695f; font-weight: 650; }
+.kwTabs button:hover:not(:disabled) { background: transparent; color: #24695f; }
+.kwNextStep { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #e5eeea; background: #f5faf8; }
+.kwNextStep strong { color: #436a5f; font-size: 12px; font-weight: 500; }
+.kwNextStep p { margin: 4px 0 0; color: #6e877b; font-size: 12px; line-height: 1.6; }
+.kwNextStep > p { margin: 0; }
+.kwNextStep button { flex-shrink: 0; font-size: 11px; background: transparent; border-color: #d4e3dd; color: #528174; }
+.kwSourceGrid { display: grid; grid-template-columns: 216px minmax(0, 1fr); min-height: 560px; }
+.kwSourceList { padding: 20px 14px; background: #fafcfd; border-right: 1px solid #e5ecef; display: flex; flex-direction: column; gap: 8px; max-height: 800px; overflow: auto; }
+.kwColumnHead { display: flex; justify-content: space-between; align-items: center; margin: 0 6px 8px; }
+.kwColumnHead h3 { color: #71868f; font-size: 11px; }
+.kwColumnHead > span { font-size: 10px; color: #a0acb2; }
+.kwWorkspace input.kwSourceSearch { padding: 9px 11px; background: #fff; font-size: 11px; margin-bottom: 7px; border-color: #e2e9ed; }
+.kwSourceList button { display: grid; gap: 7px; text-align: left; border: 1px solid transparent; background: transparent; padding: 14px 12px; min-width: 0; width: 100%; border-radius: 6px; }
+.kwSourceList button.selected { background: #eaf4f0; border-color: #d3e5de; }
+.kwSourceList button strong { font-size: 13px; font-weight: 550; color: #47616b; line-height: 1.6; overflow-wrap: anywhere; }
+.kwSourceList button.selected strong { color: #24695f; }
+.kwSourceList small { color: #7a8d96; font-size: 11px; }
+.kwSourceContent { min-width: 0; padding: 20px; }
+.kwSourceTitle { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 0 0 18px; border-bottom: 1px solid #edf1f3; margin-bottom: 18px; }
+.kwSourceTitle h3 { font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.kwSourceTitle p { color: #9ca8ad; font-size: 10px; margin: 6px 0 0; }
+.kwSourceTitle label { flex-shrink: 0; max-width: 235px; font-size: 10px; color: #9aa7ad; }
+.kwSourceTitle select { padding: 7px 10px; font-size: 11px; }
+.kwSegmentGrid { display: grid; grid-template-columns: minmax(140px, 180px) minmax(0, 1fr); gap: 18px; }
+.kwSegments { max-height: clamp(220px, calc(100vh - 600px), 340px); overflow: auto; border-right: 1px solid #e8eef1; padding: 0 12px 0 0; }
+.kwSegments > h4 { color: #8798a1; font-size: 10px; margin: 0 4px 14px; }
+.kwSegmentRow { display: flex; align-items: flex-start; gap: 7px; border-radius: 5px; padding: 9px 7px; margin-bottom: 3px; }
+.kwSegmentRow.child { margin-left: 8px; }
+.kwSegmentRow.selected { background: #edf5f1; }
+.kwSegmentRow.cited { background: #fff5ce; border-left: 3px solid #b58b21; }
+.kwCitationNavigation { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 14px 24px; background: #fffaf0; border-bottom: 1px solid #eadfbe; }
+.kwCitationNavigation > div { flex: 1; min-width: 180px; }
+.kwCitationNavigation strong { color: #795e22; font-size: 13px; }
+.kwCitationNavigation p { color: #7f735c; font-size: 12px; line-height: 1.6; margin: 5px 0 0; }
+.kwOriginal mark { background: #fff0b6; color: inherit; box-decoration-break: clone; }
+.kwCitedQuote p { margin: 0 0 18px; }
+.kwCitationContext { border-left: 2px solid #dce5e0; padding: 0 12px; margin: 14px 0; }
+.kwCitationContext p { font-size: 13px; color: #627a72; line-height: 1.9; white-space: pre-wrap; }
+.kwWorkspace .kwSegmentRow > input { margin-top: 4px; width: 12px; height: 12px; flex: 0 0 12px; accent-color: #24695f; }
+.kwSegmentRow button { display: grid; gap: 7px; border: 0; padding: 0; background: transparent; text-align: left; min-height: 0 !important; width: 100%; min-width: 0; }
+.kwSegmentRow button:hover:not(:disabled) { background: none; }
+.kwSegmentRow small { color: #8ca097; font-size: 9px; line-height: 1.5; }
+.kwSegmentRow span { color: #657b85; font-size: 12px; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.kwSegmentRow.selected span { color: #355c4f; }
+.kwOriginal { min-width: 0; background: #fff; padding: 0 4px 10px; overflow-wrap: anywhere; }
+.kwReadingHead { display: flex; justify-content: space-between; align-items: center; padding: 0 0 16px; }
+.kwReadingHead h4 { color: #85979e; font-size: 10px; }
+.kwReadingHead span { color: #a3adb2; font-size: 10px; }
+.kwWorkspace blockquote { margin: 12px 0 18px; padding: 12px 15px; background: #f6f9f8; border-left: 2px solid #c9dcd3; color: #4b6264; line-height: 1.85; font-size: 13px; white-space: pre-wrap; }
+.kwOriginal > blockquote { margin: 0 0 28px; padding: 7px 0 0; background: none; border: 0; color: #334b50; font-family: "Noto Serif CJK SC", "SimSun", serif; font-size: 18px; line-height: 2.1; letter-spacing: .025em; }
+.kwWorkspace summary { cursor: pointer; font-size: 11px; color: #6c838c; font-weight: 400; padding: 3px 0; }
+.kwOriginal details { padding: 11px 0; border-top: 1px solid #edf2f4; }
+.kwWorkspace details p { font-size: 12px; color: #73878e; line-height: 1.85; white-space: pre-wrap; }
+.kwWorkspace h5 { font-size: 11px; font-weight: 500; color: #789187; margin: 12px 0 5px; }
+.kwLocator { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 10px; color: #8c9ba2; margin: 10px 0 0; overflow-wrap: anywhere; }
+.kwLocator div { display: flex; gap: 4px; padding: 0; border: 0; max-width: 100%; }
+.kwLocator dt, .kwLocator dd { margin: 0; font-weight: 400; color: inherit; }
+.kwEvidenceBar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; background: #f8fbfa; border: 1px solid #e3ede8; border-radius: 7px; margin-top: 22px; padding: 14px; }
+.kwEvidenceBar > span { margin-right: auto; color: #6b8880; font-size: 11px; }
+.kwEvidenceBar label { display: flex; gap: 8px; align-items: center; font-size: 10px; }
+.kwEvidenceBar select { width: 110px; padding: 6px 8px; font-size: 11px; }
+.kwEvidenceBar > small { display: none; }
+.kwHint { color: #6d8680; font-size: 12px; line-height: 1.7; }
+.kwDisabledReason { margin: 0; width: 100%; font-size: 12px; color: #6b8279; }
+.kwEvidenceBar .kwDisabledReason { padding-top: 7px; border-top: 1px solid #e6efea; }
+.kwEvidenceBar > .kwError { width: 100%; }
+.kwExtraction { margin-top: 14px; padding-top: 3px; }
+.kwActions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.kwExtraction > .kwActions { margin-top: 0; }
+.kwExtraction > .kwHint { margin: 5px 0 0; }
+.kwCandidateSummary { border-top: 1px solid #e9efec; padding-top: 10px; margin-top: 12px; color: #80948b; font-size: 11px; }
+.kwBlank { display: flex; min-height: 430px; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 35px; }
+.kwBlankIcon { font-size: 29px; color: #89b1a0; background: #eef6f2; width: 60px; height: 60px; border-radius: 14px; display: grid; place-items: center; margin-bottom: 20px; }
+.kwBlank h3 { color: #557467; font-size: 15px; font-weight: 500; }
+.kwBlank p { max-width: 330px; font-size: 12px; color: #a0b0a8; line-height: 1.8; margin: 12px 0 24px; }
+.kwEmpty { margin: 0; padding: 24px 6px; color: #9aaba4; font-size: 12px; line-height: 1.8; }
+.kwReviewHead { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 24px; }
 .kwReviewHead label { min-width: 240px; }
-.kwReviewHead span { color: #68796c; font-size: 13px; }
-.kwReviewGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
-.kwCard { border: 1px solid #dce4dc; padding: 18px; border-radius: 10px; margin-bottom: 14px; overflow-wrap: anywhere; }
-.kwCard.selected { border-color: #6c9975; }
-.kwCardHead { gap: 8px; align-items: center; }
-.kwBadge { border-radius: 20px; font-size: 12px; padding: 4px 9px; background: #edf2e9; color: #426548; white-space: nowrap; }
-.kwActions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-.kwWorkspace cite { display: block; color: #71816f; font-size: 12px; margin-top: 8px; font-style: normal; }
-.kwDraftForm { padding: 18px; margin: 0 0 28px; background: #f4f6f0; border-radius: 10px; grid-template-columns: 1fr; }
-.kwReviewAction { border: 1px solid #93b99b; padding: 20px; background: #f1f8f0; border-radius: 10px; margin-top: 24px; }
-.kwWorkspace button.kwReject { background: #fff; color: #8d3d32; border: 1px solid #d7b5ab; }
-.kwIssueAction { margin-top: 12px; }
-.kwIssueAction button { margin-top: 10px; }
-.kwVersionGrid { display: grid; grid-template-columns: 230px minmax(0,1fr); gap: 24px; margin-top: 24px; }
-.kwVersionGrid code { font-size: 12px; overflow-wrap: anywhere; }
-.kwBuild { background: #f2f6ef; display: flex; gap: 18px; padding: 12px; margin: 12px 0; border-radius: 8px; }
-.kwBuild span { color: #687b6a; }
-.kwEmpty { color: #7b887d; padding: 24px 0; line-height: 1.7; }
-@media (max-width: 950px) { .kwSourceGrid, .kwVersionGrid { grid-template-columns: 180px minmax(0,1fr); } .kwSegmentGrid { grid-template-columns: 1fr; } .kwSegments { max-height: 280px; } .kwSourceTitle { flex-direction: column; } }
-@media (max-width: 680px) { .kwSourceGrid, .kwVersionGrid, .kwReviewGrid, .kwForm { grid-template-columns: 1fr; } .kwHeader, .kwQuality, .kwReviewHead { flex-direction: column; } .kwSourceList { max-height: 220px; overflow: auto; } .kwWorkspace input, .kwWorkspace select { width: 100%; } .kwTabs button { font-size: 13px; } }
+.kwReviewHead > span { color: #96a4a9; font-size: 11px; }
+.kwReviewGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; padding: 0 24px 24px; align-items: start; }
+.kwReviewGrid > div > h3 { color: #72888f; margin-bottom: 14px; font-size: 12px; }
+.kwCard { padding: 17px; border: 1px solid #e2e9ed; border-radius: 7px; margin-bottom: 12px; overflow-wrap: anywhere; }
+.kwCard.selected { border-color: #abcbbc; box-shadow: 0 0 0 1px #abcbbc; }
+.kwCard.batch { border-left: 3px solid #8faf9e; }
+.kwCardHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kwCardHead strong { font-weight: 550; font-size: 12px; line-height: 1.7; }
+.kwBadge { color: #688b7c; background: #edf5f0; font-size: 10px; border-radius: 4px; padding: 3px 7px; white-space: nowrap; }
+.kwBatchLabel { font-size: 9px; color: #80a091; margin-left: 8px; font-weight: 400; }
+.kwWorkspace cite { display: block; color: #99aaa1; font-size: 10px; font-style: normal; margin-top: 9px; }
+.kwForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+.kwWorkspace label { display: grid; gap: 7px; font-size: 13px; color: #627a85; }
+.kwWorkspace input, .kwWorkspace select, .kwWorkspace textarea { border: 1px solid #d9e3e8; border-radius: 6px; padding: 10px 11px; font: inherit; font-size: 13px; color: #47606b; background: #fff; width: 100%; min-width: 0; }
+.kwWorkspace input::placeholder, .kwWorkspace textarea::placeholder { color: #b0bac0; }
+.kwWorkspace textarea { min-height: 90px; resize: vertical; }
+.kwWorkspace input[type=checkbox] { width: 14px; margin: 0; flex: 0 0 14px; accent-color: #24695f; }
+.kwWorkspace input:focus-visible, .kwWorkspace select:focus-visible, .kwWorkspace textarea:focus-visible { outline: 2px solid #77afa0; outline-offset: 2px; }
+.kwWorkspace .kwInline { display: flex; gap: 9px; align-items: flex-start; grid-column: 1 / -1; font-size: 11px; line-height: 1.7; }
+.kwInline input { margin-top: 2px !important; }
+.kwForm > .kwHint, .kwForm > .kwError { grid-column: 1 / -1; }
+.kwDraftForm { grid-template-columns: 1fr; background: #f8fbfc; padding: 20px; border: 1px solid #e4edf0; border-radius: 8px; margin: 0 0 28px; }
+.kwDraftForm .kwPrimary { margin-top: 4px; }
+.kwReviewAction { padding: 22px; border: 1px solid #c7e0d5; background: #f6fbf8; border-radius: 8px; margin: 0 24px 24px; }
+.kwReviewAction > h3 { margin-bottom: 18px; }
+.kwWorkspace button.kwReject { color: #ad625c; background: #fff; border-color: #e6d7d4; }
+.kwIngredients { margin: 14px 0; display: grid; gap: 8px; }
+.kwIngredients > div { display: grid; grid-template-columns: minmax(65px, .3fr) minmax(0, 1fr); gap: 12px; padding: 7px 0; border-color: #edf1f0; }
+.kwIngredients small, .kwFieldSources small { display: block; color: #95a79f; font-size: 10px; margin-top: 5px; }
+.kwMethod { white-space: pre-wrap; line-height: 1.8; color: #6e847d; font-size: 12px; }
+.kwFieldSources > div { border-top: 1px solid #e5ede8; padding: 12px 0; }
+.kwJob, .kwNotice, .kwError { padding: 12px 16px; margin: 14px 24px; font-size: 12px; line-height: 1.7; border-radius: 6px; }
+.kwNotice { border: 1px solid #d4e8de; background: #f2faf5; color: #538b71; }
+.kwError, .kwJob.failed { border: 1px solid #efdcd6; background: #fff8f5; color: #b96d61; }
+.kwForm .kwError, .kwEvidenceBar .kwError, .kwReviewAction .kwError { margin: 0; }
+.kwJob { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: #f8fafb; color: #78908b; border: 1px solid #e2eaed; }
+.kwJob strong { font-weight: 500; } .kwJob small { font-size: 9px; color: #a8b4b8; overflow-wrap: anywhere; }
+.kwQuality { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin: 22px 24px; padding: 18px; background: #f6faf8; border: 1px solid #deebe4; border-radius: 7px; }
+.kwQuality p { font-size: 12px; color: #8aa092; margin-bottom: 0; }
+.kwQuality.blocked { background: #fff8f3; border-color: #efe0d1; }
+.kwWorkspace > .kwCard { margin-inline: 24px; }
+.kwVersionGrid { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; padding: 0 24px 24px; }
+.kwVersions { display: flex; flex-direction: column; gap: 9px; }
+.kwVersions button { display: grid; gap: 5px; text-align: left; }
+.kwVersions button.selected { border-color: #a4c8b7; background: #eef7f2; }
+.kwVersions small { color: #93a99e; font-size: 10px; }
+.kwVersionGrid code { overflow-wrap: anywhere; font-size: 10px; }
+.kwBuild { display: flex; flex-wrap: wrap; gap: 18px; padding: 12px; margin: 12px 0; background: #f4f8f6; color: #839b8d; font-size: 12px; border-radius: 5px; }
+.kwPublished { padding: 18px; margin: 18px 0 0; background: #eff8f3; border: 1px solid #d8e9e0; border-radius: 7px; font-size: 12px; color: #53856c; }
+.kwIssueAction { margin-top: 12px; } .kwIssueAction button { margin-top: 10px; }
+.kwImportBackdrop { position: fixed; inset: 0; background: #142a3659; backdrop-filter: blur(2px); z-index: 19; }
+.kwImport:not([open]) { display: none; }
+.kwImport[open] { position: fixed; z-index: 20; right: 28px; top: 28px; bottom: 28px; width: min(600px, calc(100vw - 56px)); overflow-y: auto; padding: 26px; background: #fff; border: 1px solid #e2e9ed; border-radius: 12px; box-shadow: 0 20px 80px #142a3630; }
+.kwImport > summary { font-size: 18px; color: #344f56; font-weight: 600; padding: 0 45px 0 0; list-style: none; cursor: default; }
+.kwImport > summary::-webkit-details-marker { display: none; }
+.kwImport .kwImportClose { position: absolute; top: 21px; right: 20px; font-size: 24px; padding: 0; width: 32px; min-height: 32px !important; border: 0; color: #83979e; }
+.kwImport .kwForm { padding-top: 22px; border-top: 1px solid #eef2f4; }
+.kwImport input[type=file] { padding: 15px; background: #f8fbfc; border: 1px dashed #cadade; font-size: 11px; }
+.kwImport input[type=file]::file-selector-button { font: inherit; border: 1px solid #cbded6; padding: 7px 10px; margin-right: 10px; border-radius: 5px; background: #fff; color: #327363; }
+.kwImport .kwPrimary { grid-column: 1 / -1; margin-top: 6px; }
+@media (max-width: 1250px) { .kwSourceGrid { grid-template-columns: 190px minmax(0, 1fr); } .kwSegmentGrid { grid-template-columns: minmax(110px, 145px) minmax(0, 1fr); gap: 14px; } .kwSourceContent { padding: 18px; } .kwSourceTitle { align-items: flex-start; } .kwSourceTitle label { max-width: 190px; } }
+@media (max-width: 1000px) { .kwSourceGrid { grid-template-columns: 170px minmax(0, 1fr); } .kwSegmentGrid { grid-template-columns: 1fr; } .kwSegments { max-height: 200px; border-right: 0; border-bottom: 1px solid #e5ecef; padding-bottom: 10px; } .kwSourceTitle { flex-direction: column; } .kwSourceTitle label { max-width: 100%; } .kwReviewGrid { gap: 16px; padding-inline: 18px; } }
+@media (max-width: 760px) { .kwHeader { padding: 17px; gap: 12px; } .kwHeader h2 { font-size: 14px; } .kwHeader p { display: none; } .kwToolbarActions button { padding-inline: 9px; font-size: 11px; } .kwTabs { padding: 0 16px; gap: 18px; overflow-x: auto; } .kwTabs button { font-size: 11px; } .kwNextStep { padding: 12px 16px; gap: 12px; } .kwNextStep p { font-size: 10px; } .kwNextStep button { padding: 7px 9px; } .kwSourceGrid, .kwVersionGrid, .kwReviewGrid, .kwForm { grid-template-columns: 1fr; } .kwSourceList { max-height: 240px; border-right: 0; border-bottom: 1px solid #e5ecef; padding: 16px; } .kwSourceList button { padding: 10px 12px; } .kwSourceContent { padding: 16px; } .kwReviewHead { flex-direction: column; align-items: stretch; gap: 10px; padding: 18px; } .kwReviewHead label { min-width: 0; } .kwReviewGrid { padding-inline: 18px; } .kwReviewAction { margin-inline: 18px; padding: 18px; } .kwEvidenceBar { gap: 10px; } .kwEvidenceBar > span { width: 100%; } .kwNextStep:has(> div > p) { align-items: flex-start; } .kwQuality { flex-direction: column; align-items: flex-start; margin-inline: 18px; } .kwVersionGrid { padding-inline: 18px; } .kwImport[open] { inset: 12px; width: auto; padding: 22px 18px; } }
+.kwSourceTools { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.kwSourceTools > button { margin-top: 17px; font-size: 11px; }
+.kwExtraction > summary { font-size: 11px; color: #78918a; }
+.kwExtraction[open] > .kwActions { margin-top: 12px; }
+@media (max-width: 1000px) { .kwSourceTools { width: 100%; justify-content: space-between; } }
+.kwReviewGrid > div:first-child { max-height: calc(100vh - 320px); min-height: 340px; overflow-y: auto; padding-right: 8px; }
+.kwReviewGrid .kwReviewAction { margin: 0 0 20px; }
+.kwDraftEvidence { margin: 14px 0; }
+.kwDraftEvidence summary { color: #50645c; cursor: pointer; font-size: 13px; }
+@media (max-width: 760px) { .kwReviewGrid > div:first-child { max-height: 430px; min-height: 0; } }
+
+
+.kwHeader p, .kwColumnHead h3, .kwSourceList small, .kwSourceTitle p, .kwSourceTitle label, .kwSegments > h4, .kwSegmentRow small { font-size: 12px; color: #687e87; }
+.kwColumnHead > span { font-size: 11px; color: #768a94; }
+.kwSourceSearch { font-size: 12px !important; }
+.kwReadingHead h4 { font-size: 13px; color: #506b73; }
+.kwJob small { flex-basis: 100%; }
+.kwViewToggle { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; font-size: 11px; }
+.kwPhysicalText { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+.kwBatchReview { display: grid; grid-template-columns: minmax(180px, .7fr) minmax(0, 1fr); gap: 14px; margin: 18px 24px; padding: 18px; border: 1px solid #d4e4dd; border-radius: 8px; background: #f6faf8; font-size: 12px; }
+.kwBatchReview p { margin: 8px 0 0; }
+.kwBatchReview .kwActions, .kwBatchReview > .kwHint { grid-column: 1 / -1; }
+.kwBatchReview textarea { min-height: 65px; }
+.kwOperation { position: sticky; top: 18px; z-index: 8; border-color: #aacdc0; color: #326b5b; box-shadow: 0 4px 18px #142a3614; }
+@media (max-width: 760px) { .kwOperation { top: 64px; } }
+@media (max-width: 760px) { .kwBatchReview { grid-template-columns: 1fr; margin-inline: 18px; } .kwSourceTools { flex-wrap: wrap; } }
+@media (max-width: 760px) { .kwNextStep p { font-size: 12px; } }
+.kwFormulaEditor { display: grid; gap: 14px; }
+.kwFormulaEditor fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; border: 1px solid var(--kw-border, #ddd); border-radius: 8px; padding: 14px; }
+.kwFormulaEditor label { display: grid; gap: 6px; min-width: 0; }
+.kwFormulaEditor select { max-width: 100%; }
+.kwFormulaEditor details > label { margin-top: 12px; }
+.kwPublicationFlow { padding: 20px; margin-bottom: 20px; border: 1px solid #cdd9d1; border-radius: 12px; background: #f7faf7; }
+@media (max-width: 600px) { .kwFormulaEditor fieldset { grid-template-columns: 1fr; } }

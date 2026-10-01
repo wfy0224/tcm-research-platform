@@ -18,6 +18,8 @@
 .researchWorkspace .hint input { flex: 0 0 auto; margin-top: 5px; }
 .researchWorkspace .sourceChoices label { flex-wrap: wrap; }
 .researchWorkspace .taskList { max-height: 500px; }
+.researchWorkspace .taskList strong { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.readableReport .reportAnswer { max-width: 820px; }
 @media (max-width: 640px) {
   .researchWorkspace .workspaceHead { align-items: start; }
   .researchWorkspace .taskOverview .panelHead { flex-wrap: wrap; }
@@ -25,3 +27,18 @@
   .researchWorkspace .researchTabs button { padding: 9px 8px; font-size: 12px; }
   .researchWorkspace .panelHead .viewSwitch { flex-wrap: wrap; }
 }
+.readableReport .reportQuestion { padding: 12px 16px; background: #edf4ee; line-height: 1.7; }
+.readableReport .reportConclusion { border-bottom: 1px solid #dde5de; padding: 12px 0; }
+.readableReport .conclusionText { font-size: 16px; line-height: 1.9; color: #172b20; margin: 0 0 8px; }
+.readableReport .reportCitationLinks { font-size: 12px; color: #5b6d61; display: flex; gap: 8px; }
+.readableReport .reportCitationLinks a { color: #276341; }
+.readableReport details { margin: 10px 0; }
+.readableReport summary { cursor: pointer; color: #496351; line-height: 1.7; }
+.readableReport .reportAudit { font-size: 13px; color: #5b6d61; }
+.readableReport .reportEvidence { margin-top: 24px; }
+.readableReport .reportEvidence details { border: 1px solid #dce5de; padding: 10px 14px; border-radius: 8px; scroll-margin-top: 90px; }
+.readableReport .reportEvidence blockquote { line-height: 1.8; white-space: pre-wrap; }
+.researchWorkspace .reportOverview > p, .researchWorkspace .reportOverview .researchProgress, .researchWorkspace .reportOverview .actionRow { display: none; }
+.researchWorkspace .reportOverview { padding-top: 14px; padding-bottom: 14px; }
+.researchWorkspace .reportOverview .panelHead h3 { font-size: 15px; line-height: 1.6; }
+.reportEvidenceFocused { background: #edf7ef; outline: 2px solid #2d6f50; outline-offset: 4px; border-radius: 6px; }

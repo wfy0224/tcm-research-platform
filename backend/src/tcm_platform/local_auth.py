@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
 from tcm_platform.api_contract import Actor, ApiError, require_if_match
 from tcm_platform.audit import append_event
@@ -38,6 +39,43 @@ def _hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def _issue_session(session: Session, *, development: bool = False) -> IssuedSession:
+    token = secrets.token_urlsafe(32)
+    csrf = _hash("development-csrf:" + token) if development else secrets.token_urlsafe(32)
+    expires = utc_now() + timedelta(seconds=settings.session_ttl_seconds)
+    local_session = LocalSession(id=new_id(), public_id=f"LS-{new_id()}",
+                                 token_hash=_hash(token), csrf_hash=_hash(csrf),
+                                 actor_id="local-owner", capabilities=list(SESSION_CAPABILITIES),
+                                 row_version=1, expires_at=expires)
+    session.add(local_session)
+    session.flush()
+    append_event(session, event_type="local_session.started", actor_id="local-owner",
+                 aggregate_id=local_session.id,
+                 payload={"session_public_id": local_session.public_id})
+    return IssuedSession(token, csrf, local_session.public_id, local_session.actor_id,
+                         SESSION_CAPABILITIES, expires)
+
+
+def development_local_session(cookie_token: str | None) -> IssuedSession:
+    if not settings.development_auto_session:
+        raise ApiError("DEVELOPMENT_SESSION_DISABLED", status=404, category="configuration",
+                       detail="development auto-session is disabled")
+    if cookie_token:
+        try:
+            actor = current_actor(cookie_token)
+        except ApiError as exc:
+            if exc.code != "SESSION_REQUIRED":
+                raise
+        else:
+            # Recover the same tab-independent CSRF token without invalidating other tabs.
+            csrf = _hash("development-csrf:" + cookie_token)
+            if hmac.compare_digest(actor.csrf_hash, _hash(csrf)):
+                return IssuedSession(cookie_token, csrf, actor.session_public_id, actor.actor_id,
+                                     tuple(sorted(actor.capabilities)), actor.expires_at)
+    with SessionLocal.begin() as session:
+        return _issue_session(session, development=True)
+
+
 def bootstrap_local_session(submitted_secret: str) -> IssuedSession:
     configured = settings.bootstrap_secret
     if configured is None:
@@ -63,21 +101,8 @@ def bootstrap_local_session(submitted_secret: str) -> IssuedSession:
         if grant.used_at is not None or grant.expires_at <= now:
             raise ApiError("INVALID_BOOTSTRAP", status=401, category="authentication",
                            detail="bootstrap secret is invalid or expired")
-        token = secrets.token_urlsafe(32)
-        csrf = secrets.token_urlsafe(32)
-        expires = now + timedelta(seconds=settings.session_ttl_seconds)
-        local_session = LocalSession(id=new_id(), public_id=f"LS-{new_id()}",
-                                     token_hash=_hash(token), csrf_hash=_hash(csrf),
-                                     actor_id="local-owner", capabilities=list(SESSION_CAPABILITIES),
-                                     row_version=1, expires_at=expires)
-        session.add(local_session)
         grant.used_at = now
-        session.flush()
-        append_event(session, event_type="local_session.started", actor_id="local-owner",
-                     aggregate_id=local_session.id,
-                     payload={"session_public_id": local_session.public_id})
-        return IssuedSession(token, csrf, local_session.public_id, local_session.actor_id,
-                             SESSION_CAPABILITIES, expires)
+        return _issue_session(session)
 
 
 def current_actor(token: str | None) -> Actor:

@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from tcm_platform.audit import append_event
+from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
 from tcm_platform.model_credentials import read_model_key
@@ -143,6 +144,9 @@ def _post_json(url: str, api_key: str, payload: dict) -> dict:
     endpoint = _checked_endpoint(url)
     host = urlparse(endpoint).hostname
     permit = current_permit()
+    # Long evidence reviews need more time than embedding/rerank requests.
+    timeout = settings.model_completion_timeout_seconds if getattr(
+        permit, "operation", None) == "complete" else 90
     if payload.get("model") != permit.model_version.partition("/")[2]:
         raise PermissionError("request model differs from outbound authorization")
     _admit_request(host)
@@ -172,7 +176,7 @@ def _post_json(url: str, api_key: str, payload: dict) -> dict:
         invocation_id = _record_start(endpoint, request_hash)
         for attempt in range(3):
             try:
-                with build_opener(NoRedirect).open(request, timeout=90) as response:
+                with build_opener(NoRedirect).open(request, timeout=timeout) as response:
                     data = response.read(MAX_RESPONSE_BYTES + 1)
                 _transport_result(host, True)
                 break
@@ -300,8 +304,8 @@ class CloudResearchModel:
             raise ValueError("TCM_RESEARCH_MODEL is not configured")
         if provider not in {"siliconflow", "deepseek"}:
             raise ValueError("unsupported research model provider")
-        if provider == "deepseek" and model != "deepseek-flash":
-            raise ValueError("DeepSeek research route currently supports deepseek-flash only")
+        if provider == "deepseek" and model not in {"deepseek-flash", "deepseek-v4-pro"}:
+            raise ValueError("unsupported DeepSeek research model")
         self.model = model
         self.api_key = api_key
         self.provider = provider

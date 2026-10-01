@@ -1,0 +1,13 @@
+{
+  "task": "RT-01a0f788-b1a8-7cee-9e52-7cee5d555a58",
+  "body_history_candidate_accepted": true,
+  "citation_rejections": [
+    "unseen evidence",
+    "mixed valid and invalid Claims atomically",
+    "outside task pool",
+    "outside role visibility",
+    "outside frozen version",
+    "unreviewed evidence"
+  ],
+  "writes_rolled_back": true
+}

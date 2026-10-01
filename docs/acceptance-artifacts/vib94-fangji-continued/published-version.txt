@@ -1,0 +1,56 @@
+- main:
+  - complementary:
+    - generic: 本
+    - generic: 中医文献研究
+    - navigation "工作区":
+      - button "知识库"
+      - button "证据检索"
+      - button "理论研究"
+  - generic: 研究空间 / 文献管理
+  - heading "知识库" [level=1]
+  - paragraph: 阅读原文，核对证据，整理可追溯的知识。
+  - generic: 本机工作区已连接
+  - region "文献资料 4":
+    - heading "文献资料 4" [level=2]:
+      - text: 文献资料
+      - generic: "4"
+    - button "＋ 导入文献"
+    - button "刷新状态"
+    - navigation "知识工作区":
+      - button "1 · 来源与原文"
+      - button "2 · 证据与人工审核"
+      - button "3 · 质量与版本发布"
+    - status: 发布任务已提交，索引构建完成后可激活检索版本。
+    - status:
+      - strong: 版本发布：完成
+      - generic: 尝试 1 / 3
+      - generic: 任务 JOB-01a0f68e-a58e-72af-985f-f9ddc11548f4
+    - complementary "当前流程下一步":
+      - strong: 版本已激活，下一步：知识检索
+      - paragraph: 按下方按钮创建快照、发布索引、激活版本；每一步完成后继续下一步。
+    - heading "发布质量概况" [level=3]
+    - paragraph: 阻断 0 · 警告 0 · 提示 0
+    - button "创建已审核知识快照"
+    - complementary:
+      - heading "知识版本" [level=3]
+      - button "版本 2 · 当前检索版本 可用":
+        - strong: 版本 2 · 当前检索版本
+        - generic: 可用
+      - button "版本 1 可用":
+        - strong: 版本 1
+        - generic: 可用
+    - heading "版本 2 · 可用" [level=3]
+    - paragraph: 已审核对象：证据 24 · 概念 3 · 关系 0 · 药物 0 · 方剂 0
+    - generic "快照校验摘要"
+    - paragraph: 发布方式：本地全文、精确与结构索引，无模型调用
+    - strong: 索引：可用
+    - generic: 全文 可用 · 向量 不适用
+    - button "发布并构建索引" [disabled]
+    - button "激活为当前检索版本" [disabled]
+    - strong: 此版本已在检索中生效
+    - button "前往知识检索"
+    - button "研究：方剂学（麻黄汤与大青龙汤研究）"
+    - button "研究：方剂学a"
+    - button "研究：方剂学"
+    - button "研究：傷寒論·太阳病上篇（演示文献）"
+  - generic "本地服务详情"

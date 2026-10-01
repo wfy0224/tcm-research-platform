@@ -31,7 +31,8 @@ class WorkflowConfig(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid", frozen=True)
 
     min_debate_rounds: int = Field(default=1, ge=1, le=5)
-    max_debate_rounds: int = Field(default=1, ge=1, le=5)
+    max_debate_rounds: int = Field(default=3, ge=1, le=5)
+    review_replies: bool = True
     min_supported_claims: int = Field(default=1, ge=0, le=100)
     max_open_disputes: int = Field(default=0, ge=0, le=100)
     max_open_gaps: int = Field(default=0, ge=0, le=100)
@@ -47,7 +48,11 @@ class WorkflowConfig(BaseModel):
 
 def evaluate_snapshot(snapshot: dict) -> tuple[str, str]:
     """Pure decision function; the stored snapshot is enough to replay it."""
-    policy = WorkflowConfig.model_validate(snapshot["workflow_config"])
+    # Historical snapshots did not require a Critic pass after each response.
+    # Replay their frozen policy rather than applying today's default to them.
+    config = snapshot["workflow_config"]
+    policy = WorkflowConfig.model_validate({"max_debate_rounds": 1,
+                                            "review_replies": False, **config})
     if snapshot["first_round_claim_count"] == 0:
         return "STOP", "NO_FIRST_ROUND_CLAIMS"
     if snapshot["round_no"] >= 2:
@@ -61,6 +66,10 @@ def evaluate_snapshot(snapshot: dict) -> tuple[str, str]:
         debate_rounds = snapshot["round_no"] - 1
         if debate_rounds < policy.min_debate_rounds:
             return "CONTINUE", "MIN_ROUNDS"
+        if policy.review_replies:
+            if debate_rounds >= policy.max_debate_rounds:
+                return "STOP", "ROUND_LIMIT"
+            return "CONTINUE", "FOLLOWUP_REVIEW"
         if (snapshot["new_claim_count"] == 0
                 and snapshot["supported_claim_count"] >= policy.min_supported_claims
                 and len(snapshot["open_dispute_ids"]) <= policy.max_open_disputes
@@ -96,7 +105,8 @@ def evaluate_stop(session: Session, task_id: UUID, round_no: int) -> StopEvaluat
         HumanReviewRequest.task_id == task_id,
         HumanReviewRequest.status == "RESOLVED")))
     snapshot = {
-        "workflow_config": task.execution_context.get("workflow_config", WorkflowConfig().model_dump()),
+        "workflow_config": task.execution_context.get("workflow_config", WorkflowConfig(
+            max_debate_rounds=1, review_replies=False).model_dump()),
         "round_no": round_no,
         "first_round_claim_count": sum(claim.parent_claim_id is None for claim in claims),
         "current_critique_count": critique_count,

@@ -405,24 +405,18 @@ def test_first_round_freezes_context_and_rejects_unseen_evidence_atomically():
     with SessionLocal() as session:
         assert not list(session.scalars(select(Claim).where(Claim.task_id == task_id)))
     historical_run = next(run for run in runs if run.role == "HistoricalScholar")
-    history_fields = (
-        "source_author", "source_era", "source_school", "source_edition",
-        "source_publication_year",
-    )
-    has_history = any(provenance.get(field) for field in history_fields)
-    if not has_history:
-        with pytest.raises(ValueError, match="explicit source history metadata"):
-            submit_first_round_output(historical_run.id, {
-                "claims": [{
-                    "client_ref": "h1", "claim_type": "HISTORICAL_FACT",
-                    "assertion_text": "unsupported history", "rationale_summary": "no metadata",
-                    "evidence_revision_ids": [valid_id],
-                }]
-            })
+    with pytest.raises(ValueError, match="outside visible"):
+        submit_first_round_output(historical_run.id, {
+            "claims": [{
+                "client_ref": "h1", "claim_type": "LATER_INTERPRETATION",
+                "assertion_text": "unseen history", "rationale_summary": "foreign citation",
+                "evidence_revision_ids": [str(uuid4())],
+            }]
+        })
     other_run = next(run for run in runs if run.role == "Theorist")
     assert "claims" not in agent_visible_context(other_run.id)
     claim_ids = execute_first_round(task_id, model=model)
-    expected_claims = 3 if has_history else 2
+    expected_claims = 3
     assert len(claim_ids) == expected_claims
     assert all("claims" not in payload for payload in model.inputs)
     with SessionLocal() as session:
@@ -435,10 +429,9 @@ def test_first_round_freezes_context_and_rejects_unseen_evidence_atomically():
             ModelInvocation.task_id == task_id
         )))
         assert len(invocations) == 1 + expected_claims
-        assert {item.purpose for item in invocations} == (
-            {"Planner", "Classicist", "Theorist"} |
-            ({"HistoricalScholar"} if has_history else set())
-        )
+        assert {item.purpose for item in invocations} == {
+            "Planner", "Classicist", "HistoricalScholar", "Theorist",
+        }
         assert all(item.status == "COMPLETED" and len(item.request_hash) == 64
                    and item.output_hash and item.latency_ms >= 0 for item in invocations)
     job_id = run_next_research_job(

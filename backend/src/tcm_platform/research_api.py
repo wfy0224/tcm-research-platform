@@ -38,6 +38,8 @@ from tcm_platform.research_service import (
     create_research_task,
     request_research_pause,
     resume_research_task,
+    retry_research_task,
+    revise_research_report,
     start_research_task,
 )
 from tcm_platform.research_views import public_ref, task_details
@@ -73,7 +75,9 @@ class TaskResponse(StrictModel):
     source_ids: list[str]
     allowed_actions: list[str]
     job_id: str | None
+    job_status: str | None = None
     report_available: bool
+    report_review_status: str | None = None
 
 
 class ExportResponse(StrictModel):
@@ -93,6 +97,9 @@ class ReportResponse(StrictModel):
     open_disputes: list[dict]
     unresolved_gaps: list[dict]
     excluded_claim_count: int
+    answer: dict | None = None
+    review_status: str = "ACCEPTED"
+    revision_no: int = 1
 
 
 def _read_actor(request: Request) -> Actor:
@@ -109,22 +116,31 @@ def _write_actor(request: Request) -> Actor:
 
 
 def _task_response(session, task: ResearchTask) -> TaskResponse:
+    from tcm_platform.research_failures import report_review_exhausted
+
     source_ids = [UUID(value) for value in task.draft_scope.get("source_ids", [])]
     sources = {source.id: source.public_id for source in session.scalars(
         select(SourceDocument).where(SourceDocument.id.in_(source_ids)))}
     job = session.scalar(select(TaskJob).where(
         TaskJob.idempotency_key == f"research:{task.id}:run:v1"))
-    report_available = session.scalar(select(StructuredReport.id).where(
-        StructuredReport.task_id == task.id)) is not None
+    report = session.scalar(select(StructuredReport).where(
+        StructuredReport.task_id == task.id).order_by(
+        StructuredReport.revision_no.desc()).limit(1))
+    report_available = report is not None
     actions = []
     if task.status == "CREATED":
         actions.extend(("start", "cancel"))
+    elif task.status == "REPORT_REVIEW_REQUIRED":
+        actions.append("revise_report")
     elif task.status == "WAITING_HUMAN":
         if session.scalar(select(HumanReviewRequest.id).where(
             HumanReviewRequest.task_id == task.id,
             HumanReviewRequest.status == "PENDING")) is not None:
             actions.append("resolve_review")
     elif task.status not in {"COMPLETED", "CANCELLED"} and job is not None:
+        if task.control_state == "ACTIVE" and job.status == "FAILED":
+            actions.append("recover_report" if report_review_exhausted(job.last_error) else "retry")
+            actions.append("cancel")
         if task.control_state == "ACTIVE" and job.status in {
             "RUNNING", "PENDING", "RETRY_WAIT",
         }:
@@ -133,14 +149,16 @@ def _task_response(session, task: ResearchTask) -> TaskResponse:
             actions.extend(("resume", "cancel"))
         elif task.control_state == "CANCEL_REQUESTED":
             actions.append("cancel")
-    if task.status == "COMPLETED" and report_available:
+    if report_available:
         actions.append("export")
     return TaskResponse(
         task_id=task.public_id, question=task.question, status=task.status,
         control_state=task.control_state,
         source_ids=[sources[value] for value in source_ids if value in sources],
         allowed_actions=actions, job_id=job.public_id if job else None,
+        job_status=job.status if job else None,
         report_available=report_available,
+        report_review_status=report.content.get("review_status", "ACCEPTED") if report else None,
     )
 
 
@@ -211,11 +229,12 @@ def start_task(task_public_id: str, payload: StartTaskRequest, request: Request,
 
 
 def _control(task_public_id: str, request: Request, actor: Actor,
-             action: Literal["pause", "resume", "cancel"]) -> TaskResponse:
+             action: Literal["pause", "resume", "retry", "cancel"]) -> TaskResponse:
     key = required_idempotency_key(request.headers.get("Idempotency-Key"))
     with SessionLocal() as session:
         task_id = resolve_public_id(session, "research_task", task_public_id, actor)
     command = {"pause": request_research_pause, "resume": resume_research_task,
+               "retry": retry_research_task,
                "cancel": cancel_research_task}[action]
     try:
         if action == "cancel":
@@ -245,6 +264,33 @@ def resume_task(task_public_id: str, request: Request,
 def cancel_task(task_public_id: str, request: Request,
                 actor: Annotated[Actor, Depends(_write_actor)]) -> TaskResponse:
     return _control(task_public_id, request, actor, "cancel")
+
+
+@router.post("/tasks/{task_public_id}/retry", response_model=TaskResponse)
+def retry_task(task_public_id: str, request: Request,
+               actor: Annotated[Actor, Depends(_write_actor)]) -> TaskResponse:
+    return _control(task_public_id, request, actor, "retry")
+
+
+@router.post("/tasks/{task_public_id}/recover-report", response_model=TaskResponse)
+def recover_report(task_public_id: str, request: Request,
+                   actor: Annotated[Actor, Depends(_write_actor)]) -> TaskResponse:
+    return _control(task_public_id, request, actor, "retry")
+
+
+@router.post("/tasks/{task_public_id}/revise-report", response_model=TaskResponse)
+def revise_report(task_public_id: str, request: Request,
+                  actor: Annotated[Actor, Depends(_write_actor)]) -> TaskResponse:
+    key = required_idempotency_key(request.headers.get("Idempotency-Key"))
+    with SessionLocal() as session:
+        task_id = resolve_public_id(session, "research_task", task_public_id, actor)
+    try:
+        revise_research_report(task_id, actor_id=actor.actor_id, idempotency_key=key)
+    except ValueError as exc:
+        raise ApiError("RESEARCH_CONTROL_CONFLICT", status=409, category="conflict",
+                       detail=str(exc)) from exc
+    with SessionLocal() as session:
+        return _task_response(session, session.get(ResearchTask, task_id))
 
 
 def _details(task_public_id: str, actor: Actor) -> dict:
@@ -377,11 +423,12 @@ async def stream_task_events(task_public_id: str, request: Request,
                                       "X-Accel-Buffering": "no"})
 
 
-def _public_evidence(session, row: dict) -> dict:
+def _public_evidence(session, row: dict, *, citation_number: int) -> dict:
     revision = session.get(EvidenceRevision, UUID(row["evidence_revision_id"]))
     evidence = session.get(Evidence, revision.evidence_id)
     source = session.get(SourceDocument, UUID(row["source_id"]))
     return {
+        "citation_number": citation_number,
         "evidence_id": evidence.public_id, "evidence_revision_no": revision.revision_no,
         "source_id": source.public_id, "source_title": row["source_title"],
         "source_edition": row["source_edition"],
@@ -400,11 +447,18 @@ def get_report(task_public_id: str,
         task_id = resolve_public_id(session, "research_task", task_public_id, actor)
         task = session.get(ResearchTask, task_id)
         report = session.scalar(select(StructuredReport).where(
-            StructuredReport.task_id == task_id))
-        if task.status != "COMPLETED" or report is None:
+            StructuredReport.task_id == task_id).order_by(
+            StructuredReport.revision_no.desc()).limit(1))
+        if report is None:
             raise ApiError("REPORT_NOT_READY", status=409, category="conflict",
                            detail="this research task has no final report yet")
         content = report.content
+        evidence_ids = {row["evidence_revision_id"] for rows in content["sections"].values()
+                        for finding in rows for row in finding["evidence"]}
+        for dispute in content["open_disputes"]:
+            for field in ("supporting_evidence", "opposing_evidence"):
+                evidence_ids.update(row["evidence_revision_id"] for row in dispute[field])
+        evidence_numbers = {key: i for i, key in enumerate(sorted(evidence_ids), start=1)}
         sections = {category: [{
             "assertion_text": finding["assertion_text"],
             "claim_type": finding["claim_type"],
@@ -416,8 +470,22 @@ def get_report(task_public_id: str,
                 else "DISPUTE" if finding["reason_id"] in finding["dispute_ids"]
                 else "EVIDENCE_GAP"
             ),
-            "evidence": [_public_evidence(session, row) for row in finding["evidence"]],
+            "evidence": [_public_evidence(session, row,
+                          citation_number=evidence_numbers[row["evidence_revision_id"]])
+                         for row in finding["evidence"]],
         } for finding in rows] for category, rows in content["sections"].items()}
+        answer = None
+        if content.get("answer"):
+            claims = {row["claim_id"]: row for rows in content["sections"].values() for row in rows}
+            answer = {"paragraphs": [{"text": p["text"], "kind": p["kind"],
+                       "evidence": [_public_evidence(session, item,
+                         citation_number=evidence_numbers[item["evidence_revision_id"]]) for item in
+                         {e["evidence_revision_id"]: e for claim_id in p["claim_ids"]
+                          for e in claims[claim_id]["evidence"]}.values()]}
+                       for p in content["answer"]["paragraphs"]],
+                      "review_summary": content["answer"]["review_summary"],
+                      "review_status": content["answer"].get("review_status", "ACCEPTED"),
+                      "review_issues": content["answer"].get("review_issues", [])}
         return ReportResponse(
             task_id=task.public_id, schema_version=report.schema_version,
             content_hash=report.content_hash, question=content["question"],
@@ -428,7 +496,8 @@ def get_report(task_public_id: str,
             unresolved_gaps=[{"reason_code": row["reason_code"],
                               "rationale_summary": row["rationale_summary"]}
                              for row in content["unresolved_gaps"]],
-            excluded_claim_count=content["excluded_claim_count"],
+            excluded_claim_count=content["excluded_claim_count"], answer=answer,
+            review_status=content.get("review_status", "ACCEPTED"), revision_no=report.revision_no,
         )
 
 
@@ -436,8 +505,12 @@ def _export(session, task_id: UUID, file_format: str) -> tuple[ReportExport, Tas
     if file_format not in {"markdown", "docx"}:
         raise ApiError("INVALID_FORMAT", status=400, category="validation",
                        detail="format must be markdown or docx")
+    latest_report = session.scalar(select(StructuredReport).where(
+        StructuredReport.task_id == task_id).order_by(
+        StructuredReport.revision_no.desc()).limit(1))
     export = session.scalar(select(ReportExport).where(
-        ReportExport.task_id == task_id, ReportExport.file_format == file_format)
+        ReportExport.task_id == task_id, ReportExport.file_format == file_format,
+        ReportExport.report_id == (latest_report.id if latest_report else None))
         .order_by(ReportExport.created_at.desc()).limit(1))
     if export is None:
         raise ApiError("EXPORT_NOT_FOUND", status=404, category="reference",

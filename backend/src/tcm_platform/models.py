@@ -1414,7 +1414,7 @@ class ResearchSynthesis(Base):
 
 class StructuredReport(Base):
     __tablename__ = "structured_report"
-    __table_args__ = (UniqueConstraint("task_id", name="uq_structured_report_task"),
+    __table_args__ = (UniqueConstraint("task_id", "revision_no", name="uq_structured_report_revision"),
                       {"schema": "research"})
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=new_id)
@@ -1424,6 +1424,7 @@ class StructuredReport(Base):
     synthesis_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("research.research_synthesis.id"), nullable=False
     )
+    revision_no: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     schema_version: Mapped[str] = mapped_column(String(40), nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     context_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False)

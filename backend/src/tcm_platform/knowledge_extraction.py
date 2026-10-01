@@ -32,7 +32,7 @@ from tcm_platform.models import (
 
 # This is an engineering seed vocabulary, not a clinical ontology or synonym map.
 # A change to the vocabulary or rules MUST increment the persisted version.
-EXTRACTOR_VERSION = "local-exact-terms/v4"
+EXTRACTOR_VERSION = "local-exact-terms/v5"
 TERMS = {
     "CONDITION": ("太陽病", "太陽中風", "中風", "傷寒", "溫病", "風溫", "壞病"),
     "SYMPTOM": ("脈浮", "脈緩", "脈浮緊", "脈微弱", "脈洪大", "頭痛", "頭項強痛",

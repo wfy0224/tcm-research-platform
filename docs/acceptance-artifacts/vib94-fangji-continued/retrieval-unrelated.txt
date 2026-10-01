@@ -1,0 +1,30 @@
+- main:
+  - complementary:
+    - generic: 本
+    - generic: 中医文献研究
+    - navigation "工作区":
+      - button "知识库"
+      - button "证据检索"
+      - button "理论研究"
+  - generic: 研究空间 / 证据检索
+  - heading "证据检索" [level=1]
+  - paragraph: 查找已入库的证据，回到文献核对依据。
+  - generic: 本机工作区已连接
+  - region "寻找相关原文":
+    - text: 知识检索
+    - heading "寻找相关原文" [level=2]
+    - generic: 检索问题或关键词
+    - textbox "检索问题或关键词":
+      - /placeholder: 例如：太阳病的脉象
+      - text: 火星土壤矿物成分
+    - button "检索证据"
+    - checkbox "同意将本次检索词发送给已配置的云端向量与重排模型。请勿输入私人或敏感信息。"
+    - text: 同意将本次检索词发送给已配置的云端向量与重排模型。请勿输入私人或敏感信息。
+    - status:
+      - strong: 本地检索
+      - paragraph: 本次查询未授权云端外发，使用本地检索。
+      - paragraph: 本次通道：原文匹配、全文检索、结构检索、关系检索。证据详情可在本地查看。
+  - heading "检索结果" [level=2]
+  - generic: 0 条已发布证据
+  - paragraph: 当前知识版本中没有找到匹配证据。
+  - generic "本地服务详情"

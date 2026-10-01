@@ -540,7 +540,8 @@ def main() -> None:
     elif args.command == "show-structured-report":
         with SessionLocal() as session:
             report = session.scalar(select(StructuredReport).where(
-                StructuredReport.task_id == args.task_id))
+                StructuredReport.task_id == args.task_id).order_by(
+                StructuredReport.revision_no.desc()).limit(1))
             if report is None:
                 raise ValueError("research task has no structured report")
             print(json.dumps({"report_id": str(report.id), "content_hash": report.content_hash,

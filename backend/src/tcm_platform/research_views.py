@@ -86,7 +86,9 @@ def task_details(session: Session, task_id: UUID) -> dict:
         "evidence": [evidence_ref(session, ref.evidence_revision_id) for ref in refs],
         "agent_runs": [{"id": public_ref("RUN", row.id), "role": row.role,
                         "round_no": row.round_no, "status": row.status,
-                        "model_version": row.model_version} for row in runs],
+                        "model_version": row.model_version,
+                        "review_summary": (row.output or {}).get("review_summary")
+                        if row.role == "Critic" else None} for row in runs],
         "claims": [{"id": public_ref("CLM", row.id),
                     "parent_claim_id": public_ref("CLM", row.parent_claim_id),
                     "agent_run_id": public_ref("RUN", row.agent_run_id),

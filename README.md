@@ -34,6 +34,12 @@ npm run dev
 
 ### 本地 API 会话与命令合约
 
+开发联调可设置 `TCM_DEVELOPMENT_AUTO_SESSION=true`：页面自动建立本地会话，无需访问码；刷新、新标签页或 CSRF 缓存失效会自动恢复。此开关默认关闭；开启时仍要求回环 Host、允许的 Origin，业务命令仍校验 Cookie、CSRF、权限与审计。`GET /api/v1/local-session/config` 返回开关，`POST /api/v1/local-session/development` 仅在开启时可用。
+
+本机现有 Linux 测试容器与转发容器运行时，在 `frontend` 执行 `npm run dev:workspace` 即可构建并打开开发服务 `http://127.0.0.1:18067`（浏览器访问该地址），该启动器自动开启免访问码连接，复用独立 `tcm_vib62_workspace_test` 数据库及其文件。无需设置 `TCM_DEMO_BOOTSTRAP`。单独使用 Vite 时，须为对应后端设置上述开关；只执行 `npm run dev` 不会自动配置后端。
+
+研究页右上方的“模型设置”可管理提供商、添加或移除模型、选择默认模型并保存。模型选项保存在当前数据目录的 `research-model-settings.json`，刷新与服务重启后保留；文件不含 API 密钥。开发启动器连接既有环境凭据，优先列出 DeepSeek 官方 `deepseek-flash`、`deepseek-v4-pro`，同时提供硅基流动候选；可在页面添加硅基流动模型名称。目录是本地候选列表，加载不会向供应商发送请求，不代表账户、余额或模型输出已经测试。选中的路由在启动任务时冻结；默认外发策略仍为 LOCAL_ONLY，模型设置不会自动开启研究或更改来源授权。
+
 当前预览页保留只读的健康检查与已发布知识检索；检索的 HTTP 响应使用来源、证据和段落公开编号，内部修订 UUID 只用于服务和 CLI。任务查询 `GET /api/v1/jobs/{JOB-...}` 需要本地会话，且只接受公开编号。
 
 桌面主进程在启动 API 时生成至少 32 字符的一次性随机密钥，通过 `TCM_BOOTSTRAP_SECRET` 注入进程；前端从主进程取得密钥后，向 `POST /api/v1/local-session/bootstrap` 提交 `{"bootstrap_secret":"..."}`。请求必须携带精确匹配 `TCM_LOCAL_ALLOWED_ORIGINS` 的 `Origin`。成功响应设置 HttpOnly、SameSite=Strict 的会话 Cookie，仅在这次响应体返回 CSRF token。密钥只可兑换一次，默认 5 分钟过期；没有主进程注入密钥时 bootstrap 返回 503。正式 HTTPS 回环部署需设置 `TCM_SECURE_SESSION_COOKIE=true`。桌面主进程接线属于后续 Desktop Supervisor 任务。

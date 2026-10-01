@@ -1,0 +1,388 @@
+{
+  "question": "比较麻黄汤和大青龙汤，分析大青龙汤中麻黄用量为什么比麻黄汤多",
+  "source": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+  "model_doubles": false,
+  "verified_at": "2026-10-01T12:51:44.218Z",
+  "task_id": "RT-01a0f784-e6a0-71d8-9ad5-2e752789aa8c",
+  "model": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+  "task": {
+    "task_id": "RT-01a0f784-e6a0-71d8-9ad5-2e752789aa8c",
+    "question": "比较麻黄汤和大青龙汤，分析大青龙汤中麻黄用量为什么比麻黄汤多",
+    "status": "CANCELLED",
+    "control_state": "CANCELLED",
+    "source_ids": [
+      "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350"
+    ],
+    "allowed_actions": [],
+    "job_id": "JOB-01a0f785-5083-76f9-bd22-3526676b4542",
+    "report_available": false
+  },
+  "job": {
+    "job_id": "JOB-01a0f785-5083-76f9-bd22-3526676b4542",
+    "job_type": "research.run",
+    "status": "CANCELLED",
+    "attempts": 1,
+    "max_attempts": 3,
+    "failure_reason": null
+  },
+  "details": {
+    "task_id": "RT-01a0f784-e6a0-71d8-9ad5-2e752789aa8c",
+    "subquestions": [
+      {
+        "sequence_no": 1,
+        "question": "检索并对比麻黄汤与大青龙汤的完整组成、剂量（包括原方剂量、现代教材常用剂量及剂量换算说明）、主治证候与配伍特点。"
+      },
+      {
+        "sequence_no": 2,
+        "question": "分析大青龙汤主治证候（外寒内热，表寒更重且兼里热烦躁）与麻黄汤主治证候（风寒表实证）在病机与临床表现上的核心差异。"
+      },
+      {
+        "sequence_no": 3,
+        "question": "基于两方证候与配伍差异，分析大青龙汤中麻黄用量相对增加的可能原因，包括增强发汗解表力度以应对更重的表寒，以及配伍石膏后麻黄与石膏的相互作用对发汗力度的影响。"
+      }
+    ],
+    "evidence": [
+      {
+        "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-4c7b-7ca8-b19a-15572cedb8b7",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-3669-7048-a0dd-5360d486dd6d",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-27e2-7ac5-8044-65060e87caca",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-603b-7957-bc70-be7457283255",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-282d-7d31-adfa-501c70338250",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f760-1331-77c2-b3b5-d3d146ac1a39",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f760-138c-7a06-bd53-0fedd15fd8c7",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75b-a9a1-76ca-a5c6-b699f1a0b5d0",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f759-95b3-7a4b-8e99-50747289cb21",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75b-d25a-70f4-a8ab-e8bcd54058e9",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-354f-7f68-964a-86f9822149b1",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f755-81f7-7df7-a437-3d68de880c3e",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f75f-1204-78da-8f21-c713b131490a",
+        "revision_no": 1
+      },
+      {
+        "evidence_id": "EV-01a0f757-7fc3-76fb-b549-647072fb2c08",
+        "revision_no": 1
+      }
+    ],
+    "agent_runs": [
+      {
+        "id": "RUN-bb658cafc35be42f3b1360d5",
+        "role": "Classicist",
+        "round_no": 1,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-e88c08048e86db23698c7eb5",
+        "role": "HistoricalScholar",
+        "round_no": 1,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      },
+      {
+        "id": "RUN-a7791d24c411f2dfd26f9a8e",
+        "role": "Theorist",
+        "round_no": 1,
+        "status": "COMPLETED",
+        "model_version": "siliconflow/deepseek-ai/DeepSeek-V3.2",
+        "review_summary": null
+      }
+    ],
+    "claims": [
+      {
+        "id": "CLM-610d29713d42d156660b2c43",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-bb658cafc35be42f3b1360d5",
+        "agent_role": "Classicist",
+        "claim_type": "DIRECT_TEXT",
+        "assertion_text": "大青龙汤中麻黄用量为六两，是麻黄汤中麻黄三两用量的两倍。",
+        "rationale_summary": "证据直接列出了两方的组成和剂量：麻黄汤麻黄三两，大青龙汤麻黄六两。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-88b3f8831dd9d443bbcf7258",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-bb658cafc35be42f3b1360d5",
+        "agent_role": "Classicist",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤主治证候为外感风寒、内有郁热，其表寒更重，且兼见烦躁；而麻黄汤主治为单纯的外感风寒表实证，无里热烦躁。",
+        "rationale_summary": "证据对比了两方的主治：麻黄汤主治外感风寒表实证，症状为恶寒发热、无汗而喘；大青龙汤主治外感风寒、内有郁热证，症状为恶寒发热、无汗而烦躁。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-aca7e928c1b8332e010821ea",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-bb658cafc35be42f3b1360d5",
+        "agent_role": "Classicist",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤倍用麻黄，是为了增强发汗解表之力以应对更重的表寒闭郁；同时配伍石膏清里热，麻黄与石膏相伍，使麻黄辛温发表而无助热之弊。",
+        "rationale_summary": "证据指出大青龙汤证属风寒重证，兼内有郁热，故倍用麻黄以确保发汗之力；并说明麻黄得石膏，辛温发表而无助热之弊。",
+        "status": "ACTIVE",
+        "audit_status": "SUPPORTED",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-3b62815e1355605eb1c02107",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-a7791d24c411f2dfd26f9a8e",
+        "agent_role": "Theorist",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "麻黄汤与大青龙汤的组成、剂量和主治证候存在明确差异。麻黄汤由麻黄三两、桂枝二两、杏仁七十个、甘草一两组成，主治外感风寒表实证，症见恶寒发热、无汗而喘。大青龙汤由麻黄六两、桂枝二两、甘草二两、杏仁四十粒、石膏如鸡子大、生姜三两、大枣十二枚组成，主治外感风寒、内有郁热证，症见恶寒发热、无汗而烦躁。",
+        "rationale_summary": "证据中分别列出了两方的完整组成、原方剂量及主治证候，通过对比可得出上述差异。",
+        "status": "ACTIVE",
+        "audit_status": "PENDING_SEMANTIC",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-d5c69642f5b3c02c2ba2b8ef",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-a7791d24c411f2dfd26f9a8e",
+        "agent_role": "Theorist",
+        "claim_type": "TEXTUAL_RELATION",
+        "assertion_text": "大青龙汤主治证候的核心病机是风寒束表较重，且阳气内郁化热，导致“烦躁”；而麻黄汤主治证候的核心病机是单纯的风寒束表、肺气失宣，以“无汗而喘”为特征，无里热表现。",
+        "rationale_summary": "证据指出麻黄汤证为“风寒束表，肺气失宣”，大青龙汤证为“风寒束表，表气闭郁较重，致使阳气内郁而化热”，并强调“烦躁”是鉴别要点。",
+        "status": "ACTIVE",
+        "audit_status": "PENDING",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "CLM-2876893c68b248c2e9004641",
+        "parent_claim_id": null,
+        "agent_run_id": "RUN-a7791d24c411f2dfd26f9a8e",
+        "agent_role": "Theorist",
+        "claim_type": "THEORETICAL_INFERENCE",
+        "assertion_text": "（推论）大青龙汤中麻黄用量倍于麻黄汤，可能基于两个相互关联的原因：一是为了应对更重的表寒闭郁，需要更强的发汗力度以开泄腠理；二是配伍大寒的石膏清里热，石膏的寒凉性质可能对麻黄的辛温发散之力有一定制约，故需增加麻黄用量以确保其发汗解表的功效不被削弱，从而达到表里双解的目的。",
+        "rationale_summary": "证据表明大青龙汤证属“风寒重证”，且方解指出其麻黄量为“麻黄汤之倍”以增强发汗散寒之力；同时指出麻黄与石膏配伍可相互制约（麻黄得石膏无助热之弊，石膏得麻黄无凉遏之虞）。由此推论，增加麻黄用量既针对病机，也考虑了与石膏的配伍关系。",
+        "status": "ACTIVE",
+        "audit_status": "PENDING",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      }
+    ],
+    "audits": [
+      {
+        "id": "AUD-1c01e6c796f34771e748542a",
+        "claim_id": "CLM-610d29713d42d156660b2c43",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-98f258579e2091ccb6d085e3",
+        "claim_id": "CLM-610d29713d42d156660b2c43",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据明确显示大青龙汤中麻黄用量为六两，麻黄汤中麻黄用量为三两，且大青龙汤的方解中明确指出其麻黄用量是麻黄汤之倍。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-ed4955166f250849a41db140",
+        "claim_id": "CLM-88b3f8831dd9d443bbcf7258",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-c42e1bcd23c21814dedc95b9",
+        "claim_id": "CLM-88b3f8831dd9d443bbcf7258",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据明确支持断言。大青龙汤主治证候为“外感风寒，内有郁热证”，并强调“表寒较甚”和“烦躁”；麻黄汤主治为“外感风寒表实证”，未提及里热烦躁。证据中的【鉴别】部分直接对比了两方，指出大青龙汤证属“风寒重证，兼内有郁热”。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-1aa6715b44d7b816652b4e88",
+        "claim_id": "CLM-aca7e928c1b8332e010821ea",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-de1040d73668572851e70c1c",
+        "claim_id": "CLM-aca7e928c1b8332e010821ea",
+        "sequence_no": 2,
+        "stage": "SEMANTIC",
+        "verdict": "SUPPORTED",
+        "rationale_summary": "证据原文明确指出大青龙汤中麻黄用量是麻黄汤的一倍，目的是增强发汗解表之力以应对更重的表寒闭郁。同时，原文也明确指出麻黄与石膏相伍，使麻黄辛温发表而无助热之弊。",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          }
+        ]
+      },
+      {
+        "id": "AUD-9d5b39fe1d401055e981ddc0",
+        "claim_id": "CLM-3b62815e1355605eb1c02107",
+        "sequence_no": 1,
+        "stage": "MECHANICAL",
+        "verdict": "PASS",
+        "rationale_summary": "Citation chain verified",
+        "evidence": [
+          {
+            "evidence_id": "EV-01a0f68d-647a-78cf-8b60-1d51bd1adb64",
+            "revision_no": 1
+          },
+          {
+            "evidence_id": "EV-01a0f68b-e487-7b47-84fb-8ab9c5b045f1",
+            "revision_no": 1
+          }
+        ]
+      }
+    ],
+    "canonical_claims": [],
+    "debate": {
+      "critiques": [],
+      "evidence_requests": [],
+      "retrievals": [],
+      "rebuttals": []
+    },
+    "disputes": [],
+    "evidence_gaps": [],
+    "stop_evaluations": [],
+    "human_reviews": []
+  }
+}

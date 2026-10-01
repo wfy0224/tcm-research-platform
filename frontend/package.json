@@ -5,6 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "dev:workspace": "npm run build && node scripts/serve_workspace.mjs",
+    "check:development-session": "npm run build && node scripts/check_development_session_browser.mjs",
+    "check:import-guidance": "npm run build && node scripts/check_import_guidance.mjs",
+    "check:api-errors": "node scripts/check_api_errors.mjs",
+    "check:citations": "npm run build && node scripts/check_citation_boundaries.mjs && node scripts/check_citation_navigation.mjs",
     "build": "tsc -b && vite build",
     "check:research-browser": "npm run build && node scripts/check_research_browser.mjs",
     "check:research-e2e": "npm run build && node scripts/check_research_e2e.mjs"

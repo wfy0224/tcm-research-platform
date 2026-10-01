@@ -1,0 +1,3396 @@
+{
+  "source": "SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350",
+  "revision": 2,
+  "total": 376,
+  "reviewed": [
+    {
+      "key": "main-241",
+      "name": "香苏散",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f75f-e7f0-73f9-958d-77267dbc264b",
+      "evidence_revision_id": "01a0f755-498d-7829-a7b2-f00a8bd42368",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-157",
+      "name": "麻黄汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f75f-de2b-71bf-a67d-f2d76cdb397c",
+      "evidence_revision_id": "01a0f755-366f-7d51-a01f-4b877687816c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-180",
+      "name": "大青龙汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f75f-dc4e-7c9f-8a7d-f960525d4098",
+      "evidence_revision_id": "01a0f755-3d7e-7743-9375-70b8611cbf03",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-227",
+      "name": "九味羌活汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f75f-dfe9-7bc4-b953-59c2fbb72ad7",
+      "evidence_revision_id": "01a0f755-3f1a-7a8d-b167-0e66d2b18dfc",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-200",
+      "name": "桂枝汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f75f-da04-74fd-99f8-8656932ce76d",
+      "evidence_revision_id": "01a0f755-3878-706d-a6d1-9deec351d493",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-277",
+      "name": "止嗽散",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f75f-e1c7-7190-84e5-642ef66b9e5a",
+      "evidence_revision_id": "01a0f755-510f-72c7-9ed6-8ca8efdb0e09",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-258",
+      "name": "小青龙汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f75f-e388-7c84-9664-e4bfe4ff788d",
+      "evidence_revision_id": "01a0f755-4c7d-745e-9d51-c44b000de5e4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-306",
+      "name": "桑菊饮",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f75f-e5c8-7316-a689-356a311e38cc",
+      "evidence_revision_id": "01a0f755-5e3f-7c6e-bc25-c77b98f55343",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-294",
+      "name": "银翘散",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f75f-e994-7cb7-9525-91c9a00b3d3e",
+      "evidence_revision_id": "01a0f755-5371-7ef3-a10c-c4e190a4f4ab",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-320",
+      "name": "麻黄杏仁甘草石膏汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f75f-edb1-748f-9af4-1d8619d93a64",
+      "evidence_revision_id": "01a0f755-603d-7341-b8bd-c26e828d8dda",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-350",
+      "name": "升麻葛根汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f75f-ef67-7530-a469-acc4fb4a8ab1",
+      "evidence_revision_id": "01a0f755-65d4-7568-a804-2b5e5ee337fb",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-367",
+      "name": "葱豉桔梗汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f75f-ebc4-78ec-ba0d-b641ca605010",
+      "evidence_revision_id": "01a0f755-87a5-7938-8fa5-907c0cda447a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-395",
+      "name": "参苏饮",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f75f-f0f3-7cdb-bbd2-b8b6de8722b3",
+      "evidence_revision_id": "01a0f755-734e-774c-9782-0cbb126ed67f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-380",
+      "name": "败毒散",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f75f-f6ab-7a80-b76c-3d0a521af2ee",
+      "evidence_revision_id": "01a0f755-7013-77e4-8ada-ff646dd1f44d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-436",
+      "name": "加减葳蕤汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f75f-f4c2-768f-9cf6-11f8432e3a5b",
+      "evidence_revision_id": "01a0f755-8412-7196-ae18-a05e32738aa4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-447",
+      "name": "葱白七味饮",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f75f-f875-7e00-b0d8-3a3445276417",
+      "evidence_revision_id": "01a0f755-936f-7ca1-982e-a2222dda7c34",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-424",
+      "name": "麻黄细辛附子汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f75f-fd9b-710e-afd0-d34fbc7d0383",
+      "evidence_revision_id": "01a0f755-81f9-7f32-8bdb-c28321cd27d4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-410",
+      "name": "再造散",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f75f-f2ef-7c98-ac84-d3d6e39a893a",
+      "evidence_revision_id": "01a0f755-7b0e-77c5-aa78-742635d6979d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-476",
+      "name": "大承气汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f75f-ff1a-775a-ac31-51a1d60362a4",
+      "evidence_revision_id": "01a0f755-a700-7b76-807d-0b9fc25ef836",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-502",
+      "name": "大陷胸汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f75f-fa6a-78ac-918a-2812a7f0c6bb",
+      "evidence_revision_id": "01a0f755-9561-7995-b5d2-9a6cbf907186",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-519",
+      "name": "大黄附子汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f75f-fbe0-744f-8ec5-a45afc45a0f7",
+      "evidence_revision_id": "01a0f755-9a1f-72d1-a17e-c8ee178d6fe5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-566",
+      "name": "麻子仁丸",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-073f-76dc-9dcd-0b159e6965fb",
+      "evidence_revision_id": "01a0f755-ade8-72ab-abfc-a412d85cb165",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-532",
+      "name": "温脾汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-00cf-7e99-8607-b62e35d04a68",
+      "evidence_revision_id": "01a0f755-a549-75d3-b94a-844ff67f7e0b",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-579",
+      "name": "五仁丸",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-0a9f-727e-8504-002592f1e9e4",
+      "evidence_revision_id": "01a0f755-d4cc-71c5-975b-0e702166b8ca",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-550",
+      "name": "三物备急丸",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-0292-7cbb-bcde-428dc2ab4481",
+      "evidence_revision_id": "01a0f755-a3f0-7eb1-9703-8cd840c02326",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-593",
+      "name": "济川煎",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-0542-74a0-8642-a568ff70fc91",
+      "evidence_revision_id": "01a0f755-d023-775f-8240-bbc067c4664d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-609",
+      "name": "十枣汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-03fc-7da5-b10a-df57451ffaa9",
+      "evidence_revision_id": "01a0f755-c00b-77f1-b6dd-38e807736807",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-661",
+      "name": "增液承气汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-11f8-7bd7-99ec-cafd4abf7f1f",
+      "evidence_revision_id": "01a0f755-d75b-7c76-9104-a1af7c01df54",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-687",
+      "name": "小柴胡汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-0de4-7ab8-bf83-45c4b06ace3d",
+      "evidence_revision_id": "01a0f755-e920-7f44-8972-daffe99844be",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-630",
+      "name": "禹功散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-0923-781c-b965-a971a629ec6d",
+      "evidence_revision_id": "01a0f755-c18c-76ac-a2f2-99e17634c70e",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-707",
+      "name": "蒿芩清胆汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-1034-764d-83ad-cf5a55c5b216",
+      "evidence_revision_id": "01a0f755-e233-742b-bb21-e153d9b2c9b3",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-646",
+      "name": "黄龙汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-0c79-707a-b0e9-af474fe0d8ee",
+      "evidence_revision_id": "01a0f755-d274-7b41-ab5a-fc1b48ac6fa2",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-734",
+      "name": "四逆散",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-13c8-7d61-a46a-e86ec1de71e4",
+      "evidence_revision_id": "01a0f755-ee7d-78d3-a651-07e55e158f50",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-750",
+      "name": "逍遥散",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-18ad-7459-9629-45cb10c8109f",
+      "evidence_revision_id": "01a0f755-f6a0-79f5-a026-3b8e58b75e51",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-719",
+      "name": "达原饮",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-1685-7d7c-93b8-86c26c320197",
+      "evidence_revision_id": "01a0f755-f3ea-7aba-bc44-2224308dc9d8",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-768",
+      "name": "痛泻要方",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-151f-7631-8a0e-2086e74b84e1",
+      "evidence_revision_id": "01a0f755-ff68-7c28-8f96-e3312d4982a1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-810",
+      "name": "白虎汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-1c1c-7c14-b00e-2be8d8ec1c13",
+      "evidence_revision_id": "01a0f756-3007-7c96-bf50-67c76a4205c3",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-782",
+      "name": "半夏泻心汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-1a15-7c0d-96c4-a5d29a55bf42",
+      "evidence_revision_id": "01a0f756-0cb4-706f-8576-4fd077c5dc24",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-827",
+      "name": "竹叶石膏汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-21f7-75ed-8e9b-1df63b60032b",
+      "evidence_revision_id": "01a0f756-33d4-7d95-b858-91427ee7240a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-843",
+      "name": "清营汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f760-23bb-70aa-9e1d-c2b2ebcaa2c5",
+      "evidence_revision_id": "01a0f756-10b9-7069-8792-5a048274c951",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-889",
+      "name": "凉膈散",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-2067-7b44-ae35-fa2d38446121",
+      "evidence_revision_id": "01a0f756-3213-770a-862c-68d34ee31f7c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-902",
+      "name": "普济消毒饮",
+      "ingredient_count": 14,
+      "formula_revision_id": "01a0f760-28e2-7fed-99a3-0eaeb80171d0",
+      "evidence_revision_id": "01a0f756-3841-7a98-9994-2c11710d9d7d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-858",
+      "name": "犀角地黄汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-1d83-7683-8b4e-c771dddcf425",
+      "evidence_revision_id": "01a0f756-2448-73e0-943d-05e648f188dd",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-919",
+      "name": "清瘟败毒饮",
+      "ingredient_count": 14,
+      "formula_revision_id": "01a0f760-26dc-7ecd-b9c4-9c49a16fc8c4",
+      "evidence_revision_id": "01a0f756-470d-7e09-8d09-1496ea99f7d4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-873",
+      "name": "黄连解毒汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-1ef4-70a3-b987-b1ec4613a7d0",
+      "evidence_revision_id": "01a0f756-1e8f-7483-b5f6-ff3902e5e5f4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-934",
+      "name": "导赤散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-25a8-784f-bff8-14ab82cadf9b",
+      "evidence_revision_id": "01a0f756-43d9-70ba-b5fe-7252ace710e9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-970",
+      "name": "左金丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f760-32b0-7cb5-9d74-360e30b00dd9",
+      "evidence_revision_id": "01a0f756-ad3c-75eb-88cc-a338fc50d121",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-951",
+      "name": "龙胆泻肝汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-2b51-7376-b173-df6d71caadd3",
+      "evidence_revision_id": "01a0f756-497c-7fcb-b459-009b0ccfe0ad",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1024",
+      "name": "玉女煎",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-3143-7649-abab-8ca735f02bca",
+      "evidence_revision_id": "01a0f756-647e-759d-b5f8-896f8e50b7c3",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1007",
+      "name": "清胃散",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-2cc6-7268-8034-3126bc24240b",
+      "evidence_revision_id": "01a0f756-af31-7281-9942-cdcc5c8670b3",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-988",
+      "name": "泻白散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-2e69-7b9e-9b6e-10d26b3dc321",
+      "evidence_revision_id": "01a0f756-65f1-7606-b256-03919a1992a5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1040",
+      "name": "芍药汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f760-3745-71a1-be17-165c68ef9cdb",
+      "evidence_revision_id": "01a0f756-b335-7fbb-b53f-3a685a69e7d8",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1059",
+      "name": "白头翁汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-2fcd-7f1f-8421-c1ce1e8584b6",
+      "evidence_revision_id": "01a0f756-77a2-7c8c-9887-cf1404194715",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1079",
+      "name": "青蒿鳖甲汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-33df-72c5-81f4-2bf9b1595b7b",
+      "evidence_revision_id": "01a0f756-8b0b-7eae-83fa-1bd98965041c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1148",
+      "name": "香薷散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-3c1d-7281-af42-f55ed271fa1a",
+      "evidence_revision_id": "01a0f756-e158-75f5-94cd-291d2be97454",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1178",
+      "name": "六一散",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f760-3d58-7a28-80a8-9330e081e828",
+      "evidence_revision_id": "01a0f756-ca2e-74d5-adc2-e40b80800ff2",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1093",
+      "name": "清骨散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-354e-7774-b580-10c9b4f4fa05",
+      "evidence_revision_id": "01a0f756-b561-7252-9e98-251976b9992a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1110",
+      "name": "当归六黄汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-3923-722e-90a6-b2cc3b198e85",
+      "evidence_revision_id": "01a0f756-c37e-71e9-96d8-c7579fbdffc2",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1165",
+      "name": "清络饮",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-3ace-7c5d-b089-5e29e1a44cfa",
+      "evidence_revision_id": "01a0f756-eba8-7936-bfc5-3c6c86932ef8",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1242",
+      "name": "理中丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-3eb6-7322-afa0-24ce60eba772",
+      "evidence_revision_id": "01a0f756-ed9b-7fb0-84f7-70a85237f1f3",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1199",
+      "name": "桂苓甘露散",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f760-4173-715d-88ae-c7817859751a",
+      "evidence_revision_id": "01a0f756-e86d-7713-a0e8-a9b53a296d63",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1215",
+      "name": "清暑益气汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-456f-7646-9c99-46b28c10021d",
+      "evidence_revision_id": "01a0f756-df1e-7bea-85ce-2d45a77c58f3",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1284",
+      "name": "吴茱萸汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-4023-7da8-abc5-4b00b44ff7ea",
+      "evidence_revision_id": "01a0f756-fb1f-7026-9a50-bc2f7b5495ab",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1313",
+      "name": "四逆汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-4d39-7936-a487-08862b875ebe",
+      "evidence_revision_id": "01a0f757-1880-75dc-84c0-bc8b4f690f0d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1265",
+      "name": "小建中汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-43be-78e9-aa77-3db8119100fd",
+      "evidence_revision_id": "01a0f757-256f-7f9f-b76d-40b1e59e4b0b",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1299",
+      "name": "大建中汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-4722-7465-9ff3-7ef496d82b22",
+      "evidence_revision_id": "01a0f757-2760-77db-a12c-02cb3dff8a34",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1356",
+      "name": "当归四逆汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-4861-7697-a564-bacdd3125ca9",
+      "evidence_revision_id": "01a0f757-33a7-7289-afe1-2343ddae10ae",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1338",
+      "name": "回阳救急汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-4ba6-7824-a410-9d6f528ffc6e",
+      "evidence_revision_id": "01a0f757-1d38-7a7b-b74a-1d1be13716f6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1409",
+      "name": "葛根黄芩黄连汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-5cb9-7c37-8860-bddc4d32eca5",
+      "evidence_revision_id": "01a0f757-359a-7d59-8a59-af41dc56649e",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1372",
+      "name": "黄芪桂枝五物汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-4a28-708d-a799-0a0b906a69c5",
+      "evidence_revision_id": "01a0f757-2c4d-717f-9ae9-7f866ac1bab7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1454",
+      "name": "防风通圣散",
+      "ingredient_count": 17,
+      "formula_revision_id": "01a0f760-5e7e-7dce-8e29-e91ab8bcfe73",
+      "evidence_revision_id": "01a0f757-7fc4-77d0-baf3-920adfa20e93",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1438",
+      "name": "大柴胡汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-508d-739d-8ba0-5414b1595994",
+      "evidence_revision_id": "01a0f757-46c0-76df-a261-7477d58d6e4c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1385",
+      "name": "暖肝煎",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-4eae-74cf-99c5-de726ee36eae",
+      "evidence_revision_id": "01a0f757-8243-7c3d-873b-4b0f497c5be7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1423",
+      "name": "五积散",
+      "ingredient_count": 15,
+      "formula_revision_id": "01a0f760-541b-7edd-8803-f8743e00ee3b",
+      "evidence_revision_id": "01a0f757-840a-7a2e-a492-cc9acbfd050a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1516",
+      "name": "参苓白术散",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-57c4-7810-9d37-63a53cf35766",
+      "evidence_revision_id": "01a0f757-977f-7649-9541-e5bf5239ec23",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1494",
+      "name": "四君子汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-5684-78f5-aea5-9cc1936dfc05",
+      "evidence_revision_id": "01a0f757-a7ab-7bfb-84fa-bedb8355ee87",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1535",
+      "name": "补中益气汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-5a4d-7e5a-9fb4-b066738c9600",
+      "evidence_revision_id": "01a0f760-5a3d-7b3a-8945-aa156ffd7a07",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1561",
+      "name": "玉屏风散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-60c5-7a7c-8c8d-c29ff3104b51",
+      "evidence_revision_id": "01a0f757-c8ca-74b7-b7d4-4cd7177773b8",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1467",
+      "name": "疏凿饮子",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-527d-7697-a5a2-2c32c5aa0217",
+      "evidence_revision_id": "01a0f757-8c7b-7c96-b788-29f0a05740bf",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1576",
+      "name": "生脉散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-61f8-76e0-8156-d9714caa76a4",
+      "evidence_revision_id": "01a0f757-a599-7c80-b192-131a33505047",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1591",
+      "name": "人参蛤蚡散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-642f-7dd4-909d-fd9581d34023",
+      "evidence_revision_id": "01a0f757-b302-7ad4-ab70-a5a72a7cd4df",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1607",
+      "name": "四物汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-65d6-7834-90dc-9af3def99809",
+      "evidence_revision_id": "01a0f757-cf51-7095-84cd-437de70bccd7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1650",
+      "name": "归脾汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-6b58-7141-9b8a-46c908054476",
+      "evidence_revision_id": "01a0f757-ca42-7382-802a-a6731f12023a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1632",
+      "name": "当归补血汤",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f760-62fc-75dc-b2e7-86bc655b8a54",
+      "evidence_revision_id": "01a0f757-cd72-7b63-85b0-a4f6ebba3315",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1690",
+      "name": "泰山磐石散",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f760-68c9-765e-90b5-ff5feea550aa",
+      "evidence_revision_id": "01a0f758-412d-720c-baf0-90a72a872242",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1706",
+      "name": "六味地黄丸",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-6e8f-7ce5-9938-aecbaee0fbeb",
+      "evidence_revision_id": "01a0f758-3d6b-7ad0-8877-d4d0c88ea352",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1727",
+      "name": "左归丸",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-720d-708c-aed9-ed0dd6000064",
+      "evidence_revision_id": "01a0f757-f140-7975-8258-51c20416d619",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1742",
+      "name": "炙甘草汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f760-7017-7236-ac61-ca21de5f6635",
+      "evidence_revision_id": "01a0f757-ea09-7721-9109-6a99968a2438",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1673",
+      "name": "八珍汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-673f-7ca4-a70e-51ec3c117772",
+      "evidence_revision_id": "01a0f757-d8b6-757f-bd04-f6989e5636ba",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1796",
+      "name": "益胃汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-73f7-7db4-937a-7b2afdb4c885",
+      "evidence_revision_id": "01a0f758-3f9c-70a8-b391-042030b8f0fd",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1781",
+      "name": "二至丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f760-757e-7f68-8dac-440f348039c8",
+      "evidence_revision_id": "01a0f758-189b-7628-bbf8-4991f92a44ea",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1827",
+      "name": "右归丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-7b4e-7531-b4c9-2dd7b4ac77af",
+      "evidence_revision_id": "01a0f758-54b9-76e9-94ea-1b610723ad28",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1809",
+      "name": "肾气丸",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-77bf-7484-9e11-e36f6b1d02b0",
+      "evidence_revision_id": "01a0f758-504e-75f0-8c14-ac0191bf0df0",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1759",
+      "name": "大补阴丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-6d47-74c2-8eab-09b029a6ef38",
+      "evidence_revision_id": "01a0f757-f98f-7fd7-b5b4-cb5cfb453791",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1770",
+      "name": "一贯煎",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-7693-7dd8-a847-00053c6ca550",
+      "evidence_revision_id": "01a0f758-02b6-7c6a-b99c-324341ab6672",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1892",
+      "name": "补天大造丸",
+      "ingredient_count": 14,
+      "formula_revision_id": "01a0f760-8629-7ef6-954f-3a500da14fb6",
+      "evidence_revision_id": "01a0f758-6637-738c-93b9-772c4208c7d9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1843",
+      "name": "地黄饮子",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f760-7990-79b1-b106-42e9ab4d70a9",
+      "evidence_revision_id": "01a0f758-56a7-78c3-b56a-de80d4ac9cc9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1860",
+      "name": "龟鹿二仙胶",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-7dc0-7bf0-a7ef-c4070d914bcb",
+      "evidence_revision_id": "01a0f758-52be-7123-adc8-b298b1913a11",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1878",
+      "name": "七宝美髯丹",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-7f3c-779a-9692-a886c0d9ebec",
+      "evidence_revision_id": "01a0f758-697f-7d6a-91bf-de6b98959b44",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1946",
+      "name": "九仙散",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f760-846e-7a1b-a115-fd20de752bab",
+      "evidence_revision_id": "01a0f758-6cff-7b14-88e0-7a62ac8d30af",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1958",
+      "name": "真人养脏汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-8121-7085-85ac-4380e0529a4e",
+      "evidence_revision_id": "01a0f758-724d-7a53-870c-2912893bbaff",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1932",
+      "name": "牡蛎散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-8313-7b72-adc5-d19dfedb3a82",
+      "evidence_revision_id": "01a0f758-60c5-7cc4-8deb-0904c44c2667",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1972",
+      "name": "四神丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-8ca8-7d82-a90f-2c72ef61011e",
+      "evidence_revision_id": "01a0f758-7831-7e8c-9d0d-2990044821c5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-1987",
+      "name": "桃花汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-89e7-73c5-8551-f5d0b658dddc",
+      "evidence_revision_id": "01a0f758-8b7b-7ff7-a224-2b25b1f56536",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2001",
+      "name": "驻车丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-907f-7854-bf08-b7a6a752f388",
+      "evidence_revision_id": "01a0f758-7f86-77a1-b778-2c045a0a5bd1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2016",
+      "name": "金锁固精丸",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-888f-7612-8d6d-15af927796ac",
+      "evidence_revision_id": "01a0f758-96c6-740b-8601-39f0143b987c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2044",
+      "name": "缩泉丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f760-920b-7cbd-bfe1-b3f5f261f82b",
+      "evidence_revision_id": "01a0f758-92d4-727a-ba08-a38b590f32ab",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2031",
+      "name": "桑螵蛸散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-8b1e-792b-bb15-5b1632fafb29",
+      "evidence_revision_id": "01a0f758-88b3-77b4-b681-d09f85380331",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2072",
+      "name": "固经丸",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-9634-7ee0-9438-2bd01cd594f2",
+      "evidence_revision_id": "01a0f758-a067-7c73-819e-62eb0c0180e5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2058",
+      "name": "固冲汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-8e41-7b69-aaf9-656269f0fdec",
+      "evidence_revision_id": "01a0f758-9e24-7c65-9bdc-2f87cdc26a29",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2085",
+      "name": "易黄汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-948c-7333-920e-f7088c658174",
+      "evidence_revision_id": "01a0f758-a77b-7fb0-acaf-6ba0c3a5d6e4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2153",
+      "name": "桂枝甘草龙骨牡蛎汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-9953-7d49-8458-4813d7d62a81",
+      "evidence_revision_id": "01a0f758-b731-7a27-bfb2-fc10038435a9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2129",
+      "name": "磁朱丸",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-9334-7a75-a2f1-377890149f6c",
+      "evidence_revision_id": "01a0f758-b171-7552-b389-272a7d5d6e49",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2113",
+      "name": "朱砂安神丸",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-97bf-7992-9e35-197abdd34468",
+      "evidence_revision_id": "01a0f758-aae4-79c8-9c9d-c985d7934f66",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2141",
+      "name": "珍珠母丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-9aa8-77d0-b0e4-116c43d9e0a9",
+      "evidence_revision_id": "01a0f758-b559-73f5-b00b-b84fa332fb45",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2166",
+      "name": "天王补心丹",
+      "ingredient_count": 13,
+      "formula_revision_id": "01a0f760-9db3-735a-974d-366b2710afa9",
+      "evidence_revision_id": "01a0f758-c171-727c-8c2a-8a0f87a3b3be",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2214",
+      "name": "养心汤",
+      "ingredient_count": 13,
+      "formula_revision_id": "01a0f760-a12d-7daf-9ce2-9136c05ae3cf",
+      "evidence_revision_id": "01a0f758-d05a-7e87-b06e-cbb1803393d4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2199",
+      "name": "甘麦大枣汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-9c62-7c96-bf27-0f7d5aaa148b",
+      "evidence_revision_id": "01a0f758-cbef-76c8-914f-e4f9d30e6f61",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2183",
+      "name": "酸枣仁汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-9fa8-7a09-9eb7-c8555980a731",
+      "evidence_revision_id": "01a0f758-c54f-7c96-96f0-7d9d357c0e4c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2229",
+      "name": "交泰丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f760-a316-70c3-bbf9-5b27e8f1cd32",
+      "evidence_revision_id": "01a0f758-d25d-74fd-b036-74d3cf8a747c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2242",
+      "name": "黄连阿胶汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-a480-7ceb-b206-c92fd57f9a49",
+      "evidence_revision_id": "01a0f758-d5d8-76ee-bf31-f898877e2c39",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2290",
+      "name": "紫雪",
+      "ingredient_count": 13,
+      "formula_revision_id": "01a0f760-b354-74ad-81b7-6810d0221c0b",
+      "evidence_revision_id": "01a0f758-e6cd-7134-a1e8-15400f42a866",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2326",
+      "name": "抱龙丸",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-b709-7ac9-aae0-70e578d7ffdc",
+      "evidence_revision_id": "01a0f759-3681-7e0b-a28c-bcc97836702c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2271",
+      "name": "安宫牛黄丸",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f760-a81a-72db-9069-82900515e3e7",
+      "evidence_revision_id": "01a0f759-1c49-7e84-b787-503fffd422f1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2304",
+      "name": "至宝丹",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-a639-77eb-b166-fbdd7c8c80b4",
+      "evidence_revision_id": "01a0f759-3d7a-7687-b220-271c1cbd463e",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2341",
+      "name": "苏合香丸",
+      "ingredient_count": 15,
+      "formula_revision_id": "01a0f760-acf7-7dca-8607-e54b85297607",
+      "evidence_revision_id": "01a0f759-1f1e-7751-a289-aa0a47f35ca4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2384",
+      "name": "越鞠丸",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-afde-754e-bc33-711ed39cf94f",
+      "evidence_revision_id": "01a0f759-2cf5-792b-be8c-a7145ac4852c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2359",
+      "name": "紫金锭",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-aa70-7d92-9091-1fb1a068585a",
+      "evidence_revision_id": "01a0f759-2f07-74a0-980c-4671fef57a79",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2397",
+      "name": "柴胡疏肝散",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-b16d-74bd-b9b0-f8fb0fa00fb4",
+      "evidence_revision_id": "01a0f759-416d-7871-8f19-a42ea0b7d664",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2412",
+      "name": "金铃子散",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f760-b5ea-7e08-a593-4a1755300e0d",
+      "evidence_revision_id": "01a0f759-3bfd-7cb4-aa8b-238e98b66371",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2426",
+      "name": "瓜蒌薤白白酒汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-bc1a-7a94-948d-eb32ddc8150b",
+      "evidence_revision_id": "01a0f759-5045-779e-bee6-75e842d6c1ed",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2457",
+      "name": "枳实消痞丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-b894-7624-8ba8-ecc6abc706e0",
+      "evidence_revision_id": "01a0f759-9b5e-7a5c-9a85-7eebfe2a566c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2443",
+      "name": "半夏厚朴汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-ba6d-7f73-910d-6061543e4283",
+      "evidence_revision_id": "01a0f759-656f-7576-b6af-8598f8bbe565",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2474",
+      "name": "厚朴温中汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-c3bf-7eee-8e97-fe6c725cb47a",
+      "evidence_revision_id": "01a0f759-54b2-79d6-aacb-04029cd466ba",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2515",
+      "name": "加味乌药汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-bd93-71fa-a6a3-0916ebf484b6",
+      "evidence_revision_id": "01a0f759-7644-752d-b554-e767312926e5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2490",
+      "name": "天台乌药散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-c0e2-7a71-b2c4-003a9a55fa0c",
+      "evidence_revision_id": "01a0f759-6724-7167-beeb-3254c0b3fbb4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2503",
+      "name": "橘核丸",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f760-bf17-71a3-831b-91497bee3544",
+      "evidence_revision_id": "01a0f759-6a7c-71b4-8e2c-e3146cd93d77",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2532",
+      "name": "苏子降气汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-ca5b-77c9-aaa1-404db692aa5f",
+      "evidence_revision_id": "01a0f759-8106-7f51-bb3c-d12744c94f74",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2561",
+      "name": "四磨汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-c283-706d-ac49-e50dbeaa3b43",
+      "evidence_revision_id": "01a0f759-8749-7a1f-b109-d39456b72ae5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2590",
+      "name": "橘皮竹茹汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-cef5-7260-be5a-1540071ed0ea",
+      "evidence_revision_id": "01a0f760-cee8-7147-bdb0-c577de6cbd5d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2548",
+      "name": "定喘汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f760-c714-7064-830d-10b53f5700af",
+      "evidence_revision_id": "01a0f759-95b4-73fb-a31c-2e7ffb5cdf8f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2661",
+      "name": "血府逐瘀汤",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f760-cc44-77bb-9140-e90188a65b00",
+      "evidence_revision_id": "01a0f759-afe8-7c53-ade7-797d4665bdb1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2578",
+      "name": "旋覆代赭汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-c556-7515-8085-d018e7bd7cf5",
+      "evidence_revision_id": "01a0f759-90fd-7f05-a0f5-db055011a6e4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2642",
+      "name": "桃核承气汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-d2bc-7822-ad4e-79587dfbd849",
+      "evidence_revision_id": "01a0f760-d2a7-74db-b8cb-22b59334e00f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2607",
+      "name": "丁香柿蒂汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-c8fe-7a9b-b2be-d77e9a9cd12a",
+      "evidence_revision_id": "01a0f759-a217-76bd-817e-8a04e2760cf9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2706",
+      "name": "复元活血汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-d4bb-709e-9407-822c935cc72f",
+      "evidence_revision_id": "01a0f759-b557-7b5c-afa6-b0e9985fe5fa",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2693",
+      "name": "补阳还五汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-d0d3-78dc-ad4e-9229cf9e2b09",
+      "evidence_revision_id": "01a0f759-b240-7036-b328-887bf617cf50",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2720",
+      "name": "七厘散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-e19a-78a8-a053-937462eea3b1",
+      "evidence_revision_id": "01a0f759-b9f2-7de4-abbd-1a147ae8ae17",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2732",
+      "name": "温经汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f760-d66e-7d53-a7e8-14ac9aa70aae",
+      "evidence_revision_id": "01a0f759-c211-7a54-a88e-ea8d1fc87ac0",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2748",
+      "name": "生化汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-d8e1-7208-8c66-62a030710769",
+      "evidence_revision_id": "01a0f759-d3d4-7378-807d-25034156c190",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2759",
+      "name": "桂枝茯苓丸",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-da52-7c24-9844-d1869b35bef1",
+      "evidence_revision_id": "01a0f759-ca53-7db8-a4c6-81d0a6f9d983",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2790",
+      "name": "大黄廑虫丸",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f760-dedf-7b03-ad8c-cc03d7d5a636",
+      "evidence_revision_id": "01a0f760-ded4-7f66-a6c5-ce6abf2fde12",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2823",
+      "name": "咳血方",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f760-eb6b-7a49-ba98-ab2199c2779f",
+      "evidence_revision_id": "01a0f759-dbc2-738f-bc3d-318bc4c6cc24",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2771",
+      "name": "失笑散",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f760-dbd9-797c-a5ee-e74b84fde7a4",
+      "evidence_revision_id": "01a0f759-c8d7-749b-ab31-3b0bdf856c54",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2807",
+      "name": "十灰散",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-dd0b-7a72-b9b3-3d2df9a12c63",
+      "evidence_revision_id": "01a0f759-f14d-70e3-a6a7-2d63025023f4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2838",
+      "name": "小蓟饮子",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-e37d-7ea1-8088-de04e3b3c1e0",
+      "evidence_revision_id": "01a0f759-f7f5-7f0b-a4a6-bfc211d3deaa",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2899",
+      "name": "川芎茶调散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f760-e634-78c9-92f7-7f88ffc26565",
+      "evidence_revision_id": "01a0f759-f408-7245-98b2-ee6bcaa391aa",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2865",
+      "name": "黄土汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f760-e7e0-7a8b-9d5a-bc39085190f1",
+      "evidence_revision_id": "01a0f759-eb12-7f78-8f7f-2753e915e152",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2916",
+      "name": "大秦艽汤",
+      "ingredient_count": 16,
+      "formula_revision_id": "01a0f760-f19c-7cd7-8705-52a126a312cf",
+      "evidence_revision_id": "01a0f75a-0426-7e38-bd58-41758ea744f3",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2851",
+      "name": "槐花散",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f760-e508-72be-ba4d-87c2241d4637",
+      "evidence_revision_id": "01a0f759-e404-77dd-b5dd-2c88d347d081",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2978",
+      "name": "玉真散",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-f401-7d66-9a1d-dc97a45c5346",
+      "evidence_revision_id": "01a0f75a-13f4-71f1-98af-d27cf9744a6f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2932",
+      "name": "消风散",
+      "ingredient_count": 13,
+      "formula_revision_id": "01a0f760-e985-7d61-925b-4821629603b5",
+      "evidence_revision_id": "01a0f75a-0b6c-7bcd-8622-d7ab3c13ee87",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2951",
+      "name": "牵正散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f760-ee0d-78fa-805b-2063eac48fe1",
+      "evidence_revision_id": "01a0f75a-069b-79da-964a-429ea5956002",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2964",
+      "name": "小活络丹",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f760-ec9d-7176-bda4-13b2854ccbe2",
+      "evidence_revision_id": "01a0f75a-0d8a-7d2c-9b5c-17608e19711a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-2996",
+      "name": "羚角钩藤汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-ef3f-7657-aba7-d6bccb3c8fc7",
+      "evidence_revision_id": "01a0f75a-2599-7eb5-ae4d-95d09170de08",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3011",
+      "name": "镇肝熄风汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f760-f562-7a85-96cf-11174bcd97c5",
+      "evidence_revision_id": "01a0f75a-3652-731d-8c1c-b86961a744cf",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3030",
+      "name": "天麻钩藤饮",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f760-fa7e-74e2-901e-2bc35d5cf7a1",
+      "evidence_revision_id": "01a0f75a-1f8d-7b30-bccb-8d2c6692c4c3",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3065",
+      "name": "阿胶鸡子黄汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f760-fc25-77cf-9787-5962757be842",
+      "evidence_revision_id": "01a0f75a-3d28-7ea3-abb6-614734e6913f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3094",
+      "name": "杏苏散",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f760-fe7d-7d6c-94f8-802e0e0aad5b",
+      "evidence_revision_id": "01a0f75a-38d7-7b15-8597-5b3c09cb1664",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3045",
+      "name": "大定风珠",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f760-f7d0-7d78-9318-7675272eabcd",
+      "evidence_revision_id": "01a0f75a-27b4-7c70-a3f4-86a9b6514238",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3125",
+      "name": "清燥救肺汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-001f-7be9-9103-2b861d394e42",
+      "evidence_revision_id": "01a0f75a-4b10-7afa-a786-0c3685dab6f6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3108",
+      "name": "桑杏汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-0242-734c-985d-064a5a68ed0b",
+      "evidence_revision_id": "01a0f761-0234-7315-8231-39b48bdca18d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3145",
+      "name": "麦门冬汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-0603-7315-9fd9-d1f79c9f735c",
+      "evidence_revision_id": "01a0f761-05f7-7b37-badb-81dec7a7e023",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3162",
+      "name": "养阴清肺汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-07d8-766a-bcc6-59a09f3510fb",
+      "evidence_revision_id": "01a0f75a-4cef-7a5e-a894-5c7f49ba9620",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3175",
+      "name": "百合固金汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-09c9-7d32-bc79-85c1b490fbd7",
+      "evidence_revision_id": "01a0f761-09bb-7558-bfb3-62807a8cdbe8",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3216",
+      "name": "增液汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-1172-7263-9ed4-46a4cf532533",
+      "evidence_revision_id": "01a0f75a-7893-7d14-aaa6-1ab66c5b3a4d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3202",
+      "name": "玉液汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-0fce-72ef-814d-1c8a2c44239e",
+      "evidence_revision_id": "01a0f75a-5eb3-764c-a0c8-e308bfc37a4e",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3189",
+      "name": "琼玉膏",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-0465-7f63-a213-17f843f201c8",
+      "evidence_revision_id": "01a0f75a-5a33-73de-843a-cc648f027e8f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3288",
+      "name": "茵陈蒿汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-12e8-729d-b536-f43bee8abc06",
+      "evidence_revision_id": "01a0f75a-7ac4-71af-ba33-ed919b703b50",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3244",
+      "name": "平胃散",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-0e53-79da-abd0-22fc30344b0e",
+      "evidence_revision_id": "01a0f75a-8235-7e49-a1a5-95ff5a5c3d92",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3265",
+      "name": "藿香正气散",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f761-0c54-7198-8393-abeb2cd44745",
+      "evidence_revision_id": "01a0f75a-8021-773a-8f9c-ed684354cd30",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3378",
+      "name": "当归拈痛汤",
+      "ingredient_count": 15,
+      "formula_revision_id": "01a0f761-19bc-757d-b22a-f8b6e164ca76",
+      "evidence_revision_id": "01a0f75a-aa50-7a87-bbef-04b9d984dfeb",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3349",
+      "name": "甘露消毒丹",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f761-179f-7123-8c60-85188457a733",
+      "evidence_revision_id": "01a0f75a-a733-7bd7-941a-f4bd5e80dd71",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3362",
+      "name": "连朴饮",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-160e-7708-baaf-eda83e91dca5",
+      "evidence_revision_id": "01a0f75a-9393-78af-9c7e-f3f10e0f5ef6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3307",
+      "name": "八正散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-144c-73ba-81cd-1a3de3e56e30",
+      "evidence_revision_id": "01a0f75a-a2cf-7c50-9aa2-cdb206503dfb",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3446",
+      "name": "防己黄芪汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-1ee3-7629-8480-a3cffe1bf4b3",
+      "evidence_revision_id": "01a0f75a-b7e9-73b6-808d-f79a061c04dc",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3394",
+      "name": "二妙散",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-1ddd-7a07-a67e-6677c8c417b3",
+      "evidence_revision_id": "01a0f75a-a5d1-781c-8d16-de47947302e5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3433",
+      "name": "猪苓汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-1c88-7301-8796-9e4a01b467b1",
+      "evidence_revision_id": "01a0f75a-c120-7ac6-820d-084f1551aa06",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3462",
+      "name": "五皮散",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-2500-7b5b-8973-09f814f21a8f",
+      "evidence_revision_id": "01a0f75a-c396-71aa-8725-b9293f91ebab",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3411",
+      "name": "五苓散",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-2370-7a38-8229-87cb6a174dca",
+      "evidence_revision_id": "01a0f75a-b4d6-714d-a89e-3a68dd1a8638",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3506",
+      "name": "真武汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-2944-7282-8337-961ab449bfd6",
+      "evidence_revision_id": "01a0f75a-d533-7858-b5a2-067d623f534f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3493",
+      "name": "甘草干姜茯苓白术汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-204e-766b-a6a3-48905da2b660",
+      "evidence_revision_id": "01a0f75a-c865-7836-9d68-c4982bacf48e",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3476",
+      "name": "苓桂术甘汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-21ef-75aa-8839-cde5c0426560",
+      "evidence_revision_id": "01a0f75a-c660-7eec-9b2f-794c4e1ee561",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3525",
+      "name": "实脾散",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-2648-76e7-adbe-e137af081377",
+      "evidence_revision_id": "01a0f75a-e1ad-78ed-956a-3eb5dbe9f48d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3557",
+      "name": "完带汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-2aea-7d75-baf4-10f0940458fd",
+      "evidence_revision_id": "01a0f75a-dfc0-768b-84f9-69364a055fe4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3570",
+      "name": "羌活胜湿汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-2d29-7418-91cf-49cdd3a2e3ca",
+      "evidence_revision_id": "01a0f75a-e81b-7c21-9c2a-c4fd1815c9e7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3542",
+      "name": "萆薛分清饮",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-27f5-7ab0-bae0-b60651d2600d",
+      "evidence_revision_id": "01a0f75a-d6fb-791e-b6cb-123d0220943d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3621",
+      "name": "二陈汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-32bf-7172-a1bd-fb171fae0547",
+      "evidence_revision_id": "01a0f75b-2a42-7a31-a700-017a1c6d38a2",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3642",
+      "name": "茯苓丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-35bd-7617-a0a2-82a5ce547dff",
+      "evidence_revision_id": "01a0f75b-2bdb-7e58-bee3-231fbd82e423",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3656",
+      "name": "温胆汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-311f-7a10-b7c9-07c7f5380e4c",
+      "evidence_revision_id": "01a0f75a-f88f-798a-91ce-7f93e6286140",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3712",
+      "name": "滚痰丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-4354-7476-989e-a6bb8c36ed3b",
+      "evidence_revision_id": "01a0f761-4348-7deb-9434-cd4a52fe218b",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3678",
+      "name": "清气化痰丸",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-3438-7fd1-877e-036f0a804915",
+      "evidence_revision_id": "01a0f75b-01e3-7be3-ba67-b89cef1a021c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3695",
+      "name": "小陷胸汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-3718-707e-b9ca-1a4066c40835",
+      "evidence_revision_id": "01a0f75b-2195-7faf-8161-66a2491d3c0b",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3745",
+      "name": "苓甘五味姜辛汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-385b-77bd-9c2b-db103a61c618",
+      "evidence_revision_id": "01a0f75b-3424-79ac-ab70-a3a94b35a802",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3583",
+      "name": "独活寄生汤",
+      "ingredient_count": 15,
+      "formula_revision_id": "01a0f761-2ebe-76f9-adcd-bf35ecb16730",
+      "evidence_revision_id": "01a0f75a-eec7-7e7a-87fd-6484ef9e8887",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3729",
+      "name": "贝母瓜蒌散",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-530e-72f8-ba2f-ffb4b7279b84",
+      "evidence_revision_id": "01a0f75b-3228-7183-b85c-bf230543fa35",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3794",
+      "name": "定痫丸",
+      "ingredient_count": 15,
+      "formula_revision_id": "01a0f761-3b8a-7472-a2e6-6fd3a4bc26cf",
+      "evidence_revision_id": "01a0f75b-4d66-7025-890a-53f5c9991ccc",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3778",
+      "name": "半夏白术天麻汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-39ed-7a3c-b2b0-915776e920ad",
+      "evidence_revision_id": "01a0f75b-3ffd-718d-93d0-23e3933cd6a8",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3859",
+      "name": "木香槟榔丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-4165-706a-acba-c46fb816d2c8",
+      "evidence_revision_id": "01a0f75b-5551-732d-94df-efd0807ae73f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3828",
+      "name": "保和丸",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-3e06-77ed-a972-369d65dbbef9",
+      "evidence_revision_id": "01a0f75b-4b7c-7140-9c60-5689124a781b",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3762",
+      "name": "三子养亲汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-45e3-71fe-bf8a-06690ff7dcb3",
+      "evidence_revision_id": "01a0f75b-3de2-7df8-b423-1005adfcc823",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3846",
+      "name": "枳实导滞丸",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-3fa2-7a48-b4c2-d79d02df7bee",
+      "evidence_revision_id": "01a0f75b-5275-7cea-a366-6f38979f303f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3873",
+      "name": "健脾丸",
+      "ingredient_count": 13,
+      "formula_revision_id": "01a0f761-470e-7a6a-8760-dc83d485d5f8",
+      "evidence_revision_id": "01a0f75b-6465-77a9-ad9d-d8b2849695a2",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3884",
+      "name": "葛花解醒汤",
+      "ingredient_count": 13,
+      "formula_revision_id": "01a0f761-4ced-7e89-8070-2da99fbd1dba",
+      "evidence_revision_id": "01a0f75b-7c5d-7aa4-ac34-4f3e246d42a1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3905",
+      "name": "乌梅丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-4aa4-7e9a-a0e5-c7fe0099ae8a",
+      "evidence_revision_id": "01a0f75b-69dc-72f0-9064-c82fecead931",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3927",
+      "name": "化虫丸",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-4958-78d6-bb17-adfb6a51aad3",
+      "evidence_revision_id": "01a0f75b-6bd8-72a2-8d35-f97d508fbfa8",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3977",
+      "name": "救急稀涎散",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-54a6-73a4-865b-30063c279c81",
+      "evidence_revision_id": "01a0f75b-789d-7bd0-b97b-e5b011ea1ac1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3938",
+      "name": "肥儿丸",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-4ee8-79b0-9ef6-a95e8d8c4642",
+      "evidence_revision_id": "01a0f75b-7a38-71a0-867f-2cb685d92553",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4026",
+      "name": "五味消毒饮",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-5c48-7575-92be-4e2f1d4ddfb2",
+      "evidence_revision_id": "01a0f75b-9d17-7204-a6ff-8f4749847d62",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3989",
+      "name": "参芦饮",
+      "ingredient_count": 1,
+      "formula_revision_id": "01a0f761-51ee-7dbf-8095-284d712cbae0",
+      "evidence_revision_id": "01a0f75b-8ab6-781c-aae9-7e9234399037",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4011",
+      "name": "仙方活命饮",
+      "ingredient_count": 13,
+      "formula_revision_id": "01a0f761-55c0-710a-af55-1dfb8aaf02d1",
+      "evidence_revision_id": "01a0f75b-937b-7a48-8f33-2836706541bf",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-3958",
+      "name": "瓜蒂散",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-50a2-7704-b43b-6c0de6e0dbd0",
+      "evidence_revision_id": "01a0f75b-7eb7-7877-b46b-4176d104eb3c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4063",
+      "name": "牛蒡解肌汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-605b-7ac4-afb3-6e80430e44da",
+      "evidence_revision_id": "01a0f75b-a229-7ecf-a86e-b269125cc10c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4050",
+      "name": "犀黄丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-57c5-733d-97a4-93407caaf3da",
+      "evidence_revision_id": "01a0f75b-9b9f-7073-a796-eb0b64eb6e64",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4038",
+      "name": "四妙勇安汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-5929-7822-8ea7-fe83a8209b05",
+      "evidence_revision_id": "01a0f75b-8ebb-7a2a-acd4-00dda0e06abd",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4074",
+      "name": "阳和汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-5a7d-7f59-bf2c-c94bae3995d5",
+      "evidence_revision_id": "01a0f75b-a9a3-7f37-b650-1d887bb39b50",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4126",
+      "name": "苇茎汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-6530-7909-b696-de6c00d79ee2",
+      "evidence_revision_id": "01a0f75b-b905-7eda-970f-e73a250754ec",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4104",
+      "name": "海藻玉壶汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f761-5eac-78a2-aa09-4dfd1f4115ec",
+      "evidence_revision_id": "01a0f75b-de8b-7466-896b-b0702c3a2970",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4115",
+      "name": "消瘰丸",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-5d93-7841-a0d0-5ab098351749",
+      "evidence_revision_id": "01a0f75b-b0c0-74b2-9ea5-c5fa4d472df6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4143",
+      "name": "大黄牡丹汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-61c3-791b-90ec-8afd16c2eae5",
+      "evidence_revision_id": "01a0f75b-c452-7e7c-95cf-5e02a32b6ee7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4164",
+      "name": "透脓散",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-679b-7214-bf10-21edbc893f93",
+      "evidence_revision_id": "01a0f75b-c26c-7d73-acf9-6ab12464102d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-166",
+      "name": "三拗汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-66cd-7d20-bbe6-456e55f7d7c3",
+      "evidence_revision_id": "01a0f75b-d349-7b7b-99d4-32bf5b40e6c7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4089",
+      "name": "小金丹",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-6363-7847-8b9f-88cced73c938",
+      "evidence_revision_id": "01a0f75b-b29e-7e0d-99c9-54263602d6d9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-167",
+      "name": "麻黄加术汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-6a74-7b92-8c2b-652a6661d347",
+      "evidence_revision_id": "01a0f75b-d25b-7351-92dd-38f5e159e921",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-168",
+      "name": "麻黄杏仁薏苡甘草汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-695e-7973-b6d7-0337ce548fc0",
+      "evidence_revision_id": "01a0f761-6955-74dd-be88-581b3528bd86",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-213",
+      "name": "桂枝加厚朴杏子汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-6ba1-76bf-b0aa-5dc4fe22ccf7",
+      "evidence_revision_id": "01a0f761-6b97-76e5-813d-38dc96af803a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "main-4185",
+      "name": "内补黄芪汤",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f761-6dfe-77d3-8a2a-43d61c98b4d6",
+      "evidence_revision_id": "01a0f75b-e44f-7900-bfa5-c86fdb60de21",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-215",
+      "name": "桂枝加桂汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-7186-722e-856b-74206f1b1422",
+      "evidence_revision_id": "01a0f75b-f560-7bab-b880-9150acfeb689",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-214",
+      "name": "桂枝加葛根汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-7046-7dc8-a4ac-0b5b2e5b9ca7",
+      "evidence_revision_id": "01a0f761-703c-785c-9266-804793e5a6d5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-169",
+      "name": "华盖散",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-6cfd-7a57-9a6d-b6e1aaaa7ff2",
+      "evidence_revision_id": "01a0f75b-e333-7028-986b-e0a6d0baaf84",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-267",
+      "name": "小青龙加石膏汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-729e-76fc-aeed-487fd03f4bd5",
+      "evidence_revision_id": "01a0f761-7294-72e5-8fa1-cd3fa4df5084",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-358",
+      "name": "宣毒发表汤",
+      "ingredient_count": 13,
+      "formula_revision_id": "01a0f761-776e-7093-80c8-0d91d225074a",
+      "evidence_revision_id": "01a0f75c-096e-7d04-9a03-3a9db7be6c4c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-266",
+      "name": "射干麻黄汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-74f0-7549-b647-451a3dfd2977",
+      "evidence_revision_id": "01a0f75c-1311-78d8-8839-dfb7a5269379",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-216",
+      "name": "桂枝加芍药汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-73e0-71a9-9036-d17e8c305362",
+      "evidence_revision_id": "01a0f75b-f661-7adb-b312-8257cad77901",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-492",
+      "name": "调胃承气汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-7b9f-74b8-a9d3-9c4a889898f9",
+      "evidence_revision_id": "01a0f75c-310c-7793-9f7a-78ff631aa434",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-491",
+      "name": "小承气汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-767d-7e9a-b9a2-e0fdfe8e6dc9",
+      "evidence_revision_id": "01a0f75c-2240-7ec3-9dce-d01dd5e20ba4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-359",
+      "name": "竹叶柳蒡汤",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f761-78de-7806-8d47-ad6bdff77d73",
+      "evidence_revision_id": "01a0f761-78d3-7bab-ae38-f241c31d77d9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-621",
+      "name": "控涎丹",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-7ad6-75c2-97c4-26dcb187f79c",
+      "evidence_revision_id": "01a0f75c-5007-7ff4-b973-e686dc6b6172",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-493",
+      "name": "宣白承气汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-7dc2-7cc2-8c95-0980c55056df",
+      "evidence_revision_id": "01a0f75c-2aa9-7aa2-bd7a-b0e571802f3c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-620",
+      "name": "舟车丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-7c6f-7632-9ae4-9e4e6dd3fbfb",
+      "evidence_revision_id": "01a0f75c-370e-796c-9aba-efb7d06e0649",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-700",
+      "name": "柴胡加龙骨牡蛎汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f761-801a-70b6-9808-dc3eaa3d8dc0",
+      "evidence_revision_id": "01a0f75c-497d-7f61-b605-bcc2060e52ae",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-622",
+      "name": "甘遂半夏汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-81c4-77b2-a2fa-d17dcc5d8509",
+      "evidence_revision_id": "01a0f75c-39fa-79e5-9ab0-3d39ff50c8a9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-758",
+      "name": "加味逍遥散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-82c8-7ad0-9d70-8dbe4bedd63e",
+      "evidence_revision_id": "01a0f75c-4de9-7cac-97a7-870937ae7f1f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-699",
+      "name": "柴胡桂枝干姜汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-7ee3-7cc1-8398-774ea5cbc03a",
+      "evidence_revision_id": "01a0f75c-52f0-7cd4-b479-12ed9ae94f08",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-760",
+      "name": "当归芍药散",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-850a-7bcd-b5ad-c7524009e994",
+      "evidence_revision_id": "01a0f75c-5fe4-7852-bfec-9c5e3aae1564",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-791",
+      "name": "生姜泻心汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-8639-7953-9998-7ca7c80f3694",
+      "evidence_revision_id": "01a0f75c-68a2-7797-8892-df68a3606b6c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-759",
+      "name": "黑逍遥散",
+      "ingredient_count": 1,
+      "formula_revision_id": "01a0f761-87cd-7779-9c05-10ce7bb3e9dd",
+      "evidence_revision_id": "01a0f75c-6f00-7f72-969b-9199697e69f5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-792",
+      "name": "甘草泻心汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-83dd-75ab-8c4c-6d84b145602a",
+      "evidence_revision_id": "01a0f75c-6534-7074-8c00-61b0c6ee9474",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-818",
+      "name": "白虎加人参汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-885f-74f7-a5cf-6ffe12d8e32c",
+      "evidence_revision_id": "01a0f761-8855-7408-88e0-39333a077277",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-820",
+      "name": "白虎加苍术汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-89ad-7418-9447-25c687eff094",
+      "evidence_revision_id": "01a0f761-89a2-736e-8f25-7fa55f4cd3d6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-793",
+      "name": "黄连汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-8cfd-70a9-b39c-24cb74a6b46d",
+      "evidence_revision_id": "01a0f75c-9e4d-7324-876b-fe7fae66e61d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-961",
+      "name": "泻青丸",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-8c0b-7a2c-a029-2997953d1bad",
+      "evidence_revision_id": "01a0f75c-9ce6-7d9a-9868-e65143e9fd85",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-996",
+      "name": "葶苈大枣泻肺汤",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-8fc5-71e8-a9fa-5bd5e08c2fd8",
+      "evidence_revision_id": "01a0f761-8fbb-788d-b65e-f7bca1052ac1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-819",
+      "name": "白虎加桂枝汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-8ae4-7af7-b3b8-890e00871a78",
+      "evidence_revision_id": "01a0f761-8ad9-7c0d-9382-5f026bc4c559",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-962",
+      "name": "当归龙荟丸",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f761-926d-7610-88b7-6eef28096956",
+      "evidence_revision_id": "01a0f75c-9714-7d1e-9bd4-0acf765fbcf0",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-997",
+      "name": "黄芩泻白散",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-8e43-7d1a-9a09-1c6fec11d3be",
+      "evidence_revision_id": "01a0f75c-acea-7388-b532-d135ca8380cc",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1049",
+      "name": "黄芩汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-915e-7039-8113-fc50bfe2f72b",
+      "evidence_revision_id": "01a0f75c-afc2-7469-86fa-0908ac60722a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1187",
+      "name": "益元散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-9082-7bdb-a8c7-70109b15859c",
+      "evidence_revision_id": "01a0f75c-b636-7354-9e30-4d886f99fde5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1189",
+      "name": "鸡苏散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-93c4-74f6-842f-ed22d2ff4bd0",
+      "evidence_revision_id": "01a0f75c-c02a-7bb0-8f60-608cf0444d75",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1255",
+      "name": "附子理中丸",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-97c3-72fe-9f81-0d5222ac6583",
+      "evidence_revision_id": "01a0f75c-d5a1-7bf4-ac45-6a100dc2edc7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1048",
+      "name": "香连丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-8f0a-7c4c-af5e-2d81c65e1e32",
+      "evidence_revision_id": "01a0f75c-bf19-75b9-a4fd-2a79a4790efa",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1188",
+      "name": "碧玉散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-949d-7295-b1d2-719549bee63f",
+      "evidence_revision_id": "01a0f75c-be4b-7b86-877a-609f0a1a6e48",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1273",
+      "name": "黄芪建中汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-98aa-77cb-96e4-e4dacd5cc851",
+      "evidence_revision_id": "01a0f761-98a2-7d21-9bfc-2fc83441d1bb",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1256",
+      "name": "桂枝人参汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-9572-7bbe-8530-82cfe4fd49a9",
+      "evidence_revision_id": "01a0f761-9568-74d0-a615-4b93f5f28270",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1257",
+      "name": "理中化痰丸",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-96e6-7044-aff6-91ff9494819a",
+      "evidence_revision_id": "01a0f75c-ceaf-7707-8f2a-317d2066bda0",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1323",
+      "name": "四逆加人参汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-9c1a-7853-9d02-a93780fdcd7e",
+      "evidence_revision_id": "01a0f761-9c12-7375-b374-30a053c8b349",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1321",
+      "name": "通脉四逆汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-9a0e-7745-8fd1-f0d17c50e297",
+      "evidence_revision_id": "01a0f75c-de34-7422-ae0c-7fbd6b625215",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1274",
+      "name": "当归建中汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-9aea-7c1e-b249-009d24cccb77",
+      "evidence_revision_id": "01a0f75c-dd43-73c7-96f5-40d48d50f2c9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1324",
+      "name": "白通汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-9d25-70a4-9352-516028bdfa93",
+      "evidence_revision_id": "01a0f75c-e34a-752e-bbcc-fb030e725c83",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1503",
+      "name": "异功散",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-9eb5-73ce-b25a-e52ae7e673cf",
+      "evidence_revision_id": "01a0f75c-efb1-77bf-9418-064995edc1c5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1505",
+      "name": "六君子汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-a128-70c9-98b2-a546e431462a",
+      "evidence_revision_id": "01a0f75c-f227-745c-9056-79c21acfd9bb",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1506",
+      "name": "香砂六君子汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-9fa1-7af8-899a-aac6657d06d1",
+      "evidence_revision_id": "01a0f75c-f553-788e-a1a9-c63886e09e35",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1325",
+      "name": "参附汤",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-9ded-7266-9713-3861e2824b8a",
+      "evidence_revision_id": "01a0f75c-ecdc-70da-83ec-71549397018f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1547",
+      "name": "举元煎",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-a652-78b3-8c8d-b2013024191a",
+      "evidence_revision_id": "01a0f75d-0262-788d-a680-1956ae204d5b",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1525",
+      "name": "七味白术散",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f764-61e4-77ec-b8d7-7dd03475696d",
+      "evidence_revision_id": "01a0f764-61d3-7a59-b60a-614a50f7fcf0",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1526",
+      "name": "资生丸",
+      "ingredient_count": 18,
+      "formula_revision_id": "01a0f761-a41f-748f-ac3c-0b675fb174e7",
+      "evidence_revision_id": "01a0f75d-1204-769f-80be-baabbdcad82c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1548",
+      "name": "升陷汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-a75a-79c8-a8f6-54ff1c1f5549",
+      "evidence_revision_id": "01a0f75d-0f45-74db-8655-345522087693",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1550",
+      "name": "保元汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-ac24-76d9-ac58-c7f26d7cf7ac",
+      "evidence_revision_id": "01a0f75d-1827-718a-b3f1-ad857741b1ce",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1549",
+      "name": "升阳益胃汤",
+      "ingredient_count": 14,
+      "formula_revision_id": "01a0f761-a27d-7efb-860e-c6d3914c4b26",
+      "evidence_revision_id": "01a0f75d-144c-7673-ac45-1b423ae94864",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1551",
+      "name": "益气聪明汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-a874-7b8f-9fce-d9481bce5811",
+      "evidence_revision_id": "01a0f75d-253e-7d71-931a-d898b63419df",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1619",
+      "name": "圣愈汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-a9e1-704b-ae6c-4d95b05132c5",
+      "evidence_revision_id": "01a0f75d-2431-793a-8208-2c0a15f6e001",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1618",
+      "name": "胶艾汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-ab0a-7662-971a-4514644f7d66",
+      "evidence_revision_id": "01a0f75d-2321-778d-8362-4b40c17aa34d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1622",
+      "name": "补肝汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-b01b-724e-a4e3-e6884b1de5e5",
+      "evidence_revision_id": "01a0f75d-3708-7417-825b-e8ce51ab2719",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1682",
+      "name": "人参养荣汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f761-aded-7fc8-a7b9-3e466bec9ea0",
+      "evidence_revision_id": "01a0f761-ade1-7ed0-aa9c-fe43585d1f11",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1621",
+      "name": "桃红四物汤",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-ad2e-73e9-9846-9206e080097c",
+      "evidence_revision_id": "01a0f75d-26f6-7c82-9eb1-7e2b542a2ae6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1715",
+      "name": "知柏地黄丸",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f764-63b7-7729-a425-4a475a625360",
+      "evidence_revision_id": "01a0f764-63ad-7a49-96a3-dbf88b93caa6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1681",
+      "name": "十全大补汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-b2c7-7fa1-a133-3a31b1633784",
+      "evidence_revision_id": "01a0f75d-3f23-785d-a81a-fd20855e3b3e",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1717",
+      "name": "都气丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-b205-75fc-b525-641c83c9dc17",
+      "evidence_revision_id": "01a0f75d-5137-76a1-92ab-27c3b4bb2dbd",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1716",
+      "name": "杞菊地黄丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-b147-7dbc-81b5-8f3f72f78dc1",
+      "evidence_revision_id": "01a0f75d-4681-71fb-b11a-6b22b18d4958",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1818",
+      "name": "加味肾气丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-bba7-7e68-8475-ebe132c93a29",
+      "evidence_revision_id": "01a0f75d-5a2c-7961-a68c-396334a6f7f5",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2174",
+      "name": "柏子养心丸",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-bd92-7c0f-92c6-d07d9135579d",
+      "evidence_revision_id": "01a0f75d-63b5-7072-8a50-2df825cf5412",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2175",
+      "name": "孔圣枕中丹",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-b773-718f-a6c1-0a40fbd38d49",
+      "evidence_revision_id": "01a0f75d-6b69-7210-a2cf-981d42c7225c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1718",
+      "name": "麦味地黄丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-b461-76c2-9558-612858f12666",
+      "evidence_revision_id": "01a0f75d-57e7-7ac3-a41f-52f78ec0d97f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-1819",
+      "name": "十补丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-b573-78d4-8453-d83e49de6403",
+      "evidence_revision_id": "01a0f75d-5b9b-7d4d-8049-9820e362bf0f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2434",
+      "name": "瓜蒌薤白半夏汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-bfa1-79db-826c-cf76e0987577",
+      "evidence_revision_id": "01a0f761-bf90-73c0-964f-6492fe70ebb7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2312",
+      "name": "行军散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-c238-7ba9-89ec-18947c1930e8",
+      "evidence_revision_id": "01a0f75d-6fd9-7a19-a291-6ffc66058d98",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2313",
+      "name": "犀珀至宝丹",
+      "ingredient_count": 15,
+      "formula_revision_id": "01a0f761-b8d8-78fb-8d8c-d4f8055f6be5",
+      "evidence_revision_id": "01a0f75d-756b-7175-a7fe-2e7cde78ba81",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2435",
+      "name": "枳实薤白桂枝汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-c38c-7ae7-bcab-f2a96ff955fd",
+      "evidence_revision_id": "01a0f761-c381-7a80-9129-7ea2a1f6141d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2524",
+      "name": "正气天香散",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-c88a-7fe1-893d-e334d0e30b2c",
+      "evidence_revision_id": "01a0f75d-937a-766c-8a66-6301db4df42f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2523",
+      "name": "乌药汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-c5b2-7303-9db4-8fb2fb3689af",
+      "evidence_revision_id": "01a0f761-c5a6-7013-86e6-3779b2b5d84f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2465",
+      "name": "枳术汤",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-c14a-716c-b4a5-72f482f1c463",
+      "evidence_revision_id": "01a0f75d-7f47-7afd-ba1f-be26bfcb57ca",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2466",
+      "name": "枳术丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f761-c6dc-727b-973f-1c4247ba8624",
+      "evidence_revision_id": "01a0f75d-86eb-719e-a100-7974c71ad7cf",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2569",
+      "name": "五磨饮子",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-c4bc-7ad4-af83-4e391247f89e",
+      "evidence_revision_id": "01a0f75d-9546-7376-8974-277963d19acd",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2570",
+      "name": "六磨饮子",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-c78f-7b70-a743-edbd59260c60",
+      "evidence_revision_id": "01a0f75d-9648-79bd-b648-dbb5d78da5db",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2600",
+      "name": "新制橘皮竹茹汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-ccb5-797a-81ed-bd757319af53",
+      "evidence_revision_id": "01a0f75d-a619-7c47-a795-a1a89e0bce19",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2651",
+      "name": "抵当汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-cac8-776f-a359-674a60234d17",
+      "evidence_revision_id": "01a0f75d-b369-7387-b2c9-cea5937e3fa7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2653",
+      "name": "下瘀血汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-cf43-7480-8c0b-4dec218a3a97",
+      "evidence_revision_id": "01a0f75d-b87e-740a-a7fa-ee25c037f521",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2652",
+      "name": "抵当丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-cbb0-79a8-a179-ab8a03131d6d",
+      "evidence_revision_id": "01a0f75d-a7ee-7899-8cf4-deda27d2cd61",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2599",
+      "name": "橘皮竹茹汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-c9a6-7d44-becb-5d577bcd9ba4",
+      "evidence_revision_id": "01a0f761-c99d-77ed-8c58-e09297e6c8d7",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2673",
+      "name": "膈下逐瘀汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f761-d442-7569-b541-395b4831b7b7",
+      "evidence_revision_id": "01a0f75d-ccb6-7700-8370-f46ad37d3f2d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2675",
+      "name": "身痛逐瘀汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f761-d177-72e2-9e19-1a4eddbc4d6a",
+      "evidence_revision_id": "01a0f75d-cb60-7218-811c-0cbe5cd82b58",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2674",
+      "name": "少腹逐瘀汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-d8f1-71f4-baac-03fc6fa5d45f",
+      "evidence_revision_id": "01a0f75d-ca1c-747d-babf-4d8ff7ca35f8",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2671",
+      "name": "通窍活血汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-d02d-7526-80d3-a6133b2af2ff",
+      "evidence_revision_id": "01a0f75d-b651-79ff-84f9-6d79cd28bc95",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2672",
+      "name": "会厌逐瘀汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-cdaa-71f9-9d96-99cf8df53b0d",
+      "evidence_revision_id": "01a0f75d-ba0b-7e08-b292-40dacc10d6aa",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2741",
+      "name": "艾附暖宫丸",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-d5e1-7913-8e88-b12dc6a8221b",
+      "evidence_revision_id": "01a0f75d-dc6d-798d-80ae-1beb30118a06",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2740",
+      "name": "温经汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-d325-7c9e-9141-a2ba84533e70",
+      "evidence_revision_id": "01a0f75d-cf47-7d4b-ada6-88375f45c424",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2782",
+      "name": "活络效灵丹",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-d821-791b-9a77-b3e273ccc44e",
+      "evidence_revision_id": "01a0f75d-dec9-75f7-992a-f66083d399c1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2815",
+      "name": "四生丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-db52-7a1e-8963-7f79305805c3",
+      "evidence_revision_id": "01a0f75d-e178-71b3-9663-a540e6208899",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2780",
+      "name": "丹参饮",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-d756-76ba-a99c-620226a51bf0",
+      "evidence_revision_id": "01a0f75d-db8a-7b23-af6a-b7709e1eb1f1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2908",
+      "name": "菊花茶调散",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f761-dd5e-7b9a-b055-0069b5074f99",
+      "evidence_revision_id": "01a0f75d-f0ac-7f00-a259-2111d3aa4523",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2909",
+      "name": "苍耳子散",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-dc38-7352-9b85-3a01ead5bc44",
+      "evidence_revision_id": "01a0f761-dc2d-75dd-b990-0b434126c797",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2816",
+      "name": "柏叶汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-daa4-7be7-85c2-cd3cf9678f5c",
+      "evidence_revision_id": "01a0f75d-f7cb-790f-aa7a-1bc7be6d35bf",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2943",
+      "name": "当归饮子",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-e00f-773c-9337-3ed061085eff",
+      "evidence_revision_id": "01a0f75e-04ec-7fbe-b771-6f486e0912f6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3053",
+      "name": "小定风珠",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-e258-72db-8ad1-344324c72012",
+      "evidence_revision_id": "01a0f75e-02a3-742c-8324-81a7ddbf3435",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3253",
+      "name": "不换金正气散",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-e172-71a3-8f2e-7e516557b0e2",
+      "evidence_revision_id": "01a0f75e-081d-7d3c-b79c-f5dd600eee6d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-2942",
+      "name": "消风散",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f761-dec5-7f89-a03d-e9e58d08d461",
+      "evidence_revision_id": "01a0f75d-f8b5-75d9-b62f-9599c722b667",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3054",
+      "name": "三甲复脉汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-e49b-765d-9143-cc28c85f91d1",
+      "evidence_revision_id": "01a0f75e-09eb-7a20-82f1-bafa812d1004",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3273",
+      "name": "一加减正气散",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f761-e90d-717a-a8d7-e373b6dfbd73",
+      "evidence_revision_id": "01a0f75e-19df-7d9c-a488-28b118c296e6",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3254",
+      "name": "柴平汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-e357-7d5a-9c98-72e4224ab6fc",
+      "evidence_revision_id": "01a0f75e-1224-74b9-bf26-95d542be637b",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3277",
+      "name": "五加减正气散",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-f975-7b7c-a16e-81f16242222d",
+      "evidence_revision_id": "01a0f75e-2e09-74cd-a700-fa9ffc90d98f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3275",
+      "name": "三加减正气散",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f761-e64c-7851-8a42-7a46acfd4dee",
+      "evidence_revision_id": "01a0f75e-1ddd-7a6a-a721-0f26a25f219c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3276",
+      "name": "四加减正气散",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-f619-7d51-b9ae-1956de67e311",
+      "evidence_revision_id": "01a0f75e-233f-79d6-960d-0fbbec252fb2",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3274",
+      "name": "二加减正气散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f761-e776-7274-b8fa-10f9ac607e08",
+      "evidence_revision_id": "01a0f75e-1f5f-77a7-bb38-6333459c1e0f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3297",
+      "name": "茵陈四逆汤",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f761-f878-71b6-96f3-d19e270ae289",
+      "evidence_revision_id": "01a0f761-f86e-78c4-96f7-ceb225c0310d",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3278",
+      "name": "六和汤",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f761-f4b9-7dcc-a141-903327aa61e1",
+      "evidence_revision_id": "01a0f75e-2f68-7e0a-bb38-b309d70a3e3b",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3318",
+      "name": "石韦散",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-fd8f-7b19-8746-a2f74ebebb82",
+      "evidence_revision_id": "01a0f75e-3e3b-7f1a-bbc9-9372fe6fe737",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3296",
+      "name": "栀子柏皮汤",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f761-f791-7532-b581-13ad610758f0",
+      "evidence_revision_id": "01a0f75e-4f36-73d6-8eb1-0feb44c12119",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3337",
+      "name": "藿朴夏苓汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f761-facc-7afe-8d8b-736bc977171c",
+      "evidence_revision_id": "01a0f75e-54a0-72ce-9e8f-47e7cd7b2cfb",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3402",
+      "name": "三妙丸",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f762-0004-7a03-8050-39a3808ad368",
+      "evidence_revision_id": "01a0f75e-615a-7080-8378-bc5b3e836184",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3338",
+      "name": "黄芩滑石汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f761-fea8-7454-8d31-51751974838e",
+      "evidence_revision_id": "01a0f75e-57fe-7740-bffa-62b25fd13fc4",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3317",
+      "name": "五淋散",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f761-fc83-77bd-a19f-32357fc551b3",
+      "evidence_revision_id": "01a0f75e-3f39-7f28-9201-6f9918b4ed82",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3403",
+      "name": "四妙丸",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f762-00d9-72c2-b550-c58f46c38be0",
+      "evidence_revision_id": "01a0f75e-67cd-719e-9211-a5f7fd2d088a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3425",
+      "name": "春泽汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f762-0358-733d-81d2-ed744e402262",
+      "evidence_revision_id": "01a0f75e-7418-7770-a057-20884061deac",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3423",
+      "name": "胃苓汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f762-0490-781d-9e44-edcf4f3da976",
+      "evidence_revision_id": "01a0f75e-68ba-72a9-b473-19a6d1587db0",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3629",
+      "name": "导痰汤",
+      "ingredient_count": 5,
+      "formula_revision_id": "01a0f762-0834-75ad-a005-7520e9740e39",
+      "evidence_revision_id": "01a0f75e-767d-739f-b8f0-91abef6d5b46",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3424",
+      "name": "茵陈五苓散",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f762-01a6-7c4f-9f7c-82d9258011b2",
+      "evidence_revision_id": "01a0f762-019d-7dbf-89f5-020677a20390",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3422",
+      "name": "四苓散",
+      "ingredient_count": 4,
+      "formula_revision_id": "01a0f762-026f-7809-a13f-9cc7dc246afd",
+      "evidence_revision_id": "01a0f75e-64f4-712d-9261-a29a3767993f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3632",
+      "name": "小半夏汤",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f762-094b-70e6-9f8d-4dd6744c3c42",
+      "evidence_revision_id": "01a0f75e-9e00-7a87-99c4-c1180c715356",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3665",
+      "name": "黄连温胆汤",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f762-09ff-754e-b08c-378f7278f1e1",
+      "evidence_revision_id": "01a0f75e-874b-7da4-be44-6fc16570cd57",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3633",
+      "name": "金水六君煎",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f762-06ef-7cb1-bb29-047097429905",
+      "evidence_revision_id": "01a0f75e-a010-7056-bafc-75e46df357ca",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3686",
+      "name": "清金降火汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f762-0f6a-79a9-8fb4-f3ef36a9a644",
+      "evidence_revision_id": "01a0f75e-9a75-75ee-ac6c-7af81489e81a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3630",
+      "name": "涤痰汤",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f762-058f-72c4-b6f6-2e760b8578ed",
+      "evidence_revision_id": "01a0f75e-7f15-7030-8ee7-2e9bd7d73f7a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3667",
+      "name": "十味温胆汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f762-0af0-7e5a-8bb3-cd77473aae9f",
+      "evidence_revision_id": "01a0f75e-8f68-7aa2-adba-b386fca1519a",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3804",
+      "name": "五痫神应丸",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f762-0d9b-7c45-9358-1d3a454baae3",
+      "evidence_revision_id": "01a0f75e-b3ad-7850-9d20-2e3c0e0e1dc0",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3687",
+      "name": "清金化痰汤",
+      "ingredient_count": 12,
+      "formula_revision_id": "01a0f764-6689-78ee-8e95-10db30dea907",
+      "evidence_revision_id": "01a0f764-667f-71af-b850-3d186feb42b1",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3803",
+      "name": "五生丸",
+      "ingredient_count": 7,
+      "formula_revision_id": "01a0f762-0c8d-7288-9dee-fea2c41c455c",
+      "evidence_revision_id": "01a0f75e-ae36-716d-b5db-2e57bbb64171",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3915",
+      "name": "连梅安蛔汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f762-1488-7d07-a0e5-ae01290fe46d",
+      "evidence_revision_id": "01a0f75e-c1bc-7e1a-8d5c-1a80a5f7e659",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3805",
+      "name": "神仙解语丹",
+      "ingredient_count": 9,
+      "formula_revision_id": "01a0f762-113d-755d-b766-aea2213a7a6f",
+      "evidence_revision_id": "01a0f75e-bbe6-7ba3-91d1-68747d22f5eb",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3806",
+      "name": "白金丸",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f762-169d-76b6-b3e6-8d231a8445e6",
+      "evidence_revision_id": "01a0f75e-b507-7f78-aab5-ff61ff4b499c",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3967",
+      "name": "三圣散",
+      "ingredient_count": 3,
+      "formula_revision_id": "01a0f762-139e-7370-a65b-52bbfa1177cd",
+      "evidence_revision_id": "01a0f75e-ceca-7fee-b245-eb8769192683",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-4172",
+      "name": "透脓散",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f762-1767-7175-8ad0-b6adb12d9e57",
+      "evidence_revision_id": "01a0f75e-d1b9-705d-939a-650fb6eed266",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3916",
+      "name": "理中安蛔汤",
+      "ingredient_count": 6,
+      "formula_revision_id": "01a0f762-1261-7d07-8379-6212a2700358",
+      "evidence_revision_id": "01a0f75e-cd08-7dd9-a55c-209b59ba4ba9",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-4173",
+      "name": "托里透脓汤",
+      "ingredient_count": 10,
+      "formula_revision_id": "01a0f762-1896-7845-adc6-5865112507e2",
+      "evidence_revision_id": "01a0f75e-e331-7406-b0b9-a85c5fbac47f",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "attached-3968",
+      "name": "盐汤探吐方",
+      "ingredient_count": 2,
+      "formula_revision_id": "01a0f762-15ce-7055-b651-e78a10cbe33f",
+      "evidence_revision_id": "01a0f75e-cfbb-751c-aa14-846d04e3c8d2",
+      "status": "REVIEWED",
+      "validation_version": 2
+    },
+    {
+      "key": "incomplete-333",
+      "name": "柴葛解肌汤",
+      "ingredient_count": 11,
+      "formula_revision_id": "01a0f764-6880-7912-bab6-045fa395bc2f",
+      "evidence_revision_id": "01a0f764-6873-7651-900b-feb510df7d09",
+      "status": "REVIEWED",
+      "validation_version": 2,
+      "warning": "原始组成残缺；药名仅据本方方解，完整剂量未知"
+    },
+    {
+      "key": "incomplete-3327",
+      "name": "三仁汤",
+      "ingredient_count": 8,
+      "formula_revision_id": "01a0f764-6a8b-7c18-90f8-020af50ca6d4",
+      "evidence_revision_id": "01a0f764-6a7e-70a3-af8f-ca47b6079d87",
+      "status": "REVIEWED",
+      "validation_version": 2,
+      "warning": "原始组成残缺；药名仅据本方方解，完整剂量未知"
+    }
+  ],
+  "failed": [],
+  "simulated_data": false,
+  "expert_review": false
+}

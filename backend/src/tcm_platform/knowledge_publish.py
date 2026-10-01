@@ -36,6 +36,7 @@ from tcm_platform.models import (
     RelationEvidence,
     RetrievalChunk,
     SourceRevision,
+    TaskJob,
     TextSegmentRevision,
     utc_now,
 )
@@ -310,6 +311,11 @@ def _snapshot_items(session: Session) -> dict[str, list[UUID]]:
     return items
 
 
+def preview_snapshot_items(session: Session) -> dict[str, list[UUID]]:
+    """Use the same current revision selection for the authoring preview and freeze."""
+    return _snapshot_items(session)
+
+
 def _validate_replacement_references(session: Session, items: dict[str, list[UUID]]) -> None:
     """Newly linked revisions must cite evidence and objects selected in this snapshot."""
     for kind, link_model, object_field in (
@@ -400,7 +406,9 @@ def _reference_manifest(references: set[tuple[str, UUID, UUID]]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
-def create_knowledge_version(*, actor_id: str = "local-curator") -> UUID:
+def create_knowledge_version(*, actor_id: str = "local-curator",
+                             reuse_existing: bool = False,
+                             configuration: dict | None = None) -> UUID:
     """Freeze reviewed object IDs; an open blocker stops the snapshot."""
     with SessionLocal.begin() as session:
         runtime = session.scalar(
@@ -417,10 +425,27 @@ def create_knowledge_version(*, actor_id: str = "local-curator") -> UUID:
         _validate_formula_provenance(session, items["formula_revision"])
         _validate_terms(session, items["concept"])
         references = _historical_references(session, items)
-        version_no = (session.scalar(select(func.max(KnowledgeVersion.version_no))) or 0) + 1
-        version_id = new_id()
         manifest = _manifest(items)
         reference_manifest = _reference_manifest(references)
+        if reuse_existing:
+            candidates = session.scalars(select(KnowledgeVersion).where(
+                KnowledgeVersion.manifest_hash == manifest,
+                KnowledgeVersion.reference_manifest_hash == reference_manifest,
+            ).order_by(KnowledgeVersion.version_no.desc()))
+            for existing in candidates:
+                builds = session.scalars(select(IndexBuild).where(
+                    IndexBuild.knowledge_version_id == existing.id)).all()
+                jobs = [job for job in session.scalars(select(TaskJob).where(
+                    TaskJob.job_type == "knowledge.publish"))
+                    if job.payload.get("version_id") == str(existing.id)]
+                if configuration is None or (
+                    all(all(build.configuration.get(key) == value
+                            for key, value in configuration.items()) for build in builds)
+                    and all(job.payload.get("configuration") == configuration for job in jobs)
+                ):
+                    return existing.id
+        version_no = (session.scalar(select(func.max(KnowledgeVersion.version_no))) or 0) + 1
+        version_id = new_id()
         session.add(KnowledgeVersion(
             id=version_id, public_id=f"KV-{version_no:06d}", version_no=version_no,
             status="PRE_PUBLISH_SNAPSHOT", manifest_hash=manifest,

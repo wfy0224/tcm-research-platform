@@ -31,7 +31,8 @@ SEMANTIC_AUDIT_PROMPT = (
     "来源/语义信息不足以判断时给 NOT_VERIFIABLE，不能把不可验证等同于错误。"
     '严格返回 JSON：{"verdict":"SUPPORTED","rationale_summary":"简要依据",'
     '"cited_evidence_revision_ids":["输入证据 ID"]}。'
-    "只能引用输入中的证据 ID，不得生成新 Claim。"
+    "cited_evidence_revision_ids只能逐字复制输入evidence条目的evidence_revision_id，"
+    "不能引用来源、片段、观点ID或证据的公开显示编号。不得生成新 Claim。"
 )
 
 
@@ -153,7 +154,11 @@ def semantic_audit_claim(claim_id: UUID, *, model: StructuredGenerator,
         context = {
             "claim_id": str(claim.id), "claim_type": claim.claim_type,
             "assertion_text": claim.assertion_text,
-            "evidence": [trace_evidence(ref.evidence_revision_id) for ref in refs],
+            "evidence": [{key: value for key, value in
+                          trace_evidence(ref.evidence_revision_id).items()
+                          if key in {"evidence_revision_id", "quote_text", "context_before", "context_after",
+                                     "source_title", "source_author", "source_era",
+                                     "source_edition", "citation_locator"}} for ref in refs],
         }
         task_id = task.id
     raw_output = recorded_complete(task_id, None, "EvidenceAuditor", model,

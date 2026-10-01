@@ -1,0 +1,14 @@
+.modelSettings { margin: 18px 0; }
+.modelSettings .panelHead { align-items: center; gap: 16px; }
+.modelProviderStatus { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+.modelProviderStatus p { flex: 1; min-width: 210px; margin: 0; padding: 14px; border: 1px solid #d7dfd5; border-radius: 10px; }
+.modelProviderStatus span { display: block; margin-top: 6px; font-size: 13px; color: #516653; }
+.modelAddForm { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 20px 0; }
+.modelAddForm label { display: grid; gap: 7px; flex: 1; min-width: 200px; }
+.modelAddForm input, .modelAddForm select { width: 100%; padding: 10px; border: 1px solid #bac7ba; border-radius: 7px; background: white; color: #243b2a; }
+.configuredModels { border: 1px solid #d7dfd5; border-radius: 10px; padding: 12px; }
+.configuredModels > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 0; border-bottom: 1px solid #e6eae4; }
+.configuredModels > div:last-child { border: 0; }
+.configuredModels label { display: flex; gap: 10px; align-items: center; overflow-wrap: anywhere; }
+.configuredModels small { display: block; color: #647164; font-size: 12px; margin-top: 5px; }
+.modelSettingsActions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }

@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-01",
+  "baseline": "7b27043",
+  "branch": "codex/evidence-audit",
+  "database": "tcm_c02_extraction_cad7ff2c_test",
+  "migration_head": "0026_term_resolution",
+  "command": "docker exec -e PYTHONPATH=/workspace/backend/src -e PYTHONDONTWRITEBYTECODE=1 -e TCM_OUTBOUND_MODE=LOCAL_ONLY -w /workspace/backend tcm-vib54-py python scripts/check_c02_extraction.py",
+  "passed": 175,
+  "failed": 0,
+  "skipped": 0,
+  "duration_seconds": 50.95,
+  "warning": "Existing Alembic path_separator deprecation warning",
+  "test_files": [
+    "test_corpus_preflight.py",
+    "test_c02_extraction_integration.py",
+    "test_formula_extraction.py",
+    "test_formula_extraction_integration.py",
+    "test_formula_provenance_integration.py",
+    "test_knowledge_extraction.py",
+    "test_knowledge_extraction_integration.py",
+    "test_initial_corpus_integration.py",
+    "test_term_resolution_integration.py"
+  ],
+  "real_excerpt_count": 3,
+  "real_formula_status": "DRAFT",
+  "real_expert_approvals": 0,
+  "source_selection_status": "PROPOSED",
+  "real_model_calls": 0,
+  "business_or_preview_database_changes": false,
+  "full_backend_suite_run": false,
+  "frontend_or_browser_suite_run": false
+}

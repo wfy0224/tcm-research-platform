@@ -9,6 +9,7 @@ __pycache__/
 node_modules/
 dist/
 *.tsbuildinfo
+~$*
 .env
 data/
-
+.parallel-worktrees/
