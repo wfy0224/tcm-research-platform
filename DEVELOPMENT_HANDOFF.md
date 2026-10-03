@@ -1,7 +1,7 @@
 # 开发交接
 
 ## 当前任务：页面配置模型、数据库保存（2026-10-03）
-- 基线仍 d0f002e / codex/evidence-audit；已有未提交改动保留，本轮未提交；用户明确要求服务器修改，已部署42.193.100.122。
+- 代码基线20ad4c5 / codex/evidence-audit；本轮模型配置、既有UI/部署/修稿改动与验收证据已提交。用户已授权推送GitHub；本页接续记录随代码一并推送origin/codex/evidence-audit。服务器42.193.100.122已部署。
 - 新增 migration 0028_model_configuration、governance.model_configuration；model_configuration.py 初次导入旧 JSON/环境/Windows 凭据，后续 API/Worker/CLI 从 DB 读取。环境密钥导入保留 TCM_ALLOW_ENV_API_KEYS=1 限制。
 - ModelSettings.tsx 新增提供商密码输入、向量/重排模型、阿里工作空间/区域；密钥留空保留，API 不回显；数据库 JSON 保存密钥，尚未应用层加密。db.py 隐藏 SQL 参数防止异常输出凭据。
 - main.py schema head 改为0028；README 同步迁移说明。研究模型路由仍按任务冻结，已有任务不改模型。调整向量模型需重建索引。
@@ -28,9 +28,9 @@
 - VIB-92/93/94仍In Progress；Linear不可用待同步。历史首页归档docs/handoff-history/2026-10-03-before-offline-revision-repair.md。
 
 ## 保留的本地开发与真实基线
-- 之前 UI 美化：theme.css 青绿暖白/阅读/响应式，main.tsx 引入；真实1440/390px检查和构建通过，证据 docs/acceptance-artifacts/ui-refresh/。未提交。
+- 之前 UI 美化：theme.css 青绿暖白/阅读/响应式，main.tsx 引入；真实1440/390px检查和构建通过，证据 docs/acceptance-artifacts/ui-refresh/；已纳入20ad4c5。
 - knowledge_api.py 新增最近后台任务/向量进度接口；JobsPanel.tsx 挂知识库质量页；接口200、向量133/133、api healthy、服务器前端构建通过，浏览器尚未验收。旧 publication_job 文案/JobResponse 进度仍未改。
-- deploy/、.dockerignore、README 与服务器手册未提交；空库部署、迁移0027、网页/代理/访问码/CSRF已验，0云调用；2核2G负载尚未验。
+- deploy/、.dockerignore、README 与服务器手册已纳入20ad4c5；空库部署、迁移0027、网页/代理/访问码/CSRF已验，0云调用；2核2G负载尚未验。
 - 完整方剂学.txt：来源 SRC-01a0f5ce-fd1e-761e-bb62-0e354f91a350 修订2，4211正文/843新增证据核对；376方剂REVIEWED（非医学认证），KV4 READY/ACTIVE，1243证据/376方剂/3概念。
 - 向量 index IB-e3e7a3fa3fb4d9784d036162b09a4b93；125批真实向量，bge-m3/bge-reranker-v2-m3检索通过。
 - 旧分歧任务 RT-01a0f7c4-ab9c-767d-ad0a-bd59b05bc940 COMPLETED；冻结 deepseek/deepseek-flash/max1；rev2 ACCEPTED，hash 6234882bdcdecb0a0c02d4334bbd7166adc44250a88f26f7022a143b44eb607b 保留。独立库43 passed/0 skipped仅前轮工程验收。
