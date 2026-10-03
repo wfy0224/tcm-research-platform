@@ -1,0 +1,11 @@
+# 服务器模型配置改造（2026-10-03）
+- 服务器42.193.100.122，/opt/zhongyi；backend及web镜像构建成功，0028迁移成功，API/Worker/Web更新。
+- 页面入口：理论研究 → 模型设置 → 提供商 API 密钥。研究路由、默认模型、API密钥、向量/重排模型、阿里空间/区域数据库保存。
+- 初次导入旧JSON/环境/系统凭据；数据库已有记录后不再以旧配置覆盖。已导入DeepSeek和硅基密钥，阿里未配置。不记录密钥正文。
+- 2项候选离线检查：响应不回显密钥、运行默认模型和凭据来自DB，通过。
+- 独立库tcm_model_config_20261003_test：全部迁移到head、配置保存、空密钥保留、不回显、引擎重连后持久性，通过；独立库已删除。
+- 线上真实HTTP：GET model-settings 200，POST缺CSRF 403，POST有CSRF 200；保存原路由和空密钥后完整配置与之前一致。临时验收会话已撤销。
+- 健康接口：database connected/schema current/blob_store available；state DEGRADED是原健康实现。线上资产index-CZsKrR4s.js包含“提供商 API 密钥”。
+- 备份：/opt/zhongyi/backups/model-settings-20261003/database.dump（6.2MB）。升级前代码tar未生成。
+- 0付费模型调用。未视觉验收、未运行完整pytest；不能据此宣称模型账户或研究输出通过验收。
+- 密钥保存在数据库JSON字段，尚无应用层加密；接口不返回正文，SQLAlchemy隐藏SQL参数。原生产任务冻结路由未修改。

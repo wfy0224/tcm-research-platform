@@ -98,3 +98,15 @@ VIB-75～86全部Backlog / Low；保留2A→2B→3依赖，并增加VIB-94前置
 
 2026-10-01用户分歧场景已修复：RT-01a0f7c4-ab9c-767d-ad0a-bd59b05bc940 / JOB-01a0f7c4-c583-716b-a786-e407fb6c27ef 均COMPLETED，保留48证据/9观点/18审计/5质疑/5回应、7高置信2未解决。三稿耗尽后保存明确NEEDS_REVISION报告，再由页面继续修订，沿用冻结deepseek/deepseek-flash真实Writer/Reviewer round3 accepted=true、issues=[]；新增research-report/v3 revision2 ACCEPTED，旧稿旧检查点不覆盖。准确FAILED状态、可用报告恢复、有界新稿修订、0027不可变报告版本及最新导出已落地。MD/DOCX导出与页面已完成验证；Word19页逐页检查。独立克隆库43 passed/0 skipped，构建/Ruff与旧报告哈希通过。新research-v3默认最多3轮，质疑回应后Critic复查，含冻结往返/缺口；旧任务max1不变，新max3多轮真实云端全链未执行，下一步验证该路径与新报告引用回跳。证据见[报告恢复验收](acceptance-artifacts/report-recovery/ACCEPTANCE.md)。VIB-92/93/94保持In Progress并已同步Linear。
 2026-10-01 报告可读性与依据跳转修复：report-export/v6 的实际MD/DOCX已重新生成，正文去除内部UUID、哈希和运行/知识/索引编号，改用本报告内观点、证据、质疑、回应、缺口编号与有效链接；保留完整原文和研究回答。三个实际任务的四个报告版本只读检查通过，可见ID/哈希0，65/63/30/22个内部链接全部有目标，已存报告哈希未变化。实际接受稿Word19页逐页检查。页面依据1～4点击均展开、聚焦、高亮，重复点击、键盘Enter、返回引用及刷新深链接通过；定位标题约90px避免固定导航遮挡。构建、相关Ruff、diff检查通过。本轮无新增研究模型调用，新max3真实多轮全链仍待执行；VIB-92/93/94保持In Progress。证据见[报告可读性与跳转验收](acceptance-artifacts/readable-report/ACCEPTANCE.md)。
+
+2026-10-03 VIB-92/94服务器交叉辩论失败修复：原任务 RT-01a1001e-e294-7ab7-9ba2-e2005bee58cc 的 Rebuttal 修订类型被原角色门禁拒绝；补齐逐目标 allowed_claim_types 和明确修订契约，旧冻结快照保留。部署前失败测试和部署后2项回归/5真实目标上下文校验通过，用户批准后已部署并重试原任务，实际第2轮5回应和第3轮Critic已完成，后续回应与报告仍在运行，未宣称全链通过。更早 invalid JSON 失败未归为同因。Linear本轮待同步；证据见[服务器回应类型约束修复](acceptance-artifacts/server-rebuttal-contract/ACCEPTANCE.md)。
+
+2026-10-03 用户指定只改并重新部署：确认原任务冻结 deepseek/deepseek-flash，将其 max_tokens 从2048设为官方最大393216（384K）。备份 cloud_models.py、镜像构建及API/Worker重启完成；0模型调用，未重试、未监测研究，JSON失败是否解决尚未验证。VIB-92/94仍In Progress；Linear待同步。
+
+2026-10-03 VIB-92/94报告校验反馈断路已修并部署：程序内容/结构不合规保存原稿及独立ReportValidator，将具体意见交下一稿；正式模型复核仍必需，设施故障仍重试。4回归修复前3errors/候选全通过；0云调用，原报告尚未重新实际修订，不宣称全链通过；证据server-rebuttal-contract/REPORT_VALIDATION_FEEDBACK.md，Linear待同步。
+
+2026-10-03 VIB-92/94真实测试未通过：原任务5次有界修订、15Writer/10Reviewer/5程序Validator，最新rev7 NEEDS_REVISION。上下文/报告契约/反馈保留已部署，8工程回归通过；原报告仍未获复核接受，不能宣称交付。用户投诉连续付费调用后停止进一步模型调用；无运行测试队列，后续云测试必须重新明确授权。证据server-rebuttal-contract/REAL_REPORT_TEST.md及JSON；Linear待同步。
+
+2026-10-03 VIB-92/94离线修稿链路已修部署：上一稿传递、全错误定位、相关缺口/争议过滤、相同失败稿提前停止；16回归及真实失败稿重放通过，0模型调用/0生产DB写入，原报告rev7仍未通过。不得宣称真实研究验收完成，后续付费云验必须重新明确授权及预算。证据server-rebuttal-contract/OFFLINE_REPAIR.md；Linear待同步。
+
+2026-10-03 用户指定服务器模型配置改造：研究页模型设置新增API密钥/向量/重排配置，数据库governance.model_configuration（0028）保存并首次导入旧配置。服务器镜像与迁移完成；独立库保存/空密钥保留/不回显/重连持久性检查通过，线上GET200及CSRF保存验证通过，0付费模型调用。视觉验收及完整pytest未执行，Linear待同步。

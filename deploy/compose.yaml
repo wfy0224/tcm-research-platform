@@ -1,0 +1,86 @@
+name: zhongyi
+x-backend: &backend
+  image: zhongyi-backend:local
+  build:
+    context: ..
+    dockerfile: deploy/backend.Dockerfile
+  environment: &environment
+    TCM_DATABASE_URL: postgresql+psycopg://tcm:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/tcm_platform
+    TCM_DATA_ROOT: /data
+    TCM_LOCAL_ALLOWED_ORIGINS: http://127.0.0.1:${TCM_WEB_PORT:-18067}
+    TCM_DEVELOPMENT_AUTO_SESSION: "false"
+    TCM_ALLOW_ENV_API_KEYS: "1"
+    TCM_OUTBOUND_MODE: ${TCM_OUTBOUND_MODE:-LOCAL_ONLY}
+    TCM_MODEL_PROVIDER: siliconflow
+    TCM_EMBEDDING_MODEL: BAAI/bge-m3
+    TCM_RERANK_MODEL: BAAI/bge-reranker-v2-m3
+    TCM_RESEARCH_PROVIDER: ${TCM_RESEARCH_PROVIDER:-siliconflow}
+    TCM_RESEARCH_MODEL: ${TCM_RESEARCH_MODEL:-deepseek-ai/DeepSeek-V3.2}
+    SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+  volumes:
+    - app_data:/data
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tcm_platform
+      POSTGRES_USER: tcm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: [postgres, -c, shared_buffers=128MB, -c, max_connections=40]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U tcm -d tcm_platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+  migrate:
+    <<: *backend
+    command: [alembic, upgrade, head]
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    <<: *backend
+    restart: unless-stopped
+    command: [api]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/system/health', timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+    mem_limit: 384m
+  worker:
+    <<: *backend
+    restart: unless-stopped
+    command: [worker]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    mem_limit: 640m
+  web:
+    image: zhongyi-web:latest
+    build:
+      context: ..
+      dockerfile: deploy/frontend.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${TCM_WEB_PORT:-18067}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 96m
+volumes:
+  postgres_data:
+  app_data:

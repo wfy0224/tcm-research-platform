@@ -1,23 +1,26 @@
 # 开发交接
 
 ## 当前任务：页面配置模型、数据库保存（2026-10-03）
-- 基线仍 d0f002e / codex/evidence-audit；已有未提交改动保留，本轮未提交；用户明确要求服务器修改，已部署42.193.100.122。
+- 基线仍 d0f002e / codex/evidence-audit；已有未提交改动保留，本轮未提交、未部署。
 - 新增 migration 0028_model_configuration、governance.model_configuration；model_configuration.py 初次导入旧 JSON/环境/Windows 凭据，后续 API/Worker/CLI 从 DB 读取。环境密钥导入保留 TCM_ALLOW_ENV_API_KEYS=1 限制。
 - ModelSettings.tsx 新增提供商密码输入、向量/重排模型、阿里工作空间/区域；密钥留空保留，API 不回显；数据库 JSON 保存密钥，尚未应用层加密。db.py 隐藏 SQL 参数防止异常输出凭据。
 - main.py schema head 改为0028；README 同步迁移说明。研究模型路由仍按任务冻结，已有任务不改模型。调整向量模型需重建索引。
-- 实际验证：本地及服务器前端构建通过；服务器候选2离线检查通过。生产0028迁移成功，独立库 tcm_model_config_20261003_test 完整迁移/保存/空密钥保留/不回显/重连持久性通过（已删除测试库）。线上GET200、缺CSRF403、携CSRF保存200且配置完全不变；健康database connected/schema current，前端新asset含密钥入口。0付费模型调用。
-- 新增 test_model_configuration.py；test_cloud_models.py 离线配置替身适配DB读取。API/Worker/Web新镜像已运行；旧DeepSeek/硅基密钥成功导入，阿里未配置。备份 /opt/zhongyi/backups/model-settings-20261003/database.dump（6.2MB），未生成升级前代码tar。下一步按用户反馈检查页面；尚未视觉验收及完整pytest回归，不发起付费模型调用。
+- 实际验证：frontend npm run build 通过；本地 Docker daemon 不可用，没有运行 Windows Python，后端单元/迁移/独立DB及页面验收未验证；没有付费调用。
+- 新增 test_model_configuration.py；test_cloud_models.py 使用离线配置替身适配 DB 读取。下一步启动安全 Linux 测试容器，运行配置/云适配器测试，并用独立测试库验证0028迁移、密钥不回显、空密钥保留及双进程配置一致；之后页面验收。生产部署尚未执行。
 - 本任务无对应已确认 Issue，Linear 不可用待同步。此前付费调用限制继续有效。
 
-- 2026-10-03同步核对：backend/src、backend/migrations、frontend/src与本地逐文件SHA256一致；连同deploy共110文件，107一致，3差异为backend.Dockerfile（腾讯依赖镜像）、compose.yaml（Origin/会话TTL/发布策略环境参数）、nginx.conf（动态DNS上游）。这些部署差异未覆盖；本地与服务器数据库数据/配置不共享，后续代码修改仍需部署。
-
-## 原研究任务约束
+## 保留的原停点（离线修稿链路已部署，真实报告未终验）
+- 分支codex/evidence-audit，基线d0f002e；未提交、未推送。已有UI/部署/任务进度改动全部保留。
 - 用户最初授权部署及重试，最新要求真实测试；后因连续调用成本要求赔钱。已承认成本控制问题，承诺不再发起任何付费模型调用，后续付费测试必须重新得到明确授权。不要自动重试或续跑云研究。
 - 原任务RT-01a1001e-e294-7ab7-9ba2-e2005bee58cc；内部3e1ddfed-82be-5d24-8d0d-093afd5ca3ec；JOB-01a1001f-0ec8-7880-af07-3b34818e003a。
 - 当前REPORT_REVIEW_REQUIRED；队列COMPLETED/attempts1/last_error=null；最新报告revision7 NEEDS_REVISION。最后一轮在暂停请求到达前已结束，暂停API返回research job cannot be paused；没有成功设PAUSED，当前control_state=ACTIVE但无运行队列。不得称研究完成或测试通过。
 - 本次实际执行5个有界修订周期，Writer round6～20共15稿，模型Reviewer10稿均拒绝、程序Validator5稿失败。真实付费调用25次（15写作+10复核）；精确费用、余额和扣费金额未知。全部记录保存在REAL_REPORT_TEST.json；该文件model_calls还含此前历史调用，不能当作本轮调用计数。
+- 最新修复report_narrative.py：恢复同冻结来源前后文/证据强度，写作与复核一致范围规则、明确完整JSON字段、实质拒绝与可选建议区分；程序校验错误保留已有内容反馈并跨周期恢复，原始草稿/独立ReportValidator持久记录保留，不伪造模型通过。
+- 最新部署report_narrative.py SHA256 04c385582d9f809e41424c6cc6c1c286a14260ab3de85a94225ea5a6263f5cf1，备份.pre-targeted-revision-20261003；重建API/Worker。本轮0模型调用、未重试原研究。
+- 本轮补修：把上一稿传给写作者并跨周期恢复，完整校验定位段落与引用；复核只接收本稿相关缺口/争议，增加逐段引用清单；新生成原样失败稿提前停止后续调用，保留原稿及反馈。原门禁未放宽，未修改历史稿或accepted状态。
+- 冻结execution_context哈希仍0f9ffcabe70c2073d6b8c75b9f41619e3e2830b71f094db29ec6b31729f7236b；历史报告rev1/2原哈希保留，新rev3～7追加。恢复48条证据上下文，不修改冻结快照或引用正文。
+- 之前debate_service.py角色类型约束已部署SHA abce564d26ed214d21f4b2164bec4afd621d635649b888795f2236d5e203863d；5真实回应通过。DeepSeek max_tokens393216已部署SHA c8a70ac6852bb2ab80f29f8e32b9addeb1ac8f126346797de145271aee069b5b；未补响应finish_reason诊断。
 - SSH ubuntu@42.193.100.122，/opt/zhongyi；私钥C:/Users/wangfeiyu/.ssh/zhongyi_diagnose_ed25519保持加密，不输出私钥、不移除口令。密钥口令仅保存在本机，不进入仓库。
-- 详细修稿/部署证据见 docs/handoff-history/2026-10-03-before-database-model-settings.md；原报告未通过真实复核，不得宣称研究完成。
 
 ## 本轮验证与下一步
 - Linux容器整批候选及部署后模块16项unittest通过，含真实第16/19/20稿离线重放。修复前缺上一稿2errors/错误定位1failure、重复调用1error/1failure、范围过滤1failure；0云调用、0生产DB写入。未跑独立DB集成；git diff --check通过。

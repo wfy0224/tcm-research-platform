@@ -1,9 +1,10 @@
 """Write and independently check a readable answer against the frozen adjudication."""
 
+from copy import deepcopy
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy import select
 
 from tcm_platform.audit import append_event
@@ -56,21 +57,41 @@ class Review(BaseModel):
     review_summary: str = Field(min_length=1, max_length=4000)
 
 
+class NarrativeValidationError(ValueError):
+    """All mechanically detected draft problems, with actionable locations."""
+
+    def __init__(self, issues: list[str]):
+        self.issues = issues
+        super().__init__("；".join(issues))
+
+
+class UnchangedDraftError(NarrativeValidationError):
+    """Stop a paid loop when the writer ignores feedback and repeats its draft."""
+
+
 def validate_narrative(payload: dict, snapshot: dict) -> dict:
     result = Narrative.model_validate(payload)
     allowed = {c["claim_id"]: c for c in snapshot["claims"]
                if c["allowed_category"] in {"HIGH_CONFIDENCE", "CONDITIONAL"}}
-    for paragraph in result.paragraphs:
+    issues = []
+    for index, paragraph in enumerate(result.paragraphs, 1):
+        location = f"第{index}段"
         if not paragraph.text.strip() or len(set(paragraph.claim_ids)) != len(paragraph.claim_ids):
-            raise ValueError("report paragraph is blank or duplicates citations")
-        if any(value not in allowed for value in paragraph.claim_ids):
-            raise ValueError("report cites a Claim outside supported adjudication")
+            issues.append(f"{location}为空白或claim_ids重复，删除空段或去重引用。")
+        unknown = [value for value in paragraph.claim_ids if value not in allowed]
+        if unknown:
+            issues.append(f"{location}引用不在允许观点中的claim_id：{', '.join(unknown)}；"
+                          "删除误引及未获支持的表述，只使用输入claims。")
         if not paragraph.claim_ids and (allowed or paragraph.kind != "boundary"):
-            raise ValueError("report paragraph requires supporting Claims")
-        if paragraph.kind == "finding" and any(
-                allowed[value]["allowed_category"] != "HIGH_CONFIDENCE"
-                for value in paragraph.claim_ids):
-            raise ValueError("conditional Claims cannot become certain report findings")
+            issues.append(f"{location}缺少支持本段的claim_ids；引用实际支持文字的观点。")
+        conditional = [value for value in paragraph.claim_ids if value in allowed
+                       and allowed[value]["allowed_category"] == "CONDITIONAL"]
+        if paragraph.kind == "finding" and conditional:
+            issues.append(f"{location}kind=finding却引用CONDITIONAL观点：{', '.join(conditional)}；"
+                          "改写为explanation并保留条件和归因，或仅在原文支持时改用"
+                          "HIGH_CONFIDENCE引用；不得只改标签保留确定性因果。")
+    if issues:
+        raise NarrativeValidationError(issues)
     return result.model_dump(mode="json")
 
 
@@ -93,7 +114,8 @@ def _prepare(task_id: UUID, role: str, attempt: int, payload: dict,
                        status="PENDING", input_snapshot=payload,
                        visible_evidence_ids=sorted({e["evidence_revision_id"]
                            for c in payload["claims"] for e in c["evidence"]}),
-                       model_version=task.execution_context["generation_model"])
+                       model_version=("program/report-validator-v1" if role == "ReportValidator"
+                                      else task.execution_context["generation_model"]))
         session.add(run)
         return run.id, None
 
@@ -108,8 +130,10 @@ def _save(run_id: UUID, output: dict, lease_guard: LeaseGuard | None) -> None:
                 return
             raise ValueError("report run is already committed")
         run.output, run.status, run.completed_at = output, "COMPLETED", utc_now()
-        append_event(session, event_type="research_task.report_reviewed" if
-                     run.role == "ReportReviewer" else "research_task.report_written",
+        event_type = ("research_task.report_validation_failed" if run.role == "ReportValidator"
+                      else "research_task.report_reviewed" if run.role == "ReportReviewer"
+                      else "research_task.report_written")
+        append_event(session, event_type=event_type,
                      actor_id="report-runtime", aggregate_id=run.task_id,
                      payload={"agent_run_id": str(run.id), "attempt": run.round_no,
                               "accepted": output.get("accepted")})
@@ -147,6 +171,141 @@ def reviewer_input(payload: dict, candidate: dict) -> dict:
     }
 
 
+ANSWER_CONTRACT = {
+    "coverage": "在输入证据覆盖范围内回答：先给有依据的比较及相对轻重，再说明不能穷尽"
+                "或不能统一排序的部分。不得要求缺失证据下的完整排序，也不得把局限说明"
+                "当作对全部文献的否定。来源不足的部分允许明确未解决。",
+    "provenance": "quote_text是直接引文；context_before/context_after是同一冻结来源修订"
+                  "的原文上下文。上下文不能冒充直接引文，但明确归因为来源上下文的解释"
+                  "可作为explanation，并保留证据层级和条件。不能要求与原文缺失无关的补证。",
+    "partial_support": "按段落实际采用的部分核对原文和audit_rationale。CONDITIONAL观点"
+                       "可以引用已支持部分并保留限制，不能因同一观点其他部分不受支持"
+                       "就否定本段，也不能把整段所有直接依据都降为推论。",
+    "boundaries": "本报告不作某种排序、仅覆盖所引材料等属于报告范围声明，"
+                  "不是新增医学事实；应明确其局部范围，不必要求原文逐字载明报告者取舍。",
+    "answer_first": "先完成证据支持的局部答案，再说明缺口。若材料明确比较和剂、重剂或"
+                    "发汗力度，必须写出该维度的局部相对顺序，同时说明药力不等于病情"
+                    "严重度；不可因缺少全局排序而删除已有局部比较。",
+    "attribution": "引用上下文内容时用自然中文注明来自所引原文前文或后文；"
+                   "不要求报告出现context_before、context_after等程序字段名。"
+                   "不得为说明缺失而补入输入中未载的具体剂量。",
+}
+
+
+def _completion_evidence(payload: dict, snapshot: dict | None) -> dict:
+    if snapshot is None:
+        return dict(payload)
+    frozen = {c["claim_id"]: c for c in snapshot["claims"]}
+    claims = []
+    for claim in payload["claims"]:
+        evidence = {e["evidence_revision_id"]: e
+                    for e in frozen[claim["claim_id"]]["evidence"]}
+        claims.append({**claim, "evidence": [
+            {**item, **{key: evidence[item["evidence_revision_id"]][key]
+                       for key in ("context_before", "context_after", "evidence_strength")
+                       if key in evidence[item["evidence_revision_id"]]}}
+            for item in claim["evidence"]
+        ]})
+    return {**payload, "claims": claims}
+
+
+def writer_completion_input(payload: dict, snapshot: dict | None = None,
+                            previous_candidate: dict | None = None) -> dict:
+    """Add executable limits without rewriting frozen draft checkpoints."""
+    return {**_completion_evidence(payload, snapshot),
+            **({"previous_candidate": deepcopy(previous_candidate)}
+               if previous_candidate is not None else {}),
+            "citation_contract": {c["claim_id"]: {
+                "allowed_paragraph_kinds": (["finding", "explanation", "boundary"]
+                                            if c["allowed_category"] == "HIGH_CONFIDENCE"
+                                            else ["explanation", "boundary"])}
+                for c in payload["claims"]},
+            "answer_contract": dict(ANSWER_CONTRACT),
+            "output_contract": {"required_top_level": ["paragraphs"],
+                                "required_paragraph_fields": ["text", "kind", "claim_ids"],
+                                "paragraph_count": "1至6段，每段text非空且不超过1200字",
+                                "kind_values": ["finding", "explanation", "boundary"],
+                                "example": {"paragraphs": [{"text": "有依据的比较及限定。",
+                                                            "kind": "explanation",
+                                                            "claim_ids": ["实际输入claim_id"]}]}},
+            "paragraph_contract": {
+        "finding": "所有引用必须为HIGH_CONFIDENCE；不得引用CONDITIONAL观点。",
+        "explanation": "可引用CONDITIONAL，但正文必须保留其条件、归因和证据边界。",
+        "boundary": "明确现有证据不能回答的部分；不得补造事实或强行排序。",
+        "scope": "仅按所引观点及其原文回答；证据不足的部分说明限制也属于有效回答。",
+        "revision": "有previous_candidate时对这份上一稿逐项执行feedback，不要从空白重新生成，"
+                    "保留不受意见影响的段落及已支持比较。没有上一稿时才写初稿。"
+                    "按citation_contract检查每段kind和全部claim_ids，避免只改某一句"
+                    "却删去上一稿已完成的核心比较。"
+                    "先列写作计划：原文明确的比较、对应引用、上下文归因、未解决项；"
+                    "计划仅用于内部思考，最终仍只输出paragraphs JSON。",
+    }}
+
+
+def reviewer_completion_input(payload: dict, snapshot: dict) -> dict:
+    cited = {key for p in payload["candidate"]["paragraphs"] for key in p["claim_ids"]}
+    enriched = _completion_evidence(payload, snapshot)
+    return {**enriched,
+            "gaps": [row for row in payload["gaps"]
+                     if row.get("claim_id") is None or row["claim_id"] in cited],
+            "disputes": [row for row in payload["disputes"]
+                         if (row.get("target_claim_id") is None
+                             or row["target_claim_id"] in cited
+                             or row.get("competing_claim_id") in cited)],
+            "citation_checklist": [{"paragraph_no": index, "kind": paragraph["kind"],
+                                    "claim_ids": list(paragraph["claim_ids"])}
+                                   for index, paragraph in enumerate(
+                                       payload["candidate"]["paragraphs"], 1)],
+            "answer_contract": dict(ANSWER_CONTRACT),
+            "review_contract": "独立核对每段引用及其原文，提出具体、可执行的修改意见。"
+                               "合理转述和明确范围的局限说明可以通过；不能因原文未逐字写出"
+                               "报告中的措辞就拒绝。核心问题按证据允许的范围回答，不得一面"
+                               "禁止无据排序，一面因缺少完整排序否决合规的局部比较。"
+                               "issues仅列必须修正的实质错误：无据事实或因果、引用不支持、"
+                               "关键限定缺失、已有证据支持的核心比较被遗漏。处理合规的项目"
+                               "及可选措辞润色写入review_summary，不放入issues；仅这些可选"
+                               "建议时accepted=true且issues为空。每条拒绝须指出实际错误文字、"
+                               "与之冲突的原文或明确遗漏，不能要求加入未载的剂量等新事实。"
+                               "逐段按citation_checklist对应的claim_ids核对audit_rationale及原文；"
+                               "不把其他版本的争议意见当成本段引用观点的审计结论。若原文和"
+                               "所引审计明确支持某个部分，不得因同一观点另一个部分缺乏支持"
+                               "而声称该部分‘完全无据’。"}
+
+
+def validation_feedback(error: ValueError) -> str:
+    """Make domain validation failures actionable for the next real draft."""
+    if isinstance(error, NarrativeValidationError):
+        return "程序校验未通过：" + "\n".join(error.issues)
+    if isinstance(error, ValidationError):
+        issues = []
+        for detail in error.errors(include_url=False, include_input=False):
+            loc = detail["loc"]
+            location = (f"第{loc[1] + 1}段" if len(loc) > 1 and loc[0] == "paragraphs"
+                        and isinstance(loc[1], int) else "报告")
+            field = ".".join(str(value) for value in (loc[2:] if location != "报告" else loc))
+            issues.append(f"{location}字段{field or 'paragraphs'}：{detail['msg']}")
+        return "程序校验未通过：修正JSON段落结构或字段：\n" + "\n".join(issues)
+    fixes = {
+        "conditional Claims cannot become certain report findings":
+            "含CONDITIONAL引用的段落不能标为finding；改写为explanation并明确限定，"
+            "或仅在原文支持时改用HIGH_CONFIDENCE引用，不得只改标签保留确定性因果。",
+        "report cites a Claim outside supported adjudication":
+            "删除不在输入claims中的引用及其未获支持的表述，只使用输入中的claim_id。",
+        "report paragraph requires supporting Claims":
+            "为段落提供实际支持文字的输入claim_id；材料不足时写出限制并引用相关观点。",
+        "report paragraph is blank or duplicates citations":
+            "删除空白段落，去除重复claim_ids。",
+    }
+    message = str(error)
+    return "程序校验未通过：" + fixes.get(message, "修正JSON段落结构或字段：" + message)
+
+
+def review_feedback(run) -> list[str]:
+    issues = run.output["issues"] or [run.output["review_summary"]]
+    prior = run.input_snapshot.get("feedback", []) if run.role == "ReportValidator" else []
+    return list(dict.fromkeys([*prior, *issues]))
+
+
 def execute_report_narrative(task_id: UUID, *, model: StructuredGenerator,
                              lease_guard: LeaseGuard | None = None) -> None:
     with SessionLocal() as session:
@@ -162,7 +321,8 @@ def execute_report_narrative(task_id: UUID, *, model: StructuredGenerator,
             AgentRun.task_id == task_id, AgentRun.role == "ReportWriter")))
         legacy = [run for run in old_writers if "input_schema" not in run.input_snapshot]
         reviews = list(session.scalars(select(AgentRun).where(
-            AgentRun.task_id == task_id, AgentRun.role == "ReportReviewer")))
+            AgentRun.task_id == task_id,
+            AgentRun.role.in_(("ReportReviewer", "ReportValidator")))))
         if any(run.status == "COMPLETED" and run.output["accepted"] for run in reviews):
             return
         legacy_reviews = {run.round_no: run for run in reviews}
@@ -181,10 +341,12 @@ def execute_report_narrative(task_id: UUID, *, model: StructuredGenerator,
             use_legacy = False
             start_attempt = revision.payload["start_attempt"]
     feedback: list[str] = []
+    previous_candidate = None
     if start_attempt and not use_legacy:
         last_review = max((run for run in reviews if run.round_no < start_attempt),
                           key=lambda run: run.round_no)
-        feedback = last_review.output["issues"] or [last_review.output["review_summary"]]
+        feedback = review_feedback(last_review)
+        previous_candidate = last_review.input_snapshot.get("candidate")
     for attempt in range(start_attempt, start_attempt + 3):
         payload = ({"question": snapshot["question"],
                     "claims": [c for c in snapshot["claims"] if c["allowed_category"] in
@@ -192,10 +354,32 @@ def execute_report_narrative(task_id: UUID, *, model: StructuredGenerator,
                     "gaps": snapshot["gaps"], "disputes": snapshot["disputes"],
                     "feedback": feedback} if use_legacy else writer_input(snapshot, feedback))
         writer_id, candidate = _prepare(task_id, "ReportWriter", attempt, payload, lease_guard)
-        if candidate is None:
-            candidate = validate_narrative(recorded_complete(
-                task_id, writer_id, "ReportWriter", model, WRITER_PROMPT, payload), snapshot)
+        generated = candidate is None
+        if generated:
+            candidate = recorded_complete(
+                task_id, writer_id, "ReportWriter", model, WRITER_PROMPT,
+                writer_completion_input(payload, snapshot, previous_candidate))
             _save(writer_id, candidate, lease_guard)
+        unchanged = generated and bool(feedback) and candidate == previous_candidate
+        previous_candidate = candidate
+        try:
+            if unchanged:
+                raise UnchangedDraftError(["本稿与上一份未通过的草稿完全相同，修改意见未落实；"
+                                           "停止后续模型复核和自动生成，避免重复调用。"])
+            candidate = validate_narrative(candidate, snapshot)
+        except ValueError as error:
+            # Content/schema failures are revision feedback, not infrastructure retries.
+            validation_payload = {**payload, "candidate": candidate}
+            validator_id, validation = _prepare(
+                task_id, "ReportValidator", attempt, validation_payload, lease_guard)
+            if validation is None:
+                validation = {"accepted": False, "issues": [validation_feedback(error)],
+                              "review_summary": "程序校验未通过，已将具体修改要求反馈给写作者。"}
+                _save(validator_id, validation, lease_guard)
+            feedback = list(dict.fromkeys([*feedback, *validation["issues"]]))
+            if isinstance(error, UnchangedDraftError):
+                raise ReportReviewExhausted("report writer repeated a rejected draft without changes")
+            continue
         review_payload = {**payload, "candidate": candidate} if use_legacy else reviewer_input(
             payload, candidate)
         reviewer_id, review = _prepare(task_id, "ReportReviewer", attempt,
@@ -203,7 +387,8 @@ def execute_report_narrative(task_id: UUID, *, model: StructuredGenerator,
         if review is None:
             review = Review.model_validate(recorded_complete(
                 task_id, reviewer_id, "ReportReviewer", model,
-                REVIEWER_PROMPT, review_payload)).model_dump(mode="json")
+                REVIEWER_PROMPT, reviewer_completion_input(review_payload, snapshot)
+            )).model_dump(mode="json")
             if review["accepted"] and review["issues"]:
                 raise ValueError("report review cannot accept unresolved issues")
             _save(reviewer_id, review, lease_guard)
@@ -220,7 +405,8 @@ def accepted_narrative(session, task_id: UUID, *, allow_rejected: bool = False) 
     if "ReportWriter" not in task.execution_context.get("frozen_prompts", {}):
         return None
     review = session.scalar(select(AgentRun).where(
-        AgentRun.task_id == task_id, AgentRun.role == "ReportReviewer",
+        AgentRun.task_id == task_id,
+        AgentRun.role.in_(("ReportReviewer", "ReportValidator")),
         AgentRun.status == "COMPLETED").order_by(AgentRun.round_no.desc()).limit(1))
     if review is None or (not review.output["accepted"] and not allow_rejected):
         raise ValueError("report requires an accepted independent narrative review")
@@ -229,7 +415,14 @@ def accepted_narrative(session, task_id: UUID, *, allow_rejected: bool = False) 
         AgentRun.round_no == review.round_no, AgentRun.status == "COMPLETED"))
     if writer is None or review.input_snapshot["candidate"] != writer.output:
         raise ValueError("reviewed narrative does not match committed draft")
-    return {**writer.output, "review_summary": review.output["review_summary"],
+    try:
+        draft = Narrative.model_validate(writer.output).model_dump(mode="json")
+    except ValueError:
+        if not allow_rejected or review.role != "ReportValidator":
+            raise
+        # Retain malformed raw output in AgentRun; never render it as report paragraphs.
+        draft = {"paragraphs": []}
+    return {**draft, "review_summary": review.output["review_summary"],
             "review_status": "ACCEPTED" if review.output["accepted"] else "NEEDS_REVISION",
             "review_issues": review.output["issues"],
             "writer_run_id": str(writer.id), "reviewer_run_id": str(review.id)}

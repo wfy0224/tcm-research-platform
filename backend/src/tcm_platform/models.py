@@ -27,6 +27,14 @@ def utc_now() -> datetime:
     return datetime.now(UTC)
 
 
+class ModelConfiguration(Base):
+    __tablename__ = "model_configuration"
+    __table_args__ = (CheckConstraint("id = 1"), {"schema": "governance"})
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+
+
 class BlobObject(Base):
     __tablename__ = "blob_object"
     __table_args__ = (CheckConstraint("size_bytes >= 0"), {"schema": "storage"})

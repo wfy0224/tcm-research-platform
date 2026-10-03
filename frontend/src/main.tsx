@@ -9,6 +9,7 @@ import type { EvidenceRef } from "./api";
 import { sourceCitationFromUrl } from "./citation";
 import type { SourceCitation } from "./citation";
 import { readingText } from "./knowledgeSelection";
+import "./theme.css";
 
 type Health = {
   state: "READY" | "DEGRADED" | "MAINTENANCE" | "NOT_READY";

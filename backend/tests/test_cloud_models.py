@@ -7,6 +7,15 @@ from tcm_platform import cloud_models
 from tcm_platform.model_errors import ModelResponseError, ModelUnavailableError
 
 
+@pytest.fixture(autouse=True)
+def database_configuration(monkeypatch, tmp_path):
+    from tcm_platform import model_configuration
+    monkeypatch.setattr(model_configuration.settings, "data_root", tmp_path)
+    monkeypatch.setattr("tcm_platform.model_credentials.read_model_key", lambda provider: None)
+    monkeypatch.setattr(model_configuration, "read_configuration",
+                        model_configuration.legacy_configuration)
+
+
 def test_aliyun_cloud_clients_use_one_workspace_key(monkeypatch):
     monkeypatch.setenv("TCM_ALLOW_ENV_API_KEYS", "1")
     monkeypatch.setattr(cloud_models, "_credential", lambda provider: "unit-test-key")

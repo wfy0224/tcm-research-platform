@@ -56,6 +56,7 @@ from tcm_platform.models import (
     Concept,
     ConceptEvidence,
     ConceptTerm,
+    EmbeddingRecord,
     Evidence,
     EvidenceRevision,
     Formula,
@@ -74,6 +75,7 @@ from tcm_platform.models import (
     KnowledgeVersionItem,
     QualityIssue,
     RelationEvidence,
+    RetrievalChunk,
     SourceDocument,
     SourceRevision,
     TaskJob,
@@ -1197,3 +1199,51 @@ def compare_versions(left_public_id: str, right_public_id: str,
                 return {key: convert(row) for key, row in value.items()}
             return value
         return convert(difference)
+
+def _job_progress(session, job: TaskJob) -> dict | None:
+    """索引构建进度直接从索引行推导，worker 不需要额外记账。"""
+    if job.job_type != "knowledge.publish":
+        return None
+    raw_version = (job.payload or {}).get("version_id")
+    if not raw_version:
+        return None
+    try:
+        version_id = UUID(str(raw_version))
+    except ValueError:
+        return None
+    build = session.scalar(select(IndexBuild).where(
+        IndexBuild.knowledge_version_id == version_id).order_by(IndexBuild.created_at.desc()))
+    if build is None:
+        return {"stage": "SNAPSHOT", "processed": 0, "total": 0, "percent": 0}
+    total = session.scalar(select(func.count()).select_from(RetrievalChunk).where(
+        RetrievalChunk.index_build_id == build.id)) or 0
+    embedded = session.scalar(select(func.count()).select_from(EmbeddingRecord).where(
+        EmbeddingRecord.index_build_id == build.id)) or 0
+    if (build.configuration or {}).get("strategy") == "local-fts-exact-v1":
+        ready = build.status == "READY"
+        percent = 100 if ready and total else (50 if total else 0)
+        return {"stage": "FTS", "processed": total if ready else 0, "total": total, "percent": percent}
+    processed = min(embedded, total)
+    percent = int(processed * 100 / total) if total else 0
+    if build.status == "READY":
+        percent = 100
+    return {"stage": "VECTOR", "processed": processed, "total": total, "percent": percent}
+
+
+@router.get("/jobs")
+def list_recent_jobs(actor: Annotated[Actor, Depends(_read_actor)],
+                     limit: int = Query(default=20, ge=1, le=100)):
+    """最近的后台任务，附带可推导的构建进度。"""
+    with SessionLocal() as session:
+        rows = list(session.scalars(select(TaskJob).order_by(
+            TaskJob.created_at.desc(), TaskJob.id.desc()).limit(limit)))
+        jobs = [{"job_id": row.public_id,
+                 "job_type": row.job_type,
+                 "status": row.status,
+                 "attempts": row.attempts,
+                 "max_attempts": row.max_attempts,
+                 "created_at": row.created_at.isoformat(),
+                 "updated_at": row.updated_at.isoformat(),
+                 "last_error": row.last_error,
+                 "progress": _job_progress(session, row)} for row in rows]
+    return {"jobs": jobs}

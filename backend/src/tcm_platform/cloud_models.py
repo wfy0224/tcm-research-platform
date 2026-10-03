@@ -3,7 +3,6 @@
 import hashlib
 import hmac
 import json
-import os
 import re
 import threading
 import time
@@ -17,7 +16,6 @@ from tcm_platform.audit import append_event
 from tcm_platform.config import settings
 from tcm_platform.db import SessionLocal
 from tcm_platform.ids import new_id
-from tcm_platform.model_credentials import read_model_key
 from tcm_platform.model_errors import (
     ModelCredentialMissing,
     ModelCredentialUnavailable,
@@ -327,7 +325,9 @@ class CloudResearchModel:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": json.dumps(input_payload, ensure_ascii=False)},
         ], "response_format": {"type": "json_object"},
-           "temperature": 0.2, "max_tokens": 2_048, "stream": False, **options}
+           "temperature": 0.2,
+           "max_tokens": 393_216 if self.provider == "deepseek" else 2_048,
+           "stream": False, **options}
         for format_attempt in range(2):
             result = _post_json(self.endpoint, self.api_key, request)
             try:
@@ -354,33 +354,18 @@ class CloudResearchModel:
 
 
 def _credential(provider: str) -> str:
-    """Read OS keychain; injected env keys require an explicit development switch."""
-    try:
-        key = read_model_key(provider)
-    except (OSError, RuntimeError) as exc:
-        if os.getenv("TCM_ALLOW_ENV_API_KEYS") != "1":
-            raise ModelCredentialUnavailable("OS keychain is unavailable for model credentials") from exc
-        key = None
-    if key:
-        return key
-    if os.getenv("TCM_ALLOW_ENV_API_KEYS") == "1":
-        key_name = {"deepseek": "DEEPSEEK_API_KEY", "siliconflow": "SILICONFLOW_API_KEY",
-                    "aliyun": "DASHSCOPE_API_KEY"}[provider]
-        key = os.getenv(key_name, "")
-        if key:
-            return key
-    raise ModelCredentialMissing(f"{provider} model credential is not configured in OS keychain")
+    from tcm_platform.model_configuration import read_configuration
+    key = read_configuration().get("api_keys", {}).get(provider, "")
+    if not key:
+        raise ModelCredentialMissing(f"{provider} API credential is not configured")
+    return key
 
 
 def research_model_from_environment() -> CloudResearchModel:
-    provider = os.getenv("TCM_RESEARCH_PROVIDER", "siliconflow").lower()
-    if provider not in {"siliconflow", "deepseek"}:
-        raise ValueError("TCM_RESEARCH_PROVIDER must be siliconflow or deepseek")
-    key = _credential(provider)
-    return CloudResearchModel(
-        model=os.getenv("TCM_RESEARCH_MODEL", ""), api_key=key, provider=provider,
-    )
-
+    from tcm_platform.model_configuration import read_configuration
+    config = read_configuration()
+    route = config["default_model"] or next(iter(config["models"]), "")
+    return research_model_for_version(route)
 
 def research_model_for_version(model_version: str) -> CloudResearchModel:
     provider, sep, model = model_version.partition("/")
@@ -391,10 +376,12 @@ def research_model_for_version(model_version: str) -> CloudResearchModel:
 
 
 def cloud_clients_from_environment() -> tuple[CloudEmbedder, CloudReranker]:
-    provider = os.getenv("TCM_MODEL_PROVIDER", "siliconflow").lower()
+    from tcm_platform.model_configuration import read_configuration
+    config = read_configuration()
+    provider = config["retrieval_provider"]
     if provider == "aliyun":
-        workspace = os.getenv("TCM_DASHSCOPE_WORKSPACE_ID", "")
-        region = os.getenv("TCM_DASHSCOPE_REGION", "cn-beijing")
+        workspace = config["workspace_id"]
+        region = config["region"]
         if not WORKSPACE.fullmatch(workspace) or not WORKSPACE.fullmatch(region):
             raise ValueError("DashScope workspace ID and region must be configured")
         host = f"https://{workspace}.{region}.maas.aliyuncs.com"
@@ -402,12 +389,12 @@ def cloud_clients_from_environment() -> tuple[CloudEmbedder, CloudReranker]:
         return (
             CloudEmbedder(
                 provider="aliyun",
-                model=os.getenv("TCM_EMBEDDING_MODEL", "qwen3.7-text-embedding"),
+                model=config["embedding_model"],
                 endpoint=f"{host}/compatible-mode/v1/embeddings", api_key=key,
             ),
             CloudReranker(
                 provider="aliyun",
-                model=os.getenv("TCM_RERANK_MODEL", "qwen3.7-text-rerank"),
+                model=config["rerank_model"],
                 endpoint=f"{host}/api/v1/services/rerank/text-rerank/text-rerank",
                 api_key=key,
             ),
@@ -417,12 +404,12 @@ def cloud_clients_from_environment() -> tuple[CloudEmbedder, CloudReranker]:
         return (
             CloudEmbedder(
                 provider="siliconflow",
-                model=os.getenv("TCM_EMBEDDING_MODEL", "BAAI/bge-m3"),
+                model=config["embedding_model"],
                 endpoint="https://api.siliconflow.cn/v1/embeddings", api_key=key,
             ),
             CloudReranker(
                 provider="siliconflow",
-                model=os.getenv("TCM_RERANK_MODEL", "BAAI/bge-reranker-v2-m3"),
+                model=config["rerank_model"],
                 endpoint="https://api.siliconflow.cn/v1/rerank", api_key=key,
             ),
         )

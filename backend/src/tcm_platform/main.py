@@ -46,7 +46,7 @@ from tcm_platform.research_capabilities import router as research_capabilities_r
 from tcm_platform.research_model_settings import router as research_model_settings_router
 from tcm_platform.retrieval import RetrievalExecution, search_published
 
-SCHEMA_REVISION = "0026_term_resolution"
+SCHEMA_REVISION = "0028_model_configuration"
 
 
 class BootstrapRequest(BaseModel):

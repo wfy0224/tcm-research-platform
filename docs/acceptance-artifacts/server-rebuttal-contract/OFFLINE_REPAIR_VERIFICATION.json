@@ -1,0 +1,58 @@
+{
+  "offline_tests_already_verified": 16,
+  "deployed_sha256": "04c385582d9f809e41424c6cc6c1c286a14260ab3de85a94225ea5a6263f5cf1",
+  "api_health": {
+    "state": "DEGRADED",
+    "database": "connected",
+    "schema": "current",
+    "blob_store": "available",
+    "preview_corpus": "none"
+  },
+  "task_status": "REPORT_REVIEW_REQUIRED",
+  "control_state": "ACTIVE",
+  "job_status": "COMPLETED",
+  "last_error": null,
+  "historical_report_model_calls": 40,
+  "frozen_context_hash": "0f9ffcabe70c2073d6b8c75b9f41619e3e2830b71f094db29ec6b31729f7236b",
+  "reports": [
+    {
+      "revision": 1,
+      "hash": "c37b07ba6c11952547b4635ec4191b8e6c6c5ab831824e24b350107d6b54c1b7",
+      "review_status": "NEEDS_REVISION"
+    },
+    {
+      "revision": 2,
+      "hash": "5492815881aed545d974c5eda6633d0b61ae90e177989b48bb9ac3a08a3de8c4",
+      "review_status": "NEEDS_REVISION"
+    },
+    {
+      "revision": 3,
+      "hash": "ab9ab98624b5659d345e64b8f0fb6b28dc80e8747a730adc9a01e4c34ed0683c",
+      "review_status": "NEEDS_REVISION"
+    },
+    {
+      "revision": 4,
+      "hash": "ecc3ecfc57e05c940580da4f26b33935a987854e9135dab1476a815d3ad6a0e2",
+      "review_status": "NEEDS_REVISION"
+    },
+    {
+      "revision": 5,
+      "hash": "419f1c722ca5bb0771f4991535f1888aaa0718fc02aa642eee6c0accf28c43bb",
+      "review_status": "NEEDS_REVISION"
+    },
+    {
+      "revision": 6,
+      "hash": "548f577b3de0db84de856ad1b0e838fbe5b38d6d0a82989adce3a8c79af949c4",
+      "review_status": "NEEDS_REVISION"
+    },
+    {
+      "revision": 7,
+      "hash": "032fd309bbbbf73100ec0f246be741183b9374568535a698d24892c14783bdbc",
+      "review_status": "NEEDS_REVISION"
+    }
+  ],
+  "agent_paid_calls_this_turn": 0,
+  "historical_report_hashes_unchanged": true,
+  "frozen_context_unchanged": true,
+  "historical_model_call_count_unchanged": true
+}

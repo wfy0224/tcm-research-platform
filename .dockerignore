@@ -1,0 +1,15 @@
+.git
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/dist
+**/data
+.uv-cache
+.parallel-worktrees
+docs/acceptance-artifacts
+*.docx
+.env
+.env.*
+deploy/.env

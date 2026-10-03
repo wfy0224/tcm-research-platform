@@ -1,0 +1,52 @@
+[
+  {
+    "name": "knowledge",
+    "width": 1440,
+    "scroll": 1425,
+    "title": "知识库",
+    "background": "rgb(25, 62, 52)"
+  },
+  {
+    "name": "search",
+    "width": 1440,
+    "scroll": 1440,
+    "title": "证据检索",
+    "background": "rgb(25, 62, 52)"
+  },
+  {
+    "name": "research",
+    "width": 1440,
+    "scroll": 1425,
+    "title": "理论研究",
+    "background": "rgb(25, 62, 52)"
+  },
+  {
+    "width": 1440,
+    "citationExpanded": true
+  },
+  {
+    "name": "knowledge",
+    "width": 390,
+    "scroll": 375,
+    "title": "知识库",
+    "background": "rgb(25, 62, 52)"
+  },
+  {
+    "name": "search",
+    "width": 390,
+    "scroll": 390,
+    "title": "证据检索",
+    "background": "rgb(25, 62, 52)"
+  },
+  {
+    "name": "research",
+    "width": 390,
+    "scroll": 375,
+    "title": "理论研究",
+    "background": "rgb(25, 62, 52)"
+  },
+  {
+    "width": 390,
+    "citationExpanded": true
+  }
+]

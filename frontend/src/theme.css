@@ -1,0 +1,206 @@
+/* Shared visual language. Layout and domain-specific states stay in their component styles. */
+:root {
+  --ink: #243f39;
+  --muted: #61756e;
+  --accent: #216552;
+  --line: #dfe6df;
+  --paper: #fffefa;
+  --wash: #f3f5ef;
+  --kw-border: var(--line);
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: var(--wash);
+  font-synthesis: none;
+}
+::selection { background: #d8e9d6; color: #183d2e; }
+.appShell { background: var(--wash); color: var(--ink); padding-left: 228px; line-height: 1.65; }
+.appSidebar { width: 228px; padding: 32px 18px 24px; background: #193e34; border: 0; }
+.appHeader { padding: 0 7px 42px; }
+.brand { color: #f6f4e8; gap: 12px; font-size: 15px; }
+.brandMark { width: 38px; height: 42px; background: #dce7cb; color: #244f3a; border-radius: 12px 4px 12px 4px; font-family: "SimSun", serif; }
+.brandSub { color: #b4c8bd; font-size: 10px; letter-spacing: .08em; }
+.navSectionLabel { color: #9ab9a9; font-size: 11px; margin-bottom: 14px; }
+.workspaceNav { gap: 9px; }
+.workspaceNav button { height: 48px; border-radius: 9px; color: #c6d7cd; padding-inline: 15px; }
+.workspaceNav button:hover { background: #285043; color: white; }
+.workspaceNav button[aria-current=page] { background: #e2ecd8; color: #244a36; box-shadow: 0 3px 12px #0d2b2420; }
+.sidebarFooter { border-color: #ffffff20; padding-top: 22px; }
+.sidebarMode, .sidebarFooter .badge { color: #b7cbbf; }
+.sidebarFooter .badge::before { background: #b4d7a0; }
+.appContent { max-width: 1640px; padding: 34px 40px 32px; }
+.pageHeader { padding-bottom: 28px; }
+.pageBreadcrumb { font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+.appShell .pageHeader h1 { font-family: "Noto Serif CJK SC", "SimSun", serif; font-size: 32px; letter-spacing: .08em; font-weight: 700; color: var(--ink); margin: 10px 0 9px; }
+.pageHeader p { font-size: 13px; color: var(--muted); }
+.sessionStatus { background: #e9eee4; border: 1px solid #d9e3d3; padding: 8px 12px; border-radius: 99px; color: #466650; }
+.connectionDot { flex-shrink: 0; background: #4c8059; }
+.appShell .panel, .appShell .resultCard { background: var(--paper); border-color: var(--line); border-radius: 14px; box-shadow: 0 3px 16px #243f3905; }
+.appShell h2, .appShell h3 { color: var(--ink); }
+.appShell .muted, .appShell .hint { color: var(--muted); line-height: 1.8; }
+.appShell button { transition: background .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.appShell button:disabled { cursor: not-allowed; }
+.appShell .badge { white-space: nowrap; flex-shrink: 0; }
+.workspaceHead > div:last-child { display: flex; align-items: center; gap: 14px; }
+.workspaceHead button, .modelSettings button, .tabPanel > button { border: 1px solid #cbd8c5; border-radius: 8px; background: var(--paper); color: var(--accent); padding: 8px 13px; font: inherit; }
+.workspaceHead button:hover:not(:disabled), .modelSettings button:hover:not(:disabled), .tabPanel > button:hover:not(:disabled) { background: #eaf2e2; }
+.appShell :is(input:not([type=checkbox]):not([type=radio]), textarea, select) { border-color: #cad8cc; background: #fffefa; color: var(--ink); border-radius: 8px; }
+.appShell :is(input, textarea, select):focus-visible { outline: 2px solid #609175; outline-offset: 3px; }
+.appShell input[type=checkbox] { accent-color: var(--accent); }
+.appShell textarea { resize: vertical; line-height: 1.75; }
+.appShell a { color: #216552; text-underline-offset: 3px; }
+.appShell :is(.searchForm, .researchForm, .inlineForm, .reviewForm, .actionRow, .exportRow) button { background: var(--accent); border-radius: 8px; }
+.appShell :is(.searchForm, .researchForm, .inlineForm, .reviewForm, .actionRow, .exportRow) button:hover:not(:disabled) { background: #194e40; box-shadow: 0 3px 9px #193e3418; }
+.appShell .sectionLabel { color: #597756; font-size: 11px; letter-spacing: .08em; }
+.appShell .empty { background: #f8faf5; border-color: #cddaca; padding: 36px 24px; line-height: 1.85; }
+.serviceDetails { border-color: var(--line); color: var(--muted); }
+
+/* Library: quiet navigation around a generous paper reading surface. */
+.kwHeader { padding: 24px 28px 20px; }
+.kwHeader h2 { font-size: 18px; }
+.kwHeader p { color: var(--muted); font-size: 12px; }
+.kwWorkspace .kwCount { background: #eaf0e3; color: #526d48; border-radius: 6px; }
+.kwWorkspace button { border-color: #d4dfd2; color: #49634f; border-radius: 8px; }
+.kwWorkspace button.kwPrimary { background: var(--accent); border-color: var(--accent); }
+.kwWorkspace button.kwPrimary:hover:not(:disabled) { background: #194e40; }
+.kwTabs { border-color: var(--line); gap: 28px; padding-inline: 28px; }
+.kwTabs button { border-color: transparent; border-radius: 0; padding-block: 14px; }
+.kwTabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+.kwNextStep { background: #f0f5e9; border-color: #e0e8d8; padding: 14px 28px; }
+.kwSourceGrid { grid-template-columns: 224px minmax(0, 1fr); }
+.kwSourceList { background: #f8faf4; border-color: var(--line); padding: 22px 14px; }
+.kwSourceList > * { flex-shrink: 0; }
+.kwSourceList button { padding: 14px; }
+.kwSourceList button.selected { background: #e8f0e0; border-color: #cdddbf; box-shadow: inset 3px 0 #5d8050; }
+.kwSourceList button strong { color: var(--ink); font-weight: 600; }
+.kwSourceContent { padding: 26px; }
+.kwSourceTitle { padding-bottom: 20px; border-color: var(--line); }
+.kwSourceTitle h3 { font-family: "SimSun", serif; font-size: 22px; font-weight: 700; }
+.kwSegmentGrid { gap: 24px; }
+.kwSegments { border-color: var(--line); }
+.kwSegmentRow.selected { background: #eaf1e3; }
+.kwSegmentRow span { color: #526952; font-size: 13px; }
+.kwOriginal { background: var(--paper); padding-inline: 8px; }
+.kwOriginal > blockquote { font-size: 19px; line-height: 2.15; color: #2e4234; }
+.kwReadingHead { border-bottom: 1px solid #edf0e7; margin-bottom: 18px; }
+.kwReadingHead span, .kwLocator { color: #65786a; font-size: 11px; }
+.kwEvidenceBar { background: #f3f7ee; border-color: #dde7d5; border-radius: 10px; padding: 16px; }
+.kwWorkspace .kwCard { border-color: var(--line); border-radius: 10px; background: var(--paper); }
+.kwWorkspace .kwCardHead strong { font-size: 14px; }
+.kwWorkspace .kwBadge { background: #eaf1e2; color: #46663e; }
+.kwWorkspace :is(.kwDraftForm, .kwPublicationFlow, .kwReviewAction) { background: #f6f9f0; border-color: #dce6d3; border-radius: 12px; }
+.kwImport[open] { background: var(--paper); border-radius: 16px; }
+
+/* Research: distinct task rail, restrained tabs, and readable report typography. */
+.workspaceGrid { grid-template-columns: minmax(250px, 292px) minmax(0, 1fr); gap: 24px; }
+.appShell .workspaceHead { padding-bottom: 10px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.researchSidebar { padding: 24px; }
+.researchSidebar h3 { font-size: 16px; }
+.researchForm { gap: 12px; }
+.researchForm textarea { min-height: 112px; }
+.researchForm fieldset { border-color: var(--line); padding: 14px; }
+.sourceChoices { gap: 11px; }
+.researchWorkspace .sourceChoices label { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; }
+.sourceChoices input { margin-top: 5px; }
+.taskList { gap: 10px; padding: 3px; margin-inline: -3px; }
+.taskList button { padding: 14px; background: #f7f9f3; border-color: var(--line); border-radius: 10px; color: var(--ink); }
+.taskList button:hover { background: #f0f5e9; }
+.taskList button.selected { background: #eaf2e2; border-color: #bdcfb2; box-shadow: inset 3px 0 #5d8050; }
+.taskList strong { font-size: 14px; line-height: 1.75; }
+.taskList span { color: #5b705f; line-height: 1.65; }
+.taskOverview { padding: 24px; }
+.taskOverview h3 { font-size: 18px; }
+.appShell .researchTabs { gap: 4px; margin: 18px 0 12px; padding: 5px; background: #e9eee3; border-radius: 10px; }
+.researchTabs button { border: 1px solid transparent; border-radius: 7px; background: transparent; color: #52664f; padding: 9px 13px; font-size: 13px; }
+.researchTabs button:hover { background: #f8faf4; }
+.researchTabs button[aria-current=page] { background: #fffefa; border-color: #d6dfcc; color: #24553c; box-shadow: 0 2px 5px #28462a08; }
+.appShell .tabPanel { padding: 28px; }
+.tabPanel > h3 { font-size: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.readableReport { color: #304638; line-height: 1.85; }
+.readableReport h4 { font-size: 15px; color: #2d5c41; margin: 24px 0 12px; }
+.readableReport .reportAnswer { max-width: 860px; }
+.readableReport .reportConclusion { padding: 16px 0; border-color: #e6ebdf; }
+.readableReport .conclusionText { font-size: 16px; line-height: 2; color: #2a4032; }
+.readableReport .reportCitationLinks { flex-wrap: wrap; align-items: center; }
+.readableReport .reportCitationLinks a { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; min-height: 28px; border-radius: 6px; background: #eaf2e2; text-decoration: none; font-weight: 600; }
+.readableReport .reportCitationLinks a:hover { background: #dce9d2; }
+.readableReport :is(.reportDetailedClaims, .reportEvidence details) { background: #f8faf4; border: 1px solid #dfe7d6; border-radius: 10px; padding: 14px 18px; }
+.readableReport summary { color: #496849; padding-block: 3px; }
+.readableReport .reportEvidence blockquote { font-family: "Noto Serif CJK SC", "SimSun", serif; font-size: 17px; line-height: 2; }
+.readableReport .reportEvidenceFocused { background: #edf5e5; outline-color: #54814a; }
+.exportRow { padding-top: 22px; margin-top: 26px; border-top: 1px solid var(--line); gap: 16px 24px; font-size: 12px; }
+.viewSwitch button { border-radius: 7px; }
+.drawerBackdrop { background: #142d2466; backdrop-filter: blur(3px); }
+.drawer, .drawerHead { background: var(--paper); }
+.drawerHead { z-index: 1; }
+.drawerQuote { background: #eff5e8; border-color: #6d925a; line-height: 2; }
+
+@media (max-width: 1200px) {
+  .appShell { padding-left: 196px; }
+  .appSidebar { width: 196px; padding-inline: 12px; }
+  .brand { font-size: 13px; gap: 8px; }
+  .appContent { padding: 28px 24px; }
+  .workspaceGrid { grid-template-columns: 254px minmax(0, 1fr); gap: 18px; }
+  .kwSourceGrid { grid-template-columns: 185px minmax(0, 1fr); }
+  .kwSourceContent { padding: 20px; }
+}
+@media (max-width: 960px) {
+  .workspaceGrid { grid-template-columns: 1fr; }
+  .researchSidebar { order: 1; }
+  .researchMain { order: 2; }
+  .researchWorkspace .taskList { max-height: 240px; }
+}
+@media (max-width: 760px) {
+  .appShell { padding-left: 0; }
+  .appSidebar { width: 100%; padding: 12px 14px; flex-wrap: wrap; gap: 12px; }
+  .appHeader { padding: 0; }
+  .brand { font-size: 13px; }
+  .brandMark { width: 28px; height: 32px; font-size: 20px; }
+  .workspaceNav { gap: 3px; }
+  .workspaceNav button { padding-inline: 9px; height: 36px; font-size: 12px; }
+  .appContent { padding: 22px 16px; }
+  .pageHeader { flex-wrap: wrap; gap: 14px; padding-bottom: 22px; }
+  .appShell .pageHeader h1 { font-size: 28px; }
+  .pageHeader p { max-width: none; }
+  .pageConnection { padding-top: 0; max-width: 100%; }
+  .sessionStatus { font-size: 11px; }
+  .kwHeader { padding: 20px 16px; flex-wrap: wrap; }
+  .kwTabs { padding-inline: 16px; gap: 20px; }
+  .kwNextStep { padding: 14px 16px; flex-wrap: wrap; }
+  .kwSourceGrid { grid-template-columns: 1fr; }
+  .kwSourceList { padding: 14px; }
+  .kwSourceContent { padding: 18px 16px; }
+  .kwOriginal { padding-inline: 0; }
+  .kwOriginal > blockquote { font-size: 18px; }
+  .researchSidebar, .taskOverview, .appShell .tabPanel { padding: 20px; }
+  .appShell .researchTabs { gap: 4px; }
+  .researchTabs button { flex: 1 0 auto; padding: 8px 10px; }
+  .readableReport :is(.reportDetailedClaims, .reportEvidence details) { padding: 12px; }
+  .modelProviderStatus p, .modelAddForm label { min-width: 0; flex-basis: 100%; }
+  .configuredModels > div { flex-wrap: wrap; }
+}
+@media (max-width: 380px) {
+  .appSidebar { justify-content: center; }
+  .workspaceNav { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .appShell button { transition: none; } }
+/* 后台任务与索引构建进度（JobsPanel）。 */
+.kwJobs { background: #f6f9f0; border: 1px solid #dce6d3; border-radius: 12px; padding: 16px; }
+.kwJobs h3 { font-size: 15px; }
+.kwJobs > p[role="status"] { color: #526952; font-size: 13px; }
+.kwJobProgress { margin: 12px 0 4px; }
+.kwProgressTrack { height: 10px; border-radius: 999px; background: #e3ecd8; overflow: hidden; }
+.kwProgressFill { display: block; height: 100%; background: #5d8050; transition: width .3s ease; }
+.kwJobs p { color: #526952; font-size: 13px; }
+.kwJobList { display: grid; gap: 8px; margin-top: 12px; }
+.kwJobRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+.kwJobRow strong { font-size: 13px; }
+.kwJobRow small { display: block; color: #65786a; font-size: 11px; margin-top: 2px; }
+.kwJobRow .kwJobError { color: #8a3a2c; font-size: 12px; margin: 4px 0 0; }
+.kwJobState { font-size: 12px; border-radius: 999px; padding: 2px 10px; background: #eaf1e2; color: #46663e; white-space: nowrap; }
+.kwJobState.running { background: #eef4e4; color: #4d6b41; }
+.kwJobState.failed { background: #f6e7e4; color: #8a3a2c; }
+/* 质量问题列表默认折叠，避免压住发布/激活按钮。 */
+.kwIssueList { margin: 12px 24px; }
+.kwIssueList > summary { cursor: pointer; color: #526952; font-size: 13px; padding: 10px 12px; background: #f6f9f0; border: 1px solid #dce6d3; border-radius: 10px; }
+.kwIssueList[open] > summary { border-radius: 10px 10px 0 0; margin-bottom: 8px; }
+.kwIssueList .kwCard { margin-top: 8px; }
